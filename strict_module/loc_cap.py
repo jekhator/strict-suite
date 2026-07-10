@@ -28,7 +28,7 @@ def count_lines(file_path: str) -> int:
 
 def load_baseline(baseline_file: str) -> dict[str, int]:
     """Load baseline LOC counts from file (with fallback for backward compatibility)."""
-    baseline = {}
+    baseline: dict[str, int] = {}
 
     actual_file = None
     if os.path.isfile(baseline_file):
@@ -67,7 +67,7 @@ def find_python_files(
     exclude_patterns: tuple[str, ...] = ("migrations", "management/commands"),
 ) -> dict[str, int]:
     """Find all Python files under root_path, exempting test files and excluded patterns."""
-    current_locs = {}
+    current_locs: dict[str, int] = {}
     root = Path(root_path).resolve()  # Normalize to absolute path
 
     if not root.exists():

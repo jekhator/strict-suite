@@ -1,8 +1,10 @@
 """Configuration loading for strict-module (formerly dto-strict)."""
 
-try:
-    import tomllib  # Python 3.11+ stdlib
-except ModuleNotFoundError:  # Python 3.10
+import sys
+
+if sys.version_info >= (3, 11):
+    import tomllib
+else:
     import tomli as tomllib
 from dataclasses import dataclass, field
 from pathlib import Path

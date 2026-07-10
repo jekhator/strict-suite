@@ -233,9 +233,9 @@ def get_annotation_string(annotation: Optional[ast.expr]) -> str:
         return annotation.id
     elif isinstance(annotation, ast.Subscript):
         base = get_annotation_string(annotation.value)
-        if isinstance(annotation.slice, ast.Index):
+        if hasattr(ast, "Index") and isinstance(annotation.slice, ast.Index):
             # Python 3.8 compatibility
-            index = get_annotation_string(annotation.slice.value)
+            index = get_annotation_string(annotation.slice.value)  # type: ignore[attr-defined]
         else:
             index = get_annotation_string(annotation.slice)
         return f"{base}[{index}]"

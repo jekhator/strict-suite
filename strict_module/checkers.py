@@ -174,11 +174,12 @@ class R002Checker(BaseChecker):
         super().__init__(file_path, source, config)
         self.in_service_file = False
         self.tag_count = 0
-        self.current_function = None
-        self.current_class = None  # Track current class for to_* serializer detection
-        self.function_comments = {}
-        self.dict_parents = {}  # Map dict node id to parent node
-        self.current_class = None  # Track current class for to_* serializer detection
+        self.current_function: ast.FunctionDef | None = None
+        self.current_class: ast.ClassDef | None = (
+            None  # Track current class for to_* serializer detection
+        )
+        self.function_comments: dict[int, str | None] = {}
+        self.dict_parents: dict[int, ast.AST] = {}  # Map dict node id to parent node
         from .rules import is_service_path
 
         self.in_service_file = is_service_path(file_path, config.service_paths)
@@ -306,7 +307,7 @@ class R002Checker(BaseChecker):
             # Check for exception tag on dict line or function line
             comment = self.get_comment_text(node.lineno)
             if not comment and self.current_function:
-                comment = self.function_comments.get(id(self.current_function), "")
+                comment = self.function_comments.get(id(self.current_function)) or ""
 
             has_tag = any(tag in comment for tag in self.config.exception_tags)
 
@@ -470,9 +471,11 @@ class R003Checker(BaseChecker):
 
     def _extract_decorator_kwargs(self, decorator: ast.expr) -> dict[str, str]:
         """Extract kwargs from @dataclass(...) decorator."""
-        kwargs = {}
+        kwargs: dict[str, str] = {}
         if isinstance(decorator, ast.Call):
             for keyword in decorator.keywords:
+                if keyword.arg is None:
+                    continue
                 if isinstance(keyword.value, ast.Constant):
                     kwargs[keyword.arg] = str(keyword.value.value)
                 elif isinstance(keyword.value, ast.NameConstant):
