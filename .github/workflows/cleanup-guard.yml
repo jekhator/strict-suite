@@ -1,0 +1,64 @@
+name: Cleanup Guard
+
+on:
+  pull_request
+
+jobs:
+  feature-documentation:
+    name: Verify all features have audit and review docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check feature documentation completeness
+        run: |
+          set -e
+
+          echo "Checking that all strict-module features have audit and review documentation..."
+
+          FEATURES_DIR="strict_module"
+          AUDITS_DIR="docs/strict_module/audits"
+          REVIEWS_DIR="docs/strict_module/reviews"
+
+          if [ ! -d "$FEATURES_DIR" ]; then
+            echo "ERROR: Features directory not found: $FEATURES_DIR"
+            exit 1
+          fi
+
+          if [ ! -d "$AUDITS_DIR" ]; then
+            echo "ERROR: Audits directory not found: $AUDITS_DIR"
+            exit 1
+          fi
+
+          if [ ! -d "$REVIEWS_DIR" ]; then
+            echo "ERROR: Reviews directory not found: $REVIEWS_DIR"
+            exit 1
+          fi
+
+          FEATURES=("linter-rules-engine" "loc-cap-subcommand" "cli" "config-layer")
+          MISSING_DOCS=0
+
+          for feature in "${FEATURES[@]}"; do
+            audit_file=$(find "$AUDITS_DIR" -name "*$feature*audit*" 2>/dev/null | head -1)
+            review_file=$(find "$REVIEWS_DIR" -name "*$feature*review*" 2>/dev/null | head -1)
+
+            if [ -z "$audit_file" ]; then
+              echo "FAIL: Feature '$feature' missing audit doc in docs/strict_module/audits"
+              MISSING_DOCS=$((MISSING_DOCS + 1))
+            fi
+
+            if [ -z "$review_file" ]; then
+              echo "FAIL: Feature '$feature' missing review doc in docs/strict_module/reviews"
+              MISSING_DOCS=$((MISSING_DOCS + 1))
+            fi
+          done
+
+          if [ $MISSING_DOCS -gt 0 ]; then
+            echo ""
+            echo "ERROR: $MISSING_DOCS feature(s) missing documentation."
+            echo "Each feature must have:"
+            echo "  - docs/strict_module/audits/*<feature>*audit*.md"
+            echo "  - docs/strict_module/reviews/*<feature>*review*.md"
+            exit 1
+          fi
+
+          echo "✓ All strict-module features have corresponding audit and review docs."

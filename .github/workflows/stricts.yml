@@ -1,0 +1,30 @@
+name: Strict Module
+
+# DTO-discipline lint (frozen+slots, facade-ban, R001-R006). Per-repo copy of
+# the canonical gate; runs on the strict-module package itself (self-lint).
+# Lint step: source directory only.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: true
+      - name: Install Python 3.12
+        run: uv python install 3.12
+      - name: Run strict-module
+        run: uv run --python 3.12 python -m strict_module.cli strict_module/ --format github
