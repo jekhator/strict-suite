@@ -1,7 +1,7 @@
-# stricts
+# strict-suite
 
-[![PyPI](https://img.shields.io/pypi/v/stricts.svg?style=flat)](https://pypi.org/project/stricts/)
-[![CI](https://github.com/jekhator/stricts/workflows/CI/badge.svg)](https://github.com/jekhator/stricts/actions)
+[![PyPI](https://img.shields.io/pypi/v/stricts.svg?style=flat)](https://pypi.org/project/strict-suite/)
+[![CI](https://github.com/jekhator/strict-suite/workflows/CI/badge.svg)](https://github.com/jekhator/strict-suite/actions)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 
@@ -27,7 +27,7 @@ All rules are configurable; violations can be disabled, severity overridden, or 
 ## Install
 
 ```bash
-pip install stricts
+pip install strict-suite
 ```
 
 Or with pip+uvx for testing:
