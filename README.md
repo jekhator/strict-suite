@@ -18,7 +18,7 @@ Data Transfer Objects (DTOs) and facade discipline are critical for clean API bo
 1. **R001 (HIGH)**: Detect `Dict[str, Any]` or bare `dict`/`list`/`tuple` in service-layer function signatures.
 2. **R002 (MEDIUM)**: Flag inline dict literals with 3+ string keys; exception tags can require justification.
 3. **R003 (MEDIUM)**: Flag `repr=False` in dataclasses (canonical: plain `@dataclass(frozen=True, slots=True)`).
-4. **R004 (HIGH)**: Demand exception tags on module-level functions (e.g., `# facade — celery schedule`).
+4. **R004 (HIGH)**: Demand exception tags on module-level functions (e.g., `# facade: celery schedule`).
 5. **R005 (LOW)**: Encourage validators to use `DTO.from_dict()` pattern.
 6. **R006 (HIGH)**: Detect `typing.Any` in function signatures (parameters and return types).
 
@@ -108,7 +108,7 @@ Configuration lives in `pyproject.toml`:
 service_paths = ["apps/*/services/*.py", "**/services/*.py"]
 dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
-    "facade — celery schedule",
+    "facade: celery schedule",
     "FRAMEWORK"
 ]
 disabled_rules = []
@@ -127,7 +127,7 @@ Backward compatibility: `[tool.strict-module]` config and `.strict-module-baseli
 
 Full documentation, including rule details, configuration options, and integration guides, is available in the `docs/` directory.
 
-Historical changelog: see `CHANGELOG-history.md` for strict-module v0.1.0–v0.5.0 release history.
+Historical changelog: see `CHANGELOG-history.md` for strict-module v0.1.0 to v0.5.0 release history.
 
 ## Development
 

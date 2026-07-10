@@ -96,7 +96,7 @@ All notable changes to this project will be documented in this file.
   - Inline dict literals inside function bodies (original intent)
   Regression tests added in `tests/test_r002_annotated_constants.py`.
 
-- **Noqa suppression now correctly handles em-dashes and multi-line dicts** - v0.2.1's `has_noqa_comment` was broken for explanations using em-dashes (-) instead of hyphens (-). The function only stripped trailing hyphens (`-`), causing specs like `"dto-strict-R002 - explanation"` to remain unmatched. Now handles all dash variants: `-`, `–`, `-`. Additionally clarified that multi-line dict noqa comments must be on the opening brace line (ast node's `lineno`). Test suite `tests/test_noqa_r002.py` covers 7 scenarios: trailing-hyphen, trailing-emdash, opening-brace, no-noqa, wrong-rule, bare-noqa, and before-line (should NOT suppress).
+- **Noqa suppression now correctly handles em-dashes and multi-line dicts** : v0.2.1's `has_noqa_comment` was broken for explanations using em-dashes (-) instead of hyphens (-). The function only stripped trailing hyphens (`-`), causing specs like `"dto-strict-R002 - explanation"` to remain unmatched. Now handles all dash variants: hyphen, en-dash, and em-dash characters. Additionally clarified that multi-line dict noqa comments must be on the opening brace line (ast node's `lineno`). Test suite `tests/test_noqa_r002.py` covers 7 scenarios: trailing-hyphen, trailing-emdash, opening-brace, no-noqa, wrong-rule, bare-noqa, and before-line (should NOT suppress).
 
 
 ## [0.2.1] - 2026-05-21
