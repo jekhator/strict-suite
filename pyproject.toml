@@ -37,7 +37,7 @@ strict-module = "strict_module.cli:main"
 dto-strict = "strict_module.cli:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8", "pytest-cov"]
+dev = ["pytest>=8", "pytest-cov", "mypy"]
 
 [tool.hatch.build.targets.wheel]
 packages = ["strict_module"]
