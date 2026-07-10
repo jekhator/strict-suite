@@ -4,17 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Added
+_No changes yet._
 
-### Changed
-
-### Fixed
-
-## [0.1.0] - 2026-07-09
+## [0.1.0] - 2026-07-10
 
 ### Added
 
 - **Monorepo consolidation** - Consolidated strict-module 0.5.0 into the strict-suite monorepo. Package import root (`strict_module`) and CLI entry points (`strict-module`, `dto-strict`) remain unchanged.
+- **R007 rule** - Pytest fixtures defined outside conftest.py are now flagged as violations.
+- **R008 rule** - Bare module-level test functions (not in Test<Concern> classes) are now flagged as violations.
+- **LOC cap subcommand** - `strict-module loc-cap` and `dto-strict loc-cap` enforce lines-of-code limits with configurable hard caps and soft targets.
+- **Backward-compatible configuration** - Both `[tool.strict-module]` and legacy `[tool.dto-strict]` config sections are supported.
 
 ---
 
