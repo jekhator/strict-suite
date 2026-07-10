@@ -20,4 +20,4 @@ All notable changes to this project will be documented in this file.
 
 ## Historical Changelog
 
-For strict-module v0.1.0–v0.5.0 release history, see [CHANGELOG-history.md](CHANGELOG-history.md).
+For strict-module v0.1.0–v0.5.0 release history, see [CHANGELOG-history.md](docs/strict_module/CHANGELOG-history.md).
