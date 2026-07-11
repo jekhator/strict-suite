@@ -81,7 +81,7 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        # Note: leading whitespace in the line is OK; we find "# noqa" and work from there
+        # Note: leading whitespace in the line is OK; we find the noqa marker and work from there
         assert has_noqa_comment(func_node, "R001", lines) is True
 
     def test_noqa_missing_lineno(self):
@@ -109,9 +109,9 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        # This should match because we search for "# noqa" starting from the first occurrence
-        # In this case, "# some comment noqa" doesn't have "# noqa", so it won't match
-        # The implementation looks for "# noqa" explicitly, which is correct
+        # This should not match because we search for the noqa marker starting from the first occurrence
+        # In this case, "# some comment noqa" doesn't have the marker, so it won't match
+        # The implementation looks for the marker explicitly, which is correct
         assert has_noqa_comment(func_node, "R001", lines) is False
 
     def test_noqa_standard_pylint_style(self):
