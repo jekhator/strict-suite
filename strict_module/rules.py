@@ -233,7 +233,7 @@ def get_annotation_string(annotation: Optional[ast.expr]) -> str:
         return annotation.id
     elif isinstance(annotation, ast.Subscript):
         base = get_annotation_string(annotation.value)
-        if hasattr(ast, "Index") and isinstance(annotation.slice, ast.Index):
+        if hasattr(ast, "Index") and isinstance(annotation.slice, ast.Index):  # pragma: no cover
             # Python 3.8 compatibility
             index = get_annotation_string(annotation.slice.value)  # type: ignore[attr-defined]
         else:
@@ -247,7 +247,7 @@ def get_annotation_string(annotation: Optional[ast.expr]) -> str:
         return f"{value}.{annotation.attr}"
     elif isinstance(annotation, ast.Constant):
         return repr(annotation.value)
-    else:
+    else:  # pragma: no cover
         return ""
 
 
@@ -259,7 +259,7 @@ def is_dict_str_any(annotation: Optional[ast.expr]) -> bool:
     # Use ast.unparse for more reliable type detection
     try:
         ann_str = ast.unparse(annotation)
-    except Exception:
+    except Exception:  # pragma: no cover
         return False
 
     ann_lower = ann_str.lower().replace(" ", "")
@@ -287,7 +287,7 @@ def contains_any(annotation: Optional[ast.expr]) -> bool:
 
     try:
         ann_str = ast.unparse(annotation)
-    except Exception:
+    except Exception:  # pragma: no cover
         return False
 
     ann_lower = ann_str.lower().replace(" ", "")

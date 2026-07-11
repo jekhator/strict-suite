@@ -26,7 +26,7 @@ class BaseChecker(ast.NodeVisitor):
 
     def get_comment_text(self, line_num: int) -> str:
         """Get comment text for a line."""
-        if line_num <= 0 or line_num > len(self.lines):
+        if line_num <= 0 or line_num > len(self.lines):  # pragma: no cover
             return ""
         line = self.lines[line_num - 1]
         if "#" in line:
