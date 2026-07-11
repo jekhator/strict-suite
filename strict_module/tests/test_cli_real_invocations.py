@@ -58,14 +58,21 @@ class TestCLIRealInvocations:
         bad_file = test_project_dir / "apps" / "services" / "bad.py"
 
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(bad_file), "--format", "text"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(bad_file),
+                "--format",
+                "text",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
         )
 
         assert result.returncode == 1
-        assert ("R001" in result.stdout or "R006" in result.stdout)
+        assert "R001" in result.stdout or "R006" in result.stdout
         assert "bad.py" in result.stdout
 
     def test_cli_lint_json_format(self, test_project_dir):
@@ -73,7 +80,14 @@ class TestCLIRealInvocations:
         bad_file = test_project_dir / "apps" / "services" / "bad.py"
 
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(bad_file), "--format", "json"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(bad_file),
+                "--format",
+                "json",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -86,14 +100,23 @@ class TestCLIRealInvocations:
             assert len(data) > 0
             assert "rule_id" in data[0]
         else:
-            assert any(v["rule_id"] in ["R001", "R006"] for v in data.get("violations", []))
+            assert any(
+                v["rule_id"] in ["R001", "R006"] for v in data.get("violations", [])
+            )
 
     def test_cli_lint_github_format(self, test_project_dir):
         """Test CLI linting with GitHub Actions output format."""
         bad_file = test_project_dir / "apps" / "services" / "bad.py"
 
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(bad_file), "--format", "github"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(bad_file),
+                "--format",
+                "github",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -107,7 +130,14 @@ class TestCLIRealInvocations:
         good_file = test_project_dir / "apps" / "services" / "good.py"
 
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(good_file), "--format", "text"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(good_file),
+                "--format",
+                "text",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -118,7 +148,13 @@ class TestCLIRealInvocations:
     def test_cli_generate_baseline(self, test_project_dir):
         """Test CLI baseline generation."""
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(test_project_dir), "--generate-baseline"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(test_project_dir),
+                "--generate-baseline",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -138,7 +174,13 @@ class TestCLIRealInvocations:
         bad_file = test_project_dir / "apps" / "services" / "bad.py"
 
         gen_result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(bad_file), "--generate-baseline"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(bad_file),
+                "--generate-baseline",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -147,7 +189,14 @@ class TestCLIRealInvocations:
         baseline_file.write_text(gen_result.stdout)
 
         lint_result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", str(bad_file), "--baseline", str(baseline_file)],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                str(bad_file),
+                "--baseline",
+                str(baseline_file),
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -158,13 +207,23 @@ class TestCLIRealInvocations:
     def test_cli_loc_cap_help(self, test_project_dir):
         """Test loc-cap subcommand basic invocation."""
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", "loc-cap", str(test_project_dir)],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                "loc-cap",
+                str(test_project_dir),
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
         )
 
-        assert "Python files" in result.stdout or "LOC" in result.stdout or result.returncode in [0, 1]
+        assert (
+            "Python files" in result.stdout
+            or "LOC" in result.stdout
+            or result.returncode in [0, 1]
+        )
 
     def test_cli_missing_path_error(self, test_project_dir):
         """Test CLI error when path is missing."""
@@ -185,7 +244,14 @@ class TestCLILocCap:
     def test_loc_cap_generate_baseline(self, test_project_dir):
         """Test loc-cap baseline generation."""
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", "loc-cap", str(test_project_dir), "--generate-baseline"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                "loc-cap",
+                str(test_project_dir),
+                "--generate-baseline",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -201,8 +267,17 @@ class TestCLILocCap:
     def test_loc_cap_with_custom_limits(self, test_project_dir):
         """Test loc-cap with custom hard and soft limits."""
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", "loc-cap", str(test_project_dir),
-             "--hard-cap", "50", "--soft-target", "30"],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                "loc-cap",
+                str(test_project_dir),
+                "--hard-cap",
+                "50",
+                "--soft-target",
+                "30",
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,
@@ -216,8 +291,15 @@ class TestCLILocCap:
         baseline_file.write_text("apps/services/bad.py: 100\n")
 
         result = subprocess.run(
-            [sys.executable, "-m", "strict_module.cli", "loc-cap", str(test_project_dir),
-             "--baseline", str(baseline_file)],
+            [
+                sys.executable,
+                "-m",
+                "strict_module.cli",
+                "loc-cap",
+                str(test_project_dir),
+                "--baseline",
+                str(baseline_file),
+            ],
             cwd=str(test_project_dir),
             capture_output=True,
             text=True,

@@ -86,6 +86,7 @@ service_paths = ["**/*.py"]
         original_stdout = sys.stdout
         try:
             import io
+
             sys.stdout = io.StringIO()
             sys.argv = ["strict-module", str(test_file), "--generate-baseline"]
             result = main()
@@ -109,7 +110,12 @@ service_paths = ["**/*.py"]
 
         original_argv = sys.argv
         try:
-            sys.argv = ["strict-module", str(test_file), "--baseline", str(baseline_file)]
+            sys.argv = [
+                "strict-module",
+                str(test_file),
+                "--baseline",
+                str(baseline_file),
+            ]
             result = main()
             assert result == 0
         finally:

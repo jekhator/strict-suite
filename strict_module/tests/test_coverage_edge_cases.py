@@ -103,10 +103,7 @@ from typing import Any
 def process(data: Any) -> dict:
     return {}
 """)
-        config = Config(
-            service_paths=["apps/*/services/*.py"],
-            disabled_rules=["R006"]
-        )
+        config = Config(service_paths=["apps/*/services/*.py"], disabled_rules=["R006"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(service_file)
         r006_violations = [v for v in violations if v.rule_id == "R006"]
@@ -147,10 +144,7 @@ class TestCheckerEdgeCases:
 def handle_event():  # FRAMEWORK
     pass
 """)
-        config = Config(
-            service_paths=["**/*.py"],
-            exception_tags=["FRAMEWORK"]
-        )
+        config = Config(service_paths=["**/*.py"], exception_tags=["FRAMEWORK"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(code_file)
         r004_violations = [v for v in violations if v.rule_id == "R004"]
