@@ -78,7 +78,7 @@ def main() -> int:
     parser = argparse.ArgumentParser(
         description="AST-based linter for Python DTO discipline and facade-ban enforcement."
     )
-    parser.add_argument("path", nargs="?", help="Path to file or directory to lint")
+    parser.add_argument("path", nargs="*", help="Path(s) to file or directory to lint")
     parser.add_argument(
         "--config",
         default="pyproject.toml",
@@ -113,10 +113,14 @@ def main() -> int:
             print("error: --generate-baseline requires PATH argument", file=sys.stderr)
             return 1
 
-        target_path = Path(args.path)
-        linter = DtoStrictLinter(config)
-        violations = linter.lint_path(target_path)
-        baseline_data = linter.generate_baseline(violations)
+        # Lint all provided paths for baseline generation
+        all_violations = []
+        for path_str in args.path:
+            target_path = Path(path_str)
+            linter = DtoStrictLinter(config)
+            all_violations.extend(linter.lint_path(target_path))
+
+        baseline_data = linter.generate_baseline(all_violations)
         print(json.dumps(baseline_data, indent=2))
         return 0
 
@@ -128,24 +132,25 @@ def main() -> int:
         )
         return 1
 
-    target_path = Path(args.path)
-
     # Load baseline if provided
     baseline = None
     if args.baseline:
         baseline = DtoStrictLinter.load_baseline(args.baseline)
 
-    # Lint path
+    # Lint all provided paths
     linter = DtoStrictLinter(config, baseline=baseline)
-    violations = linter.lint_path(target_path)
+    all_violations = []
+    for path_str in args.path:
+        target_path = Path(path_str)
+        all_violations.extend(linter.lint_path(target_path))
 
     # Output results
-    if violations:
-        output = linter.format_violations(violations, args.format)
+    if all_violations:
+        output = linter.format_violations(all_violations, args.format)
         print(output)
 
     # Return exit code
-    return linter.get_exit_code(violations)
+    return linter.get_exit_code(all_violations)
 
 
 if __name__ == "__main__":
