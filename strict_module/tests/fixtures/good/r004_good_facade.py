@@ -1,7 +1,7 @@
 """Good example: module-level functions with exception tags."""
 
 
-def async_send_email(recipient: str, subject: str):  # facade — celery schedule
+def async_send_email(recipient: str, subject: str):  # facade - celery schedule
     """Send email asynchronously via Celery."""
     pass
 
