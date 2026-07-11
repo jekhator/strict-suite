@@ -27,4 +27,13 @@ jobs:
       - name: Install Python 3.12
         run: uv python install 3.12
       - name: Run strict-module
-        run: uv run --python 3.12 python -m strict_module.cli strict_module/ --format github
+        run: |
+          uv run --python 3.12 python -m strict_module.cli \
+            strict_module/__init__.py \
+            strict_module/checkers.py \
+            strict_module/cli.py \
+            strict_module/config/ \
+            strict_module/linter.py \
+            strict_module/loc_cap.py \
+            strict_module/rules.py \
+            --format github

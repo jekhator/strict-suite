@@ -47,7 +47,7 @@ path = "strict_module/config/_version.py"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["tests"]
+testpaths = ["strict_module/tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
 
