@@ -5,17 +5,8 @@ import json
 import os
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock, patch
+from unittest.mock import Mock
 
-import pytest
-
-from strict_module.checkers import (
-    R001Checker,
-    R002Checker,
-    R003Checker,
-    R004Checker,
-    R006Checker,
-)
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 from strict_module.rules import (
@@ -461,9 +452,16 @@ class TestLinterFileHandling:
         with tempfile.TemporaryDirectory() as tmpdir:
             baseline_file = Path(tmpdir) / "baseline.json"
             baseline_file.write_text(
-                json.dumps([
-                    {"file": "test.py", "line": 1, "rule_id": "R001", "message_hash": "abc123"}
-                ])
+                json.dumps(
+                    [
+                        {
+                            "file": "test.py",
+                            "line": 1,
+                            "rule_id": "R001",
+                            "message_hash": "abc123",
+                        }
+                    ]
+                )
             )
 
             result = DtoStrictLinter.load_baseline(baseline_file)

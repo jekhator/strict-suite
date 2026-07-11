@@ -180,7 +180,7 @@ def has_noqa_comment(node: ast.AST, rule_id: str, source_lines: list[str]) -> bo
 
     noqa_part = comment_part[4:].strip()  # Skip "noqa" (4 chars)
 
-    # Bare `# noqa` suppresses all rules
+    # Bare noqa (without codes) suppresses all rules
     if not noqa_part or noqa_part.startswith("#") or noqa_part.startswith("-"):
         return True
 
@@ -200,19 +200,19 @@ def has_noqa_comment(node: ast.AST, rule_id: str, source_lines: list[str]) -> bo
                 # Trailing dash indicates explanation after the spec
                 spec = parts[0]
 
-        # `# noqa: strict-module` suppresses all strict-module rules
+        # "strict-module" suppresses all strict-module rules
         if spec == "strict-module":
             return True
 
-        # `# noqa: strict-module-R001` suppresses R001 specifically
+        # "strict-module-R001" suppresses R001 specifically
         if spec == f"strict-module-{rule_id}":
             return True
 
-        # `# noqa: dto-strict` suppresses all rules (backward-compat)
+        # "dto-strict" suppresses all rules (backward-compat)
         if spec == "dto-strict":
             return True
 
-        # `# noqa: dto-strict-R001` suppresses R001 (backward-compat)
+        # "dto-strict-R001" suppresses R001 (backward-compat)
         if spec == f"dto-strict-{rule_id}":
             return True
 
@@ -233,7 +233,9 @@ def get_annotation_string(annotation: Optional[ast.expr]) -> str:
         return annotation.id
     elif isinstance(annotation, ast.Subscript):
         base = get_annotation_string(annotation.value)
-        if hasattr(ast, "Index") and isinstance(annotation.slice, ast.Index):  # pragma: no cover
+        if hasattr(ast, "Index") and isinstance(
+            annotation.slice, ast.Index
+        ):  # pragma: no cover
             # Python 3.8 compatibility
             index = get_annotation_string(annotation.slice.value)  # type: ignore[attr-defined]
         else:
