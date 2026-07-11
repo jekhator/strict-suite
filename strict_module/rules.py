@@ -194,7 +194,7 @@ def has_noqa_comment(node: ast.AST, rule_id: str, source_lines: list[str]) -> bo
         # Remove any trailing dash-delimited explanation (e.g., "- explanation")
         parts = spec.split()
         if len(parts) > 1:
-            # Check if second part starts with any dash character (-, –, —, etc.)
+            # Check if second part starts with any dash character (-, en-dash, em-dash, etc.)
             second = parts[1]
             if second and second[0] in "-–—":
                 # Trailing dash indicates explanation after the spec

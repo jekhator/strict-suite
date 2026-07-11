@@ -68,18 +68,16 @@ def find_python_files(
 ) -> dict[str, int]:
     """Find all Python files under root_path, exempting test files and excluded patterns."""
     current_locs: dict[str, int] = {}
-    root = Path(root_path).resolve()  # Normalize to absolute path
+    root = Path(root_path).resolve()
 
     if not root.exists():
         return current_locs
 
     for file_path in root.rglob("*.py"):
-        # Skip excluded patterns
         file_str = str(file_path)
         if any(excl in file_str for excl in exclude_patterns):
             continue
 
-        # Skip test files (conftest.py, test_*.py, or under tests/)
         if is_loc_test_file(file_path):
             continue
 
@@ -97,7 +95,6 @@ def generate_baseline(
     """Generate baseline output in path:loc format, sorted by LOC descending."""
     files = find_python_files(root_path, exclude_patterns)
 
-    # Filter by floor and sort by LOC descending, then by path for stability
     filtered = [(path, loc) for path, loc in files.items() if loc >= floor]
     sorted_files = sorted(filtered, key=lambda x: (-x[1], x[0]))
 
@@ -115,12 +112,10 @@ def run_loc_cap(
 ) -> int:
     """Run LOC cap checker with hard/soft caps and baseline ratchet enforcement."""
     if generate:
-        # Generate mode: compute LOC for all files and output baseline format
         baseline_output = generate_baseline(path, exclude_patterns, floor=0)
         print(baseline_output)
         return 0
 
-    # Check mode: enforce LOC cap
     baseline = load_baseline(baseline_file)
     current = find_python_files(path, exclude_patterns)
 
@@ -128,13 +123,10 @@ def run_loc_cap(
     hard_violations = []
     improvements = []
 
-    # Check each current file
     for path_str, loc in current.items():
-        # Soft target warning (soft_target < loc <= hard_cap)
         if soft_target < loc <= hard_cap:
             soft_warnings.append(f"  {loc}  {path_str}")
 
-        # Hard cap violations
         if loc > hard_cap:
             if path_str not in baseline:
                 hard_violations.append(f"  {loc}  {path_str} (NEW OFFENDER)")
@@ -144,7 +136,6 @@ def run_loc_cap(
                     f"  {loc}  {path_str} (was {baseline[path_str]}, grew by {delta})"
                 )
 
-    # Check for improvements in baseline files
     for baseline_path, baseline_loc in baseline.items():
         current_loc = current.get(baseline_path)
 
@@ -157,21 +148,18 @@ def run_loc_cap(
                     f"  {current_loc}  {baseline_path} (was {baseline_loc}, improved by {delta})"
                 )
 
-    # Output warnings for soft target
     if soft_warnings:
         print(
-            f"::warning::Files over soft target ({soft_target} LOC) — consider decomposition:"
+            f"::warning::Files over soft target ({soft_target} LOC) - consider decomposition:"
         )
         print("\n".join(soft_warnings))
         print()
 
-    # Output improvements
     if improvements:
         print(f"::notice::Files improved (under {hard_cap} LOC):")
         print("\n".join(improvements))
         print()
 
-    # Fail on hard violations
     if hard_violations:
         print(
             f"::error::Files exceed hard cap of {hard_cap} LOC. Decompose by cohesion:"

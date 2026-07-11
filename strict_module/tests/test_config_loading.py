@@ -9,7 +9,7 @@ def test_config_defaults():
     config = Config()
     assert "apps/*/services/*.py" in config.service_paths
     assert "**/dtos.py" in config.dto_paths
-    assert "facade — celery schedule" in config.exception_tags
+    assert "facade - celery schedule" in config.exception_tags
     assert len(config.disabled_rules) == 0
 
 

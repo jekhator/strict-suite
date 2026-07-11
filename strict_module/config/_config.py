@@ -28,7 +28,7 @@ class Config:
     )
     dto_paths: list[str] = field(default_factory=lambda: ["**/dtos.py", "**/dtos/*.py"])
     exception_tags: list[str] = field(
-        default_factory=lambda: ["facade — celery schedule", "FRAMEWORK"]
+        default_factory=lambda: ["facade - celery schedule", "FRAMEWORK"]
     )
     disabled_rules: list[str] = field(default_factory=list)
     severity_overrides: dict[str, str] = field(default_factory=dict)
@@ -75,7 +75,7 @@ class Config:
             dto_paths=config_data.get("dto_paths", ["**/dtos.py", "**/dtos/*.py"]),
             exception_tags=config_data.get(
                 "exception_tags",
-                ["facade — celery schedule", "FRAMEWORK"],
+                ["facade - celery schedule", "FRAMEWORK"],
             ),
             disabled_rules=config_data.get("disabled_rules", []),
             severity_overrides=config_data.get("severity_overrides", {}),
