@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "strict-suite"
 dynamic = ["version"]
-description = "Consolidated strict Python linting and static analysis tools — AST-based DTO discipline, facade-ban enforcement, and complexity metrics."
+description = "Consolidated strict Python linting and static analysis tools - AST-based DTO discipline, facade-ban enforcement, and complexity metrics."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "James Ekhator" }]
@@ -70,7 +70,7 @@ exclude_lines = [
 service_paths = ["apps/*/services/*.py", "**/services/*.py"]
 dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
-    "facade — celery schedule",
+    "facade - celery schedule",
     "FRAMEWORK"
 ]
 disabled_rules = []
