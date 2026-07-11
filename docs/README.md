@@ -11,7 +11,7 @@ The linter enforces 8 rules across Python code:
 | R001 | Dict[str, Any] in signatures | HIGH | Function signatures must not use bare `dict`, `list`, `tuple`, or `Dict[str, Any]` in service code |
 | R002 | Inline dict literals (3+ keys) | MEDIUM | Large inline dict literals should be converted to DTOs instead |
 | R003 | repr=False on dataclass | MEDIUM | Dataclasses should use canonical `@dataclass(frozen=True, slots=True)` without repr=False |
-| R004 | Module-level function without tag | HIGH | Module-level functions must have documented exception tags (e.g., `# facade — celery schedule`) |
+| R004 | Module-level function without tag | HIGH | Module-level functions must have documented exception tags (e.g., `# facade: celery schedule`) |
 | R005 | Validator pattern | LOW | Validator functions should use `DTO.from_dict()` pattern for type coercion |
 | R006 | typing.Any in signatures | HIGH | Functions must not use `typing.Any` in parameters or return types |
 | R007 | Pytest fixture outside conftest | MEDIUM | Pytest fixtures must be defined in conftest.py, not scattered across test files |
