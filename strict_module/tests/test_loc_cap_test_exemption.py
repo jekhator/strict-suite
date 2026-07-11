@@ -37,5 +37,7 @@ class TestLocCapTestExemption:
         for path, loc in files.items():
             if "src/module.py" in path or "src" + chr(92) + "module.py" in path:
                 found_src = True
-                assert loc == 500, "Source file should be counted with correct line count"
+                assert loc == 500, (
+                    "Source file should be counted with correct line count"
+                )
         assert found_src, "Source file should be present in results"

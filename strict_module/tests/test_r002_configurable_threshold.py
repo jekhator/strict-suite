@@ -31,7 +31,9 @@ def build_response():
             linter = DtoStrictLinter(config)
             violations = linter.lint_file(path)
             r002_violations = [v for v in violations if v.rule_id == "R002"]
-            assert len(r002_violations) >= 1, "2 keys should trigger with min_dict_keys=2"
+            assert len(r002_violations) >= 1, (
+                "2 keys should trigger with min_dict_keys=2"
+            )
         finally:
             path.unlink()
 
@@ -114,6 +116,8 @@ def build_response():
             linter = DtoStrictLinter(config)
             violations = linter.lint_file(path)
             r002_violations = [v for v in violations if v.rule_id == "R002"]
-            assert len(r002_violations) >= 1, "5+ keys should trigger with min_dict_keys=5"
+            assert len(r002_violations) >= 1, (
+                "5+ keys should trigger with min_dict_keys=5"
+            )
         finally:
             path.unlink()

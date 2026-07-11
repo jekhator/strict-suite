@@ -33,7 +33,9 @@ class UserDTO:
             linter = DtoStrictLinter(config)
             violations = linter.lint_file(path)
             r003_violations = [v for v in violations if v.rule_id == "R003"]
-            assert len(r003_violations) >= 1, "repr=False should be flagged in strict mode"
+            assert len(r003_violations) >= 1, (
+                "repr=False should be flagged in strict mode"
+            )
         finally:
             path.unlink()
 
@@ -91,7 +93,9 @@ class UserDTO:
             linter = DtoStrictLinter(config)
             violations = linter.lint_file(path)
             r003_violations = [v for v in violations if v.rule_id == "R003"]
-            assert len(r003_violations) == 0, "repr=False should be ignored in relaxed mode"
+            assert len(r003_violations) == 0, (
+                "repr=False should be ignored in relaxed mode"
+            )
         finally:
             path.unlink()
 

@@ -40,7 +40,9 @@ class TestNoqaR002:
             # Should have no R002 violations
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 0, f"Expected 0 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 0, (
+                f"Expected 0 R002, got {len(r002_violations)}"
+            )
 
     def test_r002_noqa_trailing_emdash(self):
         """R002 violation with trailing noqa using em-dash (—)."""
@@ -71,7 +73,9 @@ class TestNoqaR002:
             # Should have no R002 violations
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 0, f"Expected 0 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 0, (
+                f"Expected 0 R002, got {len(r002_violations)}"
+            )
 
     def test_r002_noqa_opening_brace_emdash(self):
         """R002 violation with noqa on opening-brace line (multi-line dict) using em-dash."""
@@ -106,7 +110,9 @@ class TestNoqaR002:
             # Should have no R002 violations
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 0, f"Expected 0 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 0, (
+                f"Expected 0 R002, got {len(r002_violations)}"
+            )
 
     def test_r002_no_noqa_flagged(self):
         """R002 violation without noqa should be flagged."""
@@ -137,7 +143,9 @@ class TestNoqaR002:
             # Should have exactly 1 R002 violation
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 1, f"Expected 1 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 1, (
+                f"Expected 1 R002, got {len(r002_violations)}"
+            )
 
     def test_r002_noqa_wrong_rule_not_suppressed(self):
         """R002 violation with noqa for different rule should NOT be suppressed."""
@@ -168,7 +176,9 @@ class TestNoqaR002:
             # Should have exactly 1 R002 violation (noqa is for R001, not R002)
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 1, f"Expected 1 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 1, (
+                f"Expected 1 R002, got {len(r002_violations)}"
+            )
 
     def test_r002_bare_noqa_suppresses(self):
         """Bare `# noqa` should suppress R002."""
@@ -199,7 +209,9 @@ class TestNoqaR002:
             # Should have no R002 violations
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 0, f"Expected 0 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 0, (
+                f"Expected 0 R002, got {len(r002_violations)}"
+            )
 
     def test_r002_noqa_before_line_not_suppressed(self):
         """R002 with noqa on line BEFORE the violation should NOT suppress (multi-line only)."""
@@ -234,4 +246,6 @@ class TestNoqaR002:
             # (noqa on line above the dict doesn't suppress)
             violations = json.loads(result.stdout)
             r002_violations = [v for v in violations if v["rule_id"] == "R002"]
-            assert len(r002_violations) == 1, f"Expected 1 R002, got {len(r002_violations)}"
+            assert len(r002_violations) == 1, (
+                f"Expected 1 R002, got {len(r002_violations)}"
+            )

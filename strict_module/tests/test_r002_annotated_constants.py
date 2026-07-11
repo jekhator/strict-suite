@@ -123,7 +123,9 @@ class TestR002AnnotatedConstants:
                 return {"a": "A", "b": "B", "c": "C"}  # facade: transient event
         """).strip()
 
-        config = Config(service_paths=["apps/*/services/*.py"], exception_tags=["facade"])
+        config = Config(
+            service_paths=["apps/*/services/*.py"], exception_tags=["facade"]
+        )
         tree = ast.parse(code)
         checker = R002Checker(Path("apps/foo/services/m.py"), code, config)
         checker.visit(tree)

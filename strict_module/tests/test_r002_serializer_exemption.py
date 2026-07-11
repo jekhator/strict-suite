@@ -33,7 +33,9 @@ class TestR002SerializerExemption:
             dto_paths=["**/dtos.py"],
         )
         linter = DtoStrictLinter(config)
-        violations = linter.lint_file(fixture_dir / "bad" / "r002_bad_non_serializer.py")
+        violations = linter.lint_file(
+            fixture_dir / "bad" / "r002_bad_non_serializer.py"
+        )
         r002_violations = [v for v in violations if v.rule_id == "R002"]
         # get_metadata() should be flagged (non-to_* in dataclass)
         # to_dict() in PlainClass should be flagged (non-dataclass)

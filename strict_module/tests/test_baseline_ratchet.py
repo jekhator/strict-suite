@@ -149,4 +149,6 @@ def bad_function_2(x: Dict[str, Any]):
         assert hash1 == hash2, "Hash should be deterministic"
 
         hash_different = DtoStrictLinter._hash_message("Different message")
-        assert hash1 != hash_different, "Different messages should have different hashes"
+        assert hash1 != hash_different, (
+            "Different messages should have different hashes"
+        )

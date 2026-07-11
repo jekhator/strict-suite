@@ -30,6 +30,8 @@ class TestR008TestFunctions:
             dto_paths=["**/dtos.py"],
         )
         linter = DtoStrictLinter(config)
-        violations = linter.lint_file(fixture_dir / "good" / "test_r008_good_test_class.py")
+        violations = linter.lint_file(
+            fixture_dir / "good" / "test_r008_good_test_class.py"
+        )
         r008_violations = [v for v in violations if v.rule_id == "R008"]
         assert len(r008_violations) == 0

@@ -68,7 +68,9 @@ def pure_utility(x: int):
             linter = DtoStrictLinter(config)
             violations = linter.lint_file(path)
             r004_violations = [v for v in violations if v.rule_id == "R004"]
-            assert len(r004_violations) >= 1, "Pure utility without tag should be flagged"
+            assert len(r004_violations) >= 1, (
+                "Pure utility without tag should be flagged"
+            )
         finally:
             path.unlink()
 
