@@ -2,8 +2,8 @@
 
 [![PyPI](https://img.shields.io/pypi/v/strict-suite.svg?style=flat)](https://pypi.org/project/strict-suite/)
 [![CI](https://github.com/jekhator/strict-suite/workflows/CI/badge.svg)](https://github.com/jekhator/strict-suite/actions)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
+[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 
 AST-based linter for Python DTO discipline and facade-ban enforcement. Consolidated strict Python linting and static analysis tools with complexity metrics.
 
