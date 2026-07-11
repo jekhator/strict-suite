@@ -24,6 +24,6 @@ class UserValidator:
         return bool(user.email)
 
 
-def create_user_response(user: UserDTO) -> dict:  # facade — celery schedule
+def create_user_response(user: UserDTO) -> dict:  # facade - celery schedule
     """Return user as dict (OK at boundary)."""
     return {"id": user.user_id, "email": user.email}

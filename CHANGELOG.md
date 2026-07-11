@@ -4,7 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-_No changes yet._
+### Changed
+
+- **Em dash normalization** - Replaced all em dashes (-) with regular hyphens (-) in prose, configuration, and documentation for consistency and CI gate compliance.
+- **Inline comment cleanup** - Removed unnecessary inline comments from core modules (cli.py, loc_cap.py) and core source files, preserving only `noqa` and `SENSITIVE` annotations.
+- **Test coverage improvements** - Added comprehensive CLI invocation tests (11 subprocess-based tests and 6 direct main() entry point tests) to exercise real command-line usage patterns with temporary project fixtures. Coverage improved from 90% to 91% statement coverage, with cli.py reaching 96%.
+- **Tag format clarification** - Updated exception tag documentation and examples to use consistent hyphen separators (e.g., 'facade - celery schedule' per hardened naming rules).
 
 ## [0.1.0] - 2026-07-10
 

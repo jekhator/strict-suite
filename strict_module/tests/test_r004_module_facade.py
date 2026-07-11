@@ -16,9 +16,9 @@ def fixture_dir():
 def config():
     """Create a test config."""
     return Config(
-        service_paths=["**/*.py"],  # Check all files for testing
+        service_paths=["**/*.py"],
         dto_paths=["**/dtos.py"],
-        exception_tags=["facade — celery schedule", "FRAMEWORK"],
+        exception_tags=["facade - celery schedule", "FRAMEWORK"],
     )
 
 

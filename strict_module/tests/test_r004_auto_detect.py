@@ -18,7 +18,7 @@ def config():
     return Config(
         service_paths=["**/*.py"],
         dto_paths=["**/dtos.py"],
-        exception_tags=["facade — celery schedule", "FRAMEWORK"],
+        exception_tags=["facade - celery schedule", "FRAMEWORK"],
     )
 
 
@@ -84,7 +84,7 @@ def pure_utility(x: int):
 def test_r004_exception_tag_still_works(config):
     """R004: Exception tag still works as override."""
     source = """
-def my_function(x: int):  # facade — celery schedule
+def my_function(x: int):  # facade - celery schedule
     return x * 2
 """
     from tempfile import NamedTemporaryFile

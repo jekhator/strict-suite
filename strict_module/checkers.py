@@ -333,7 +333,7 @@ class R002Checker(BaseChecker):
                                 file=str(self.file_path),
                                 line=node.lineno,
                                 col=node.col_offset,
-                                message="Exception tag missing justification. Format: 'tag: explanation' (e.g., 'facade — celery schedule: transient event payload')",
+                                message="Exception tag missing justification. Format: 'tag: explanation' (e.g., 'facade - celery schedule: transient event payload')",
                             )
                         )
                         self.generic_visit(node)

@@ -42,13 +42,10 @@ def handle_loc_cap(args: list[str]) -> int:
         help="Generate baseline from all Python files in path (stdout)",
     )
 
-    parsed = parser.parse_args(args[2:])  # Skip 'dto-strict' and 'loc-cap'
+    parsed = parser.parse_args(args[2:])
 
-    # Load config from pyproject
     config_path = Path(parsed.config)
     config = Config.from_pyproject(config_path)
-
-    # Determine final values: CLI flag > config file > default
     hard_cap = (
         parsed.hard_cap if parsed.hard_cap is not None else config.loc_cap.hard_cap
     )
@@ -59,7 +56,6 @@ def handle_loc_cap(args: list[str]) -> int:
     )
     baseline_file = parsed.baseline if parsed.baseline else config.loc_cap.baseline_file
 
-    # Run loc-cap checker
     return run_loc_cap(
         path=parsed.path,
         hard_cap=hard_cap,
@@ -71,7 +67,6 @@ def handle_loc_cap(args: list[str]) -> int:
 
 def main() -> int:
     """Main CLI entry point."""
-    # Check for loc-cap subcommand (dispatch before argparse)
     if len(sys.argv) > 1 and sys.argv[1] == "loc-cap":
         return handle_loc_cap(sys.argv)
 
@@ -103,17 +98,14 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    # Load configuration
     config_path = Path(args.config)
     config = Config.from_pyproject(config_path)
 
-    # If generating baseline, require path
     if args.generate_baseline:
         if not args.path:
             print("error: --generate-baseline requires PATH argument", file=sys.stderr)
             return 1
 
-        # Lint all provided paths for baseline generation
         all_violations = []
         for path_str in args.path:
             target_path = Path(path_str)
@@ -124,7 +116,6 @@ def main() -> int:
         print(json.dumps(baseline_data, indent=2))
         return 0
 
-    # Normal linting mode
     if not args.path:
         print(
             "error: PATH argument required (unless using --generate-baseline)",
@@ -132,24 +123,20 @@ def main() -> int:
         )
         return 1
 
-    # Load baseline if provided
     baseline = None
     if args.baseline:
         baseline = DtoStrictLinter.load_baseline(args.baseline)
 
-    # Lint all provided paths
     linter = DtoStrictLinter(config, baseline=baseline)
     all_violations = []
     for path_str in args.path:
         target_path = Path(path_str)
         all_violations.extend(linter.lint_path(target_path))
 
-    # Output results
     if all_violations:
         output = linter.format_violations(all_violations, args.format)
         print(output)
 
-    # Return exit code
     return linter.get_exit_code(all_violations)
 
 

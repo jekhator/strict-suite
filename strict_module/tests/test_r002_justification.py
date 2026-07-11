@@ -9,14 +9,14 @@ def test_r002_tag_without_justification(tmp_path):
     bad_file = tmp_path / "bad_tag.py"
     bad_file.write_text(
         """
-def process():  # facade — celery schedule
+def process():  # facade - celery schedule
     x = {"a": 1, "b": 2, "c": 3}
     return x
 """
     )
     config = Config(
         service_paths=["**/*.py"],
-        exception_tags=["facade — celery schedule"],
+        exception_tags=["facade - celery schedule"],
         exception_tag_requires_justification=True,
     )
     linter = DtoStrictLinter(config)
@@ -31,14 +31,14 @@ def test_r002_tag_with_justification(tmp_path):
     good_file = tmp_path / "good_tag.py"
     good_file.write_text(
         """
-def process():  # facade — celery schedule: transient event payload
+def process():  # facade - celery schedule: transient event payload
     x = {"a": 1, "b": 2, "c": 3}
     return x
 """
     )
     config = Config(
         service_paths=["**/*.py"],
-        exception_tags=["facade — celery schedule"],
+        exception_tags=["facade - celery schedule"],
         exception_tag_requires_justification=True,
     )
     linter = DtoStrictLinter(config)
@@ -52,22 +52,22 @@ def test_r002_max_exception_tags(tmp_path):
     bad_file = tmp_path / "too_many_tags.py"
     bad_file.write_text(
         """
-def process1():  # facade — celery schedule
+def process1():  # facade - celery schedule
     x = {"a": 1, "b": 2, "c": 3}
     return x
 
-def process2():  # facade — celery schedule
+def process2():  # facade - celery schedule
     y = {"d": 4, "e": 5, "f": 6}
     return y
 
-def process3():  # facade — celery schedule
+def process3():  # facade - celery schedule
     z = {"g": 7, "h": 8, "i": 9}
     return z
 """
     )
     config = Config(
         service_paths=["**/*.py"],
-        exception_tags=["facade — celery schedule"],
+        exception_tags=["facade - celery schedule"],
         max_exception_tags_per_file=2,
     )
     linter = DtoStrictLinter(config)
@@ -82,14 +82,14 @@ def test_r002_no_justification_required(tmp_path):
     good_file = tmp_path / "tag_no_justification.py"
     good_file.write_text(
         """
-def process():  # facade — celery schedule
+def process():  # facade - celery schedule
     x = {"a": 1, "b": 2, "c": 3}
     return x
 """
     )
     config = Config(
         service_paths=["**/*.py"],
-        exception_tags=["facade — celery schedule"],
+        exception_tags=["facade - celery schedule"],
         exception_tag_requires_justification=False,  # default
     )
     linter = DtoStrictLinter(config)
