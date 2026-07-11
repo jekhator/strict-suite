@@ -1,11 +1,10 @@
 """Tests for edge cases and error paths to improve coverage."""
 
-import pytest
-from pathlib import Path
+import ast
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 from strict_module.rules import has_noqa_comment
-import ast
 
 
 class TestNoqaCommentParsing:

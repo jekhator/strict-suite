@@ -1,10 +1,6 @@
 """Tests for CLI main() entry point with direct calls."""
 
 import sys
-import tempfile
-from pathlib import Path
-
-import pytest
 
 from strict_module.cli import main
 
