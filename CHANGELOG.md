@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Config parity with domain-suite** - Added `paths` configuration and `[tool.strict-module.loc-cap]` section to pyproject.toml for consistency with domain-suite; renamed workflow file from stricts.yml to strict-module.yml to match naming convention.
 - **Em dash normalization** - Replaced all em dashes (-) with regular hyphens (-) in prose, configuration, and documentation for consistency and CI gate compliance.
 - **Inline comment cleanup** - Removed unnecessary inline comments from core modules (cli.py, loc_cap.py) and core source files, preserving only `noqa` and `SENSITIVE` annotations.
 - **Test coverage improvements** - Added comprehensive CLI invocation tests (11 subprocess-based tests and 6 direct main() entry point tests) to exercise real command-line usage patterns with temporary project fixtures. Coverage improved from 90% to 91% statement coverage, with cli.py reaching 96%.
