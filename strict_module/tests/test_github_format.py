@@ -1,6 +1,6 @@
 """Tests for GitHub format output."""
 
-from strict_module.rules import Violation, RuleSeverity
+from strict_module.rules.rules_objects import RuleSeverity, Violation
 
 
 class TestGithubFormat:

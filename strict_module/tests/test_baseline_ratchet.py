@@ -3,6 +3,7 @@
 import json
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

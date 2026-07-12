@@ -3,8 +3,8 @@
 import ast
 
 from strict_module.config import Config
+from strict_module.inspection import AnnotationInspector
 from strict_module.linter import DtoStrictLinter
-from strict_module.rules import has_noqa_comment
 
 
 class TestNoqaCommentParsing:
@@ -16,7 +16,7 @@ class TestNoqaCommentParsing:
         lines = code.split("\n")
         tree = ast.parse(code)
         node = list(ast.walk(tree))[1]
-        result = has_noqa_comment(node, "R002", lines)
+        result = AnnotationInspector.has_noqa_comment(node, "R002", lines)
         assert result is True
 
     def test_noqa_with_multiple_rules(self):
@@ -25,7 +25,7 @@ class TestNoqaCommentParsing:
         lines = code.split("\n")
         tree = ast.parse(code)
         node = list(ast.walk(tree))[1]
-        result = has_noqa_comment(node, "R002", lines)
+        result = AnnotationInspector.has_noqa_comment(node, "R002", lines)
         assert result is True
 
     def test_noqa_backward_compat_dto_strict(self):
@@ -34,7 +34,7 @@ class TestNoqaCommentParsing:
         lines = code.split("\n")
         tree = ast.parse(code)
         node = list(ast.walk(tree))[1]
-        result = has_noqa_comment(node, "R002", lines)
+        result = AnnotationInspector.has_noqa_comment(node, "R002", lines)
         assert result is True
 
     def test_noqa_not_suppressed(self):
@@ -43,7 +43,7 @@ class TestNoqaCommentParsing:
         lines = code.split("\n")
         tree = ast.parse(code)
         node = list(ast.walk(tree))[1]
-        result = has_noqa_comment(node, "R002", lines)
+        result = AnnotationInspector.has_noqa_comment(node, "R002", lines)
         assert result is False
 
 

@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from strict_module.config import Config
-from strict_module.loc_cap import load_baseline
+from strict_module.loc_cap import LocCap
 
 
 class TestCompatFallback:
@@ -62,7 +62,7 @@ disabled_rules = ["R003"]
             old_cwd = Path.cwd()
             try:
                 os.chdir(tmpdir)
-                baseline = load_baseline(".loc-cap-baseline.txt")
+                baseline = LocCap.load_baseline(".loc-cap-baseline.txt")
                 assert "file1.py" in baseline
                 assert baseline["file1.py"] == 100
                 assert "file2.py" not in baseline
@@ -78,7 +78,7 @@ disabled_rules = ["R003"]
             old_cwd = Path.cwd()
             try:
                 os.chdir(tmpdir)
-                baseline = load_baseline(".loc-cap-baseline.txt")
+                baseline = LocCap.load_baseline(".loc-cap-baseline.txt")
                 assert "file3.py" in baseline
                 assert baseline["file3.py"] == 300
             finally:
@@ -90,7 +90,7 @@ disabled_rules = ["R003"]
             old_cwd = Path.cwd()
             try:
                 os.chdir(tmpdir)
-                baseline = load_baseline(".loc-cap-baseline.txt")
+                baseline = LocCap.load_baseline(".loc-cap-baseline.txt")
                 assert baseline == {}
             finally:
                 os.chdir(old_cwd)

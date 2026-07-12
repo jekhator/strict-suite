@@ -1,6 +1,7 @@
 """Tests for configuration loading."""
 
 from pathlib import Path
+
 from strict_module.config import Config
 
 

@@ -12,12 +12,12 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
         │
         ├─▶ [SUBCOMMAND?] sys.argv[1] == 'loc-cap'
         │   ┌─────────────────────────────────────────────────────┐
-        │   │ LOC Cap Enforcer (loc_cap.py)                       │
-        │   │ ├─ count_lines(file_path) → int                     │
-        │   │ ├─ load_baseline(baseline_file) → dict[str, int]    │
-        │   │ ├─ find_python_files(root, patterns) → dict[str, int]
-        │   │ ├─ generate_baseline(root) → str                    │
-        │   │ └─ run_loc_cap(path, hard, soft, baseline) → int    │
+        │   │ LOC Cap Enforcer (loc_cap/loc_cap_client.py)        │
+        │   │ ├─ LocCap.count_lines(file_path) → int             │
+        │   │ ├─ LocCap.load_baseline(baseline_file) → dict      │
+        │   │ ├─ LocCap.find_python_files(root) → dict[str, int] │
+        │   │ ├─ LocCap.generate_baseline(root) → str            │
+        │   │ └─ LocCap.run_loc_cap(path, hard, soft) → int      │
         │   └─────────────────────────────────────────────────────┘
         │
         └─▶ [DEFAULT] Standard linting mode
@@ -32,7 +32,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
                     │
                     ▶ DtoStrictLinter(config, baseline?)
             ┌─────────────────────────────────────────────────────┐
-            │ Linter Engine (linter.py)                           │
+            │ Linter Engine (linter/linter_client.py)             │
             │ ├─ lint_path(path: Path) → list[Violation]          │
             │ ├─   walk(path.rglob("*.py"))                       │
             │ ├─   lint_file(py_file: Path) → list[Violation]     │
@@ -45,7 +45,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
             │ │     ├─ filter by config.is_rule_enabled()         │
             │ │     └─ filter by baseline (ratchet) ← new vs old   │
             │ │                                                    │
-            │ ├─ Checkers (checkers.py):                          │
+            │ ├─ Checkers (checkers/r001.py .. r008.py):          │
             │ │   ├─ R001Checker: Dict[str, Any] in service sigs  │
             │ │   ├─   ⚠ Guard: is_service_path(...) + not noqa   │
             │ │   ├─ R002Checker: inline dict 3+ keys             │
@@ -72,7 +72,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
                     │
                     ▶ format_violations(violations, format)
             ┌─────────────────────────────────────────────────────┐
-            │ Output Formatters (linter.py)                       │
+            │ Output Formatters (linter/linter_client.py)         │
             │ ├─ text: file:line: rule_id message                 │
             │ ├─ github: ::error file=...,line=...,col=... ::msg  │
             │ └─ json: [{rule_id, severity, file, line, col, ...}]
@@ -80,7 +80,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
                     │
                     ▶ get_exit_code(violations) → int
             ┌─────────────────────────────────────────────────────┐
-            │ Exit Code Logic (linter.py)                         │
+            │ Exit Code Logic (linter/linter_client.py)           │
             │ ├─ no violations → 0 (SUCCESS)                      │
             │ ├─ any HIGH severity → 1 (HARD FAIL)                │
             │ ├─ any MEDIUM severity → 2 (WARN)                   │
@@ -102,7 +102,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
       ├─ YES: handle_loc_cap(sys.argv)
       │  ├─ Parse loc-cap args: path, --config, --hard-cap, --soft-target, --baseline, --generate-baseline
       │  ├─ Load Config.from_pyproject(config_path)
-      │  └─ Call run_loc_cap(...) ── returns exit code (0 clean, 1 violations)
+      │  └─ Call LocCap.run_loc_cap(...) ── returns exit code (0 clean, 1 violations)
       │
       └─ NO: Standard linting mode
 
@@ -134,7 +134,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
 
 ### Linting Pipeline
 
-5. **Lint All Paths** (`linter.py::lint_path()`)
+5. **Lint All Paths** (`linter/linter_client.py::DtoStrictLinter.lint_path()`)
    ├─ For each path_str in args.path:
    │  ├─ target_path = Path(path_str)
    │  ├─ path.is_file()? → lint_file(path) → list[Violation]
@@ -142,7 +142,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
    │
    └─ all_violations = combine results
 
-6. **Lint Single File** (`linter.py::lint_file()`)
+6. **Lint Single File** (`linter/linter_client.py::DtoStrictLinter.lint_file()`)
    ├─ file_path.suffix != ".py"? → return []
    ├─ source = file_path.read_text()
    │  └─ ⚠ Exception (OSError, UnicodeDecodeError) → return []
@@ -154,15 +154,15 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
       ├─ checker.visit(tree) [AST walk with visitor pattern]
       └─ violations.extend(checker.violations)
 
-7. **Checker Execution** (each RxxxChecker inherits from ast.NodeVisitor)
+7. **Checker Execution** (each RxxxChecker in checkers/ inherits from ast.NodeVisitor)
    └─ Per rule:
       │
       ├─ R001Checker::visit_FunctionDef():
-      │  ├─ is_service_path(file_path, config.service_paths)? → NO: return
-      │  ├─ is_suppressed(node, "R001")? ← has_noqa_comment(...) → YES: return
+      │  ├─ PathClassifier.is_service_path(...)? → NO: return
+      │  ├─ is_suppressed(node, "R001")? ← AnnotationInspector.has_noqa_comment(...) → YES: return
       │  └─ For each param/vararg/kwarg/return annotation:
-      │     ├─ is_dict_str_any(annotation)? → Violation(R001, HIGH, ...)
-      │     └─ config.strict_collections & is_bare_collection(annotation)? → Violation(R001, HIGH, ...)
+      │     ├─ AnnotationInspector.is_dict_str_any(annotation)? → Violation(R001, HIGH, ...)
+      │     └─ config.strict_collections & AnnotationInspector.is_bare_collection(...)? → Violation(R001, HIGH, ...)
       │
       ├─ R002Checker::visit_Dict():
       │  ├─ in_service_file? → NO: return
@@ -178,7 +178,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
       │  │     └─ NO tag: Violation(R002, MEDIUM, ...)
       │
       ├─ R003Checker::visit_ClassDef():
-      │  ├─ is_dto_path(file_path, config.dto_paths)? → NO: return
+      │  ├─ PathClassifier.is_dto_path(...)? → NO: return
       │  ├─ is_suppressed(node, "R003")? → YES: return
       │  ├─ @dataclass decorator present?
       │  │  └─ Extract kwargs (frozen, slots, repr)
@@ -188,7 +188,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
       │  │     └─ r003_mode == "legacy": check frozen+slots+repr=False → Violation(R003, MEDIUM, ...)
       │
       ├─ R004Checker::visit_Module():
-      │  ├─ is_service_path(file_path, config.service_paths)? → NO: return
+      │  ├─ PathClassifier.is_service_path(...)? → NO: return
       │  └─ For each top-level FunctionDef:
       │     ├─ is_suppressed(node, "R004")? → YES: continue
       │     └─ _has_exception_tag(fn)? | _is_class_method_wrapper(fn)?
@@ -204,53 +204,53 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
       │  │     └─ YES: skip
       │
       ├─ R006Checker::visit_FunctionDef():
-      │  ├─ is_service_path(file_path, config.r006_paths)? → NO: return
+      │  ├─ PathClassifier.is_service_path(...)? → NO: return
       │  ├─ is_suppressed(node, "R006")? → YES: return
       │  └─ For each param/vararg/kwarg/return annotation:
-      │     ├─ contains_any(annotation)? → Violation(R006, HIGH, ...)
+      │     ├─ AnnotationInspector.contains_any(annotation)? → Violation(R006, HIGH, ...)
       │
       ├─ R007Checker::visit_FunctionDef():
-      │  ├─ is_test_file(file_path)? → NO: return
+      │  ├─ PathClassifier.is_test_file(file_path)? → NO: return
       │  ├─ file_path.name == "conftest.py"? → YES: return (allowed)
       │  └─ Has @pytest.fixture decorator?
       │     ├─ is_suppressed(node, "R007")? → YES: continue
       │     └─ Violation(R007, MEDIUM, ...)
       │
       └─ R008Checker::visit_Module():
-         ├─ is_test_file(file_path)? → NO: return
+         ├─ PathClassifier.is_test_file(file_path)? → NO: return
          └─ For each top-level FunctionDef starting with "test_":
             ├─ is_suppressed(node, "R008")? → YES: continue
             └─ Violation(R008, MEDIUM, ...)
 
 ### Filtering & Baseline
 
-8. **Filter by Enabled Rules** (`linter.py::lint_path()`)
+8. **Filter by Enabled Rules** (`linter/linter_client.py::DtoStrictLinter.lint_path()`)
    └─ For each violation:
       ├─ config.is_rule_enabled(rule_id)? ← rule_id not in disabled_rules
       │  ├─ YES: keep
       │  └─ NO: discard
 
-9. **Apply Baseline (Ratchet Mode)** (`linter.py::_filter_by_baseline()`)
+9. **Apply Baseline (Ratchet Mode)** (`linter/linter_client.py::DtoStrictLinter._filter_by_baseline()`)
    └─ For each violation:
       ├─ key = (violation.file, violation.line, violation.rule_id)
       ├─ key in self.baseline?
       │  ├─ YES: discard (violation was accepted in baseline)
       │  └─ NO: keep (new violation)
 
-10. **Apply Severity Overrides** (`linter.py::lint_path()`)
+10. **Apply Severity Overrides** (`linter/linter_client.py::DtoStrictLinter.lint_path()`)
     └─ For each violation with rule_id in config.severity_overrides:
        └─ Create new Violation with updated severity
 
 ### Output & Exit
 
-11. **Format Violations** (`linter.py::format_violations()`)
+11. **Format Violations** (`linter/linter_client.py::DtoStrictLinter.format_violations()`)
     └─ args.format type?
        ├─ "text": for each v: "{file}:{line}: {rule_id} {message}"
        ├─ "github": for each v: "::{level} file={file},line={line},col={col}::{message}"
        │  └─ level = "error" if severity==HIGH else "warning"
        └─ "json": all violations as JSON array with rule_id, severity, file, line, col, message
 
-12. **Compute Exit Code** (`linter.py::get_exit_code()`)
+12. **Compute Exit Code** (`linter/linter_client.py::DtoStrictLinter.get_exit_code()`)
     ├─ no violations? → return 0 ← EXIT 0 (SUCCESS)
     ├─ any HIGH severity? → return 1 ← EXIT 1 (HARD FAIL)
     ├─ any MEDIUM severity? → return 2 ← EXIT 2 (WARN)
@@ -304,7 +304,7 @@ For any node with matching rule:
 
 ---
 
-## LOC Cap Flow (loc_cap.py subcommand)
+## LOC Cap Flow (loc_cap/loc_cap_client.py subcommand)
 
 1. **Subcommand Detection** (`cli.py::main()`)
    └─ sys.argv[1] == "loc-cap"? → handle_loc_cap(sys.argv)
@@ -314,18 +314,18 @@ For any node with matching rule:
    ├─ Load Config.from_pyproject(config_path)
    └─ Merge CLI args with config.loc_cap settings
 
-3. **Run LOC Cap** (`loc_cap.py::run_loc_cap()`)
-   ├─ generate? → generate_baseline(path) → print() → exit(0)
+3. **Run LOC Cap** (`loc_cap/loc_cap_client.py::LocCap.run_loc_cap()`)
+   ├─ generate? → LocCap.generate_baseline(path) → print() → exit(0)
    │
    └─ Check mode:
-      ├─ baseline = load_baseline(baseline_file)
+      ├─ baseline = LocCap.load_baseline(baseline_file)
       │  └─ Fallback: .strict-module-baseline.txt, .dto-strict-baseline.txt
       │     ⚠ OSError → return {}
       │
-      ├─ current = find_python_files(path, exclude_patterns)
+      ├─ current = LocCap.find_python_files(path, exclude_patterns)
       │  └─ For each *.py:
       │     ├─ Skip migrations/, management/commands, test files
-      │     ├─ loc = count_lines(file) ← wc -l semantics ⚠ OSError/UnicodeDecodeError → 0
+      │     ├─ loc = LocCap.count_lines(file) ← wc -l semantics ⚠ OSError/UnicodeDecodeError → 0
       │     └─ current[file] = loc
       │
       ├─ For each current file:
