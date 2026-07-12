@@ -1,7 +1,9 @@
 """Tests for R001: Dict[str, Any] in service signatures."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

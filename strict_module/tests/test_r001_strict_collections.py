@@ -1,7 +1,9 @@
 """Tests for R001: Bare dict/list/tuple detection with strict_collections mode."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

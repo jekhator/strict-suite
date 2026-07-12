@@ -1,7 +1,9 @@
 """Tests for service test file exemption from R001, R004, R006 rules."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

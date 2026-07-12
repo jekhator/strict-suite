@@ -1,7 +1,9 @@
 """Tests for R008: bare module-level test functions."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

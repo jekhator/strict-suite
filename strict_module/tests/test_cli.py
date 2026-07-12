@@ -1,9 +1,11 @@
 """Tests for CLI functionality."""
 
-import pytest
-from pathlib import Path
-from strict_module.cli import main
 import sys
+from pathlib import Path
+
+import pytest
+
+from strict_module.cli import main
 
 
 def test_cli_good_fixture(fixture_dir, monkeypatch, capsys, tmp_path):

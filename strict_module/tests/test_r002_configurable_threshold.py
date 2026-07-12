@@ -1,7 +1,9 @@
 """Tests for R002 configurable min_dict_keys threshold (Issue #2)."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

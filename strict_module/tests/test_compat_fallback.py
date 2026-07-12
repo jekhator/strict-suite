@@ -5,7 +5,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from strict_module.config import Config
-from strict_module.loc_cap import load_baseline
+from strict_module.loc_cap import LocCap
 
 
 def test_config_reads_strict_module_first():
@@ -62,7 +62,7 @@ def test_baseline_prefers_strict_module_file():
         old_cwd = Path.cwd()
         try:
             os.chdir(tmpdir)
-            baseline = load_baseline(".loc-cap-baseline.txt")
+            baseline = LocCap.load_baseline(".loc-cap-baseline.txt")
             assert "file1.py" in baseline
             assert baseline["file1.py"] == 100
             assert "file2.py" not in baseline
@@ -79,7 +79,7 @@ def test_baseline_falls_back_to_dto_strict_file():
         old_cwd = Path.cwd()
         try:
             os.chdir(tmpdir)
-            baseline = load_baseline(".loc-cap-baseline.txt")
+            baseline = LocCap.load_baseline(".loc-cap-baseline.txt")
             assert "file3.py" in baseline
             assert baseline["file3.py"] == 300
         finally:
@@ -92,7 +92,7 @@ def test_baseline_returns_empty_when_no_files_exist():
         old_cwd = Path.cwd()
         try:
             os.chdir(tmpdir)
-            baseline = load_baseline(".loc-cap-baseline.txt")
+            baseline = LocCap.load_baseline(".loc-cap-baseline.txt")
             assert baseline == {}
         finally:
             os.chdir(old_cwd)

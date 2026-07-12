@@ -5,9 +5,9 @@ import json
 import sys
 from pathlib import Path
 
-from .config import Config
-from .linter import DtoStrictLinter
-from .loc_cap import run_loc_cap
+from strict_module.config import Config
+from strict_module.linter import DtoStrictLinter
+from strict_module.loc_cap import LocCap
 
 
 def handle_loc_cap(args: list[str]) -> int:
@@ -56,7 +56,7 @@ def handle_loc_cap(args: list[str]) -> int:
     )
     baseline_file = parsed.baseline if parsed.baseline else config.loc_cap.baseline_file
 
-    return run_loc_cap(
+    return LocCap.run_loc_cap(
         path=parsed.path,
         hard_cap=hard_cap,
         soft_target=soft_target,

@@ -1,7 +1,9 @@
 """Tests for R005: Validator not using DTO.from_dict() pattern."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

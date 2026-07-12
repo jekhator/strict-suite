@@ -1,7 +1,9 @@
 """Tests for R003: Dataclass missing frozen+slots+repr=False trio."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

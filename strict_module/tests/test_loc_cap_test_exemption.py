@@ -1,9 +1,11 @@
 """Tests for loc-cap test file exemption."""
 
-import pytest
 import tempfile
 from pathlib import Path
-from strict_module.loc_cap import find_python_files
+
+import pytest
+
+from strict_module.loc_cap import LocCap
 
 
 @pytest.fixture
@@ -41,7 +43,7 @@ def temp_project():
 
 def test_loc_cap_exempts_test_basename(temp_project):
     """Test files matching test_*.py are exempt."""
-    files = find_python_files(str(temp_project))
+    files = LocCap.find_python_files(str(temp_project))
     # test_module.py (600 lines) should not appear
     for path, loc in files.items():
         assert "test_module.py" not in path, "test_*.py files should be exempt"
@@ -49,7 +51,7 @@ def test_loc_cap_exempts_test_basename(temp_project):
 
 def test_loc_cap_exempts_conftest(temp_project):
     """conftest.py files are exempt."""
-    files = find_python_files(str(temp_project))
+    files = LocCap.find_python_files(str(temp_project))
     # conftest.py (700 lines) should not appear
     for path in files.keys():
         assert "conftest.py" not in path, "conftest.py should be exempt"
@@ -57,7 +59,7 @@ def test_loc_cap_exempts_conftest(temp_project):
 
 def test_loc_cap_exempts_tests_directory(temp_project):
     """Files under tests/ directory are exempt."""
-    files = find_python_files(str(temp_project))
+    files = LocCap.find_python_files(str(temp_project))
     # test_helper.py under tests/ (800 lines) should not appear
     for path in files.keys():
         assert "/tests/" not in path and not path.startswith("tests/"), (
@@ -67,7 +69,7 @@ def test_loc_cap_exempts_tests_directory(temp_project):
 
 def test_loc_cap_counts_source_files(temp_project):
     """Source files that are not test files are counted."""
-    files = find_python_files(str(temp_project))
+    files = LocCap.find_python_files(str(temp_project))
     # src/module.py (500 lines) should be counted
     found_src = False
     for path, loc in files.items():

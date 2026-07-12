@@ -8,15 +8,9 @@ from pathlib import Path
 from unittest.mock import Mock
 
 from strict_module.config import Config
+from strict_module.inspection import AnnotationInspector
 from strict_module.linter import DtoStrictLinter
-from strict_module.rules import (
-    RuleRegistry,
-    has_noqa_comment,
-    is_dict_str_any,
-    is_bare_collection,
-    contains_any,
-    get_annotation_string,
-)
+from strict_module.rules import RuleRegistry
 
 
 class TestRuleRegistryEdgeCases:
@@ -52,7 +46,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is True
 
     def test_noqa_malformed_with_en_dash_explanation(self):
@@ -63,7 +57,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is True
 
     def test_noqa_malformed_with_regular_dash_explanation(self):
@@ -74,7 +68,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is True
 
     def test_noqa_with_multiple_spaces(self):
@@ -85,7 +79,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is True
 
     def test_noqa_bare_noqa_suppresses_all(self):
@@ -96,15 +90,15 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        assert has_noqa_comment(node, "R001", source) is True
-        assert has_noqa_comment(node, "R002", source) is True
+        assert AnnotationInspector.has_noqa_comment(node, "R001", source) is True
+        assert AnnotationInspector.has_noqa_comment(node, "R002", source) is True
 
     def test_noqa_node_without_lineno(self):
         """Test node without lineno attribute."""
         source = ["x = 1"]
         node = Mock(spec=[])
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is False
 
     def test_noqa_lineno_beyond_source(self):
@@ -113,7 +107,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 999
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is False
 
     def test_noqa_lineno_zero(self):
@@ -122,7 +116,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 0
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is False
 
     def test_noqa_dto_strict_backward_compat(self):
@@ -133,7 +127,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is True
 
     def test_noqa_dto_strict_specific_backward_compat(self):
@@ -144,8 +138,8 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        assert has_noqa_comment(node, "R001", source) is True
-        assert has_noqa_comment(node, "R002", source) is False
+        assert AnnotationInspector.has_noqa_comment(node, "R001", source) is True
+        assert AnnotationInspector.has_noqa_comment(node, "R002", source) is False
 
     def test_noqa_comma_separated_mixed(self):
         """Test comma-separated list with mixed old/new syntax."""
@@ -155,9 +149,9 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        assert has_noqa_comment(node, "R001", source) is True
-        assert has_noqa_comment(node, "R002", source) is True
-        assert has_noqa_comment(node, "R003", source) is False
+        assert AnnotationInspector.has_noqa_comment(node, "R001", source) is True
+        assert AnnotationInspector.has_noqa_comment(node, "R002", source) is True
+        assert AnnotationInspector.has_noqa_comment(node, "R003", source) is False
 
     def test_noqa_no_comment(self):
         """Test line without comment."""
@@ -167,7 +161,7 @@ class TestNoqaCommentEdgeCases:
         node = Mock()
         node.lineno = 1
 
-        result = has_noqa_comment(node, "R001", source)
+        result = AnnotationInspector.has_noqa_comment(node, "R001", source)
         assert result is False
 
 
@@ -181,12 +175,12 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = get_annotation_string(arg.annotation)
+        result = AnnotationInspector.get_annotation_string(arg.annotation)
         assert result == "int"
 
     def test_get_annotation_string_none(self):
         """Test annotation string for None."""
-        result = get_annotation_string(None)
+        result = AnnotationInspector.get_annotation_string(None)
         assert result == ""
 
     def test_get_annotation_string_subscript_simple(self):
@@ -196,7 +190,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = get_annotation_string(arg.annotation)
+        result = AnnotationInspector.get_annotation_string(arg.annotation)
         assert "list" in result.lower()
         assert "int" in result.lower()
 
@@ -207,7 +201,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = get_annotation_string(arg.annotation)
+        result = AnnotationInspector.get_annotation_string(arg.annotation)
         assert "tuple" in result.lower() or "int" in result.lower()
 
     def test_get_annotation_string_attribute(self):
@@ -217,7 +211,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = get_annotation_string(arg.annotation)
+        result = AnnotationInspector.get_annotation_string(arg.annotation)
         assert len(result) > 0
 
     def test_get_annotation_string_constant(self):
@@ -226,7 +220,7 @@ class TestAnnotationParsingEdgeCases:
         tree = ast.parse(source)
         ann_assign = tree.body[0]
 
-        result = get_annotation_string(ann_assign.annotation)
+        result = AnnotationInspector.get_annotation_string(ann_assign.annotation)
         assert "'int'" in result or "int" in result
 
     def test_is_dict_str_any_valid(self):
@@ -236,7 +230,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[1]
         arg = func.args.args[0]
 
-        result = is_dict_str_any(arg.annotation)
+        result = AnnotationInspector.is_dict_str_any(arg.annotation)
         assert result is True
 
     def test_is_dict_str_any_lowercase(self):
@@ -246,7 +240,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = is_dict_str_any(arg.annotation)
+        result = AnnotationInspector.is_dict_str_any(arg.annotation)
         assert result is True
 
     def test_is_dict_str_any_invalid(self):
@@ -256,7 +250,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = is_dict_str_any(arg.annotation)
+        result = AnnotationInspector.is_dict_str_any(arg.annotation)
         assert result is False
 
     def test_is_bare_collection_dict(self):
@@ -266,7 +260,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = is_bare_collection(arg.annotation)
+        result = AnnotationInspector.is_bare_collection(arg.annotation)
         assert result is True
 
     def test_is_bare_collection_list(self):
@@ -276,7 +270,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = is_bare_collection(arg.annotation)
+        result = AnnotationInspector.is_bare_collection(arg.annotation)
         assert result is True
 
     def test_is_bare_collection_tuple(self):
@@ -286,7 +280,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = is_bare_collection(arg.annotation)
+        result = AnnotationInspector.is_bare_collection(arg.annotation)
         assert result is True
 
     def test_is_bare_collection_parametrized(self):
@@ -296,7 +290,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = is_bare_collection(arg.annotation)
+        result = AnnotationInspector.is_bare_collection(arg.annotation)
         assert result is False
 
     def test_contains_any_present(self):
@@ -306,7 +300,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[1]
         arg = func.args.args[0]
 
-        result = contains_any(arg.annotation)
+        result = AnnotationInspector.contains_any(arg.annotation)
         assert result is True
 
     def test_contains_any_in_optional(self):
@@ -316,7 +310,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[1]
         arg = func.args.args[0]
 
-        result = contains_any(arg.annotation)
+        result = AnnotationInspector.contains_any(arg.annotation)
         assert result is True
 
     def test_contains_any_absent(self):
@@ -326,7 +320,7 @@ class TestAnnotationParsingEdgeCases:
         func = tree.body[0]
         arg = func.args.args[0]
 
-        result = contains_any(arg.annotation)
+        result = AnnotationInspector.contains_any(arg.annotation)
         assert result is False
 
 

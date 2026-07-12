@@ -1,7 +1,9 @@
 """Tests for R002 exemption: dict literals in to_* methods of dataclasses."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

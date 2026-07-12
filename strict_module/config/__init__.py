@@ -1,6 +1,6 @@
 """Configuration module for strict-module."""
 
-from ._config import Config, LocCapConfig
-from ._version import __version__
+from strict_module.config._config import Config, LocCapConfig
+from strict_module.config._version import __version__
 
 __all__ = ["Config", "LocCapConfig", "__version__"]

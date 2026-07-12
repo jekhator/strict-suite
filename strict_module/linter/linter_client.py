@@ -4,9 +4,8 @@ import ast
 import hashlib
 import json
 from pathlib import Path
-from dataclasses import dataclass
 
-from .checkers import (
+from strict_module.checkers import (
     R001Checker,
     R002Checker,
     R003Checker,
@@ -16,18 +15,8 @@ from .checkers import (
     R007Checker,
     R008Checker,
 )
-from .config import Config
-from .rules import RuleSeverity, Violation
-
-
-@dataclass(frozen=True, slots=True)
-class BaselineEntry:
-    """Baseline entry for tracking accepted violations."""
-
-    file: str
-    line: int
-    rule_id: str
-    message_hash: str
+from strict_module.config import Config
+from strict_module.rules import RuleSeverity, Violation
 
 
 class DtoStrictLinter:
@@ -38,9 +27,7 @@ class DtoStrictLinter:
     ):
         self.config = config
         self.violations: list[Violation] = []
-        self.baseline = (
-            baseline or {}
-        )  # Key: (file, line, rule_id), Value: message_hash
+        self.baseline = baseline or {}
 
     def lint_file(self, file_path: Path) -> list[Violation]:
         """Lint a single Python file."""
@@ -59,7 +46,6 @@ class DtoStrictLinter:
 
         violations = []
 
-        # Run all checkers
         for checker_cls in [
             R001Checker,
             R002Checker,
@@ -74,13 +60,11 @@ class DtoStrictLinter:
             checker.visit(tree)
             violations.extend(checker.violations)
 
-        # Filter by enabled rules
         filtered = []
         for v in violations:
             if self.config.is_rule_enabled(v.rule_id):
                 filtered.append(v)
 
-        # Apply baseline filtering if present
         if self.baseline:
             filtered = self._filter_by_baseline(filtered)
 
@@ -96,21 +80,18 @@ class DtoStrictLinter:
             for py_file in path.rglob("*.py"):
                 all_violations.extend(self.lint_file(py_file))
 
-        # Filter by enabled rules
         filtered = []
         for v in all_violations:
-            if self.config.is_rule_enabled(v.rule_id):  # pragma: no cover
+            if self.config.is_rule_enabled(v.rule_id):
                 filtered.append(v)
 
-        # Apply baseline filtering if present
-        if self.baseline:  # pragma: no cover
+        if self.baseline:
             filtered = self._filter_by_baseline(filtered)
 
-        # Apply severity overrides
         for violation in filtered:
-            if violation.rule_id in self.config.severity_overrides:  # pragma: no cover
+            if violation.rule_id in self.config.severity_overrides:
                 new_severity = self.config.severity_overrides[violation.rule_id].upper()
-                if new_severity in ["HIGH", "MEDIUM", "LOW"]:  # pragma: no cover
+                if new_severity in ["HIGH", "MEDIUM", "LOW"]:
                     violation = Violation(
                         rule_id=violation.rule_id,
                         severity=RuleSeverity[new_severity],
@@ -128,7 +109,6 @@ class DtoStrictLinter:
         for v in violations:
             key = (v.file, v.line, v.rule_id)
             if key not in self.baseline:
-                # New violation not in baseline
                 new_violations.append(v)
         return new_violations
 
@@ -172,8 +152,6 @@ class DtoStrictLinter:
         if format_type == "github":
             return "\n".join(v.format_github() for v in violations)
         elif format_type == "json":
-            import json
-
             return json.dumps(
                 [
                     {
@@ -188,7 +166,7 @@ class DtoStrictLinter:
                 ],
                 indent=2,
             )
-        else:  # text
+        else:
             return "\n".join(v.format_text() for v in violations)
 
     def get_exit_code(self, violations: list[Violation]) -> int:

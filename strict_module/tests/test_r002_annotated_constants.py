@@ -7,6 +7,7 @@ constants while still flagging actual inline dict literals in function bodies.
 import ast
 import textwrap
 from pathlib import Path
+
 from strict_module.checkers import R002Checker
 from strict_module.config import Config
 

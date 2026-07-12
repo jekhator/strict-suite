@@ -1,7 +1,9 @@
 """Tests for R004 auto-detect class-method-wrapping pattern (Issue #1)."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

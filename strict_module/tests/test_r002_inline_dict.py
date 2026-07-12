@@ -1,7 +1,9 @@
 """Tests for R002: Inline dict literals with 3+ string keys."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

@@ -1,7 +1,9 @@
 """Regression test: multiple dataclasses with to_* serializer methods (state reset per class)."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

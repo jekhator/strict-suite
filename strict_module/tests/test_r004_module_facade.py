@@ -1,7 +1,9 @@
 """Tests for R004: Module-level functions without exception tags."""
 
-import pytest
 from pathlib import Path
+
+import pytest
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 

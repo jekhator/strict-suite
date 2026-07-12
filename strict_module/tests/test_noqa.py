@@ -2,7 +2,7 @@
 
 import ast
 
-from strict_module.rules import has_noqa_comment
+from strict_module.inspection import AnnotationInspector
 
 
 class TestNoqaCommentDetection:
@@ -15,9 +15,9 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert has_noqa_comment(func_node, "R001", lines) is True
-        assert has_noqa_comment(func_node, "R002", lines) is True
-        assert has_noqa_comment(func_node, "R006", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R002", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
 
     def test_noqa_dto_strict_suppresses_all_rules(self):
         """# noqa: dto-strict should suppress any dto-strict rule."""
@@ -26,9 +26,9 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert has_noqa_comment(func_node, "R001", lines) is True
-        assert has_noqa_comment(func_node, "R002", lines) is True
-        assert has_noqa_comment(func_node, "R005", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R002", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R005", lines) is True
 
     def test_noqa_specific_rule_suppresses_only_that_rule(self):
         """# noqa: dto-strict-R001 should suppress only R001."""
@@ -37,9 +37,9 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert has_noqa_comment(func_node, "R001", lines) is True
-        assert has_noqa_comment(func_node, "R002", lines) is False
-        assert has_noqa_comment(func_node, "R006", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R002", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is False
 
     def test_noqa_comma_separated_rules(self):
         """# noqa: dto-strict-R001, dto-strict-R002 should suppress those rules only."""
@@ -50,10 +50,10 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert has_noqa_comment(func_node, "R001", lines) is True
-        assert has_noqa_comment(func_node, "R002", lines) is True
-        assert has_noqa_comment(func_node, "R003", lines) is False
-        assert has_noqa_comment(func_node, "R006", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R002", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R003", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is False
 
     def test_missing_noqa_not_suppressed(self):
         """Without noqa comment, violations should not be suppressed."""
@@ -62,8 +62,8 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert has_noqa_comment(func_node, "R001", lines) is False
-        assert has_noqa_comment(func_node, "R002", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R002", lines) is False
 
     def test_noqa_with_trailing_text(self):
         """noqa should work even with extra text after it."""
@@ -72,7 +72,7 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert has_noqa_comment(func_node, "R001", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is True
 
     def test_noqa_with_leading_whitespace(self):
         """noqa with leading whitespace should be recognized."""
@@ -82,7 +82,7 @@ class TestNoqaCommentDetection:
         func_node = tree.body[0]
 
         # Note: leading whitespace in the line is OK; we find the noqa marker and work from there
-        assert has_noqa_comment(func_node, "R001", lines) is True
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is True
 
     def test_noqa_missing_lineno(self):
         """Node without lineno should return False."""
@@ -90,7 +90,7 @@ class TestNoqaCommentDetection:
         lines = source.splitlines()
         # Create a node without lineno
         node = ast.AST()
-        assert has_noqa_comment(node, "R001", lines) is False
+        assert AnnotationInspector.has_noqa_comment(node, "R001", lines) is False
 
     def test_noqa_lineno_beyond_file(self):
         """Node with lineno beyond source length should return False."""
@@ -100,7 +100,7 @@ class TestNoqaCommentDetection:
         func_node = tree.body[0]
         # Manually set lineno beyond file length
         func_node.lineno = 999
-        assert has_noqa_comment(func_node, "R001", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is False
 
     def test_noqa_in_middle_of_comment(self):
         """# noqa in the middle of a longer comment should be recognized."""
@@ -112,7 +112,7 @@ class TestNoqaCommentDetection:
         # This should not match because we search for the noqa marker starting from the first occurrence
         # In this case, "# some comment noqa" doesn't have the marker, so it won't match
         # The implementation looks for the marker explicitly, which is correct
-        assert has_noqa_comment(func_node, "R001", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is False
 
     def test_noqa_standard_pylint_style(self):
         """Standard pylint-style noqa should work."""
@@ -120,7 +120,7 @@ class TestNoqaCommentDetection:
         lines = source.splitlines()
         tree = ast.parse(source)
         assign_node = tree.body[0]
-        assert has_noqa_comment(assign_node, "R002", lines) is True
+        assert AnnotationInspector.has_noqa_comment(assign_node, "R002", lines) is True
 
     def test_noqa_flake8_style(self):
         """flake8-style noqa with codes should work if codes match."""
@@ -129,4 +129,4 @@ class TestNoqaCommentDetection:
         tree = ast.parse(source)
         func_node = tree.body[0]
         # This won't match dto-strict rules since the comment doesn't mention them
-        assert has_noqa_comment(func_node, "R001", lines) is False
+        assert AnnotationInspector.has_noqa_comment(func_node, "R001", lines) is False
