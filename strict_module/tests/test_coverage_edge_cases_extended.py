@@ -10,7 +10,7 @@ from unittest.mock import Mock
 from strict_module.config import Config
 from strict_module.inspection import AnnotationInspector
 from strict_module.linter import DtoStrictLinter
-from strict_module.rules import RuleRegistry
+from strict_module.rules.rules_objects import RuleRegistry
 
 
 class TestRuleRegistryEdgeCases:
@@ -458,7 +458,7 @@ class TestLinterFileHandling:
                 )
             )
 
-            result = DtoStrictLinter.load_baseline(baseline_file)
+            result = DtoStrictLinter.LocCap.load_baseline(baseline_file)
             assert ("test.py", 1, "R001") in result
 
     def test_load_baseline_invalid_json(self):
@@ -467,12 +467,12 @@ class TestLinterFileHandling:
             baseline_file = Path(tmpdir) / "baseline.json"
             baseline_file.write_text("not json")
 
-            result = DtoStrictLinter.load_baseline(baseline_file)
+            result = DtoStrictLinter.LocCap.load_baseline(baseline_file)
             assert result == {}
 
     def test_load_baseline_nonexistent(self):
         """Test loading nonexistent baseline file."""
-        result = DtoStrictLinter.load_baseline(Path("/nonexistent/baseline.json"))
+        result = DtoStrictLinter.LocCap.load_baseline(Path("/nonexistent/baseline.json"))
         assert result == {}
 
     def test_severity_overrides_high(self):
@@ -492,7 +492,7 @@ class TestLinterFileHandling:
 
     def test_get_exit_code_high_severity(self):
         """Test exit code 1 for high severity."""
-        from strict_module.rules import RuleSeverity, Violation
+        from strict_module.rules.rules_objects import RuleSeverity, Violation
 
         config = Config()
         linter = DtoStrictLinter(config)
@@ -506,7 +506,7 @@ class TestLinterFileHandling:
 
     def test_get_exit_code_medium_severity(self):
         """Test exit code 2 for medium severity."""
-        from strict_module.rules import RuleSeverity, Violation
+        from strict_module.rules.rules_objects import RuleSeverity, Violation
 
         config = Config()
         linter = DtoStrictLinter(config)
@@ -520,7 +520,7 @@ class TestLinterFileHandling:
 
     def test_get_exit_code_low_severity(self):
         """Test exit code 3 for low severity."""
-        from strict_module.rules import RuleSeverity, Violation
+        from strict_module.rules.rules_objects import RuleSeverity, Violation
 
         config = Config()
         linter = DtoStrictLinter(config)
@@ -542,7 +542,7 @@ class TestLinterFileHandling:
 
     def test_format_violations_text(self):
         """Test text formatting of violations."""
-        from strict_module.rules import RuleSeverity, Violation
+        from strict_module.rules.rules_objects import RuleSeverity, Violation
 
         config = Config()
         linter = DtoStrictLinter(config)
@@ -558,7 +558,7 @@ class TestLinterFileHandling:
 
     def test_format_violations_json(self):
         """Test JSON formatting of violations."""
-        from strict_module.rules import RuleSeverity, Violation
+        from strict_module.rules.rules_objects import RuleSeverity, Violation
 
         config = Config()
         linter = DtoStrictLinter(config)
@@ -577,7 +577,7 @@ class TestLinterFileHandling:
 
     def test_format_violations_github(self):
         """Test GitHub formatting of violations."""
-        from strict_module.rules import RuleSeverity, Violation
+        from strict_module.rules.rules_objects import RuleSeverity, Violation
 
         config = Config()
         linter = DtoStrictLinter(config)

@@ -116,7 +116,7 @@ def process(data: Any) -> dict:
         config = Config()
         linter = DtoStrictLinter(config)
         violations = []
-        baseline = linter.generate_baseline(violations)
+        baseline = linter.LocCap.generate_baseline(violations)
         assert isinstance(baseline, (dict, list))
 
     def test_baseline_ratchet_improvement(self, tmp_path):
