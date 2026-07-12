@@ -28,7 +28,7 @@ def bad_function(x: Dict[str, Any]):
             violations = linter.lint_file(path)
             assert len(violations) > 0, "Should have violations to baseline"
 
-            baseline_data = linter.LocCap.generate_baseline(violations)
+            baseline_data = linter.generate_baseline(violations)
             assert isinstance(baseline_data, list)
             assert len(baseline_data) > 0
             assert "file" in baseline_data[0]
@@ -59,7 +59,7 @@ def bad_function(x: Dict[str, Any]):
             baseline_path = Path(tmpdir) / "baseline.json"
             baseline_path.write_text(json.dumps(baseline_json))
 
-            baseline = DtoStrictLinter.LocCap.load_baseline(baseline_path)
+            baseline = DtoStrictLinter.load_baseline(baseline_path)
             assert ("test.py", 10, "R001") in baseline
             assert baseline[("test.py", 10, "R001")] == "abc123"
             assert ("test.py", 20, "R002") in baseline
@@ -80,7 +80,7 @@ def bad_function(x: Dict[str, Any]):
             violations = linter.lint_file(path)
 
             # First, generate baseline from current violations
-            baseline_data = linter.LocCap.generate_baseline(violations)
+            baseline_data = linter.generate_baseline(violations)
             baseline = {}
             for entry in baseline_data:
                 key = (entry["file"], entry["line"], entry["rule_id"])
@@ -119,7 +119,7 @@ def bad_function_2(x: Dict[str, Any]):
             # Generate baseline from original
             linter = DtoStrictLinter(config)
             violations_original = linter.lint_file(path)
-            baseline_data = linter.LocCap.generate_baseline(violations_original)
+            baseline_data = linter.generate_baseline(violations_original)
             baseline = {}
             for entry in baseline_data:
                 key = (entry["file"], entry["line"], entry["rule_id"])
@@ -139,7 +139,7 @@ def bad_function_2(x: Dict[str, Any]):
 
     def test_baseline_empty_when_file_missing(self):
         """Baseline: Load returns empty dict if file missing."""
-        baseline = DtoStrictLinter.LocCap.load_baseline(Path("/nonexistent/baseline.json"))
+        baseline = DtoStrictLinter.load_baseline(Path("/nonexistent/baseline.json"))
         assert baseline == {}
 
     def test_baseline_entry_hash_consistency(self):

@@ -1,11 +1,6 @@
 """Tests for CLI functionality."""
 
 import sys
-from pathlib import Path
-
-import pytest
-
-from strict_module.cli import main
 
 from strict_module.cli import main
 

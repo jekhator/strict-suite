@@ -10,7 +10,7 @@ from unittest.mock import Mock
 from strict_module.config import Config
 from strict_module.inspection import AnnotationInspector
 from strict_module.linter import DtoStrictLinter
-from strict_module.rules.rules_objects import RuleRegistry
+from strict_module.rules.rules_client import RuleRegistry
 
 
 class TestRuleRegistryEdgeCases:
@@ -458,7 +458,7 @@ class TestLinterFileHandling:
                 )
             )
 
-            result = DtoStrictLinter.LocCap.load_baseline(baseline_file)
+            result = DtoStrictLinter.load_baseline(baseline_file)
             assert ("test.py", 1, "R001") in result
 
     def test_load_baseline_invalid_json(self):
@@ -467,12 +467,12 @@ class TestLinterFileHandling:
             baseline_file = Path(tmpdir) / "baseline.json"
             baseline_file.write_text("not json")
 
-            result = DtoStrictLinter.LocCap.load_baseline(baseline_file)
+            result = DtoStrictLinter.load_baseline(baseline_file)
             assert result == {}
 
     def test_load_baseline_nonexistent(self):
         """Test loading nonexistent baseline file."""
-        result = DtoStrictLinter.LocCap.load_baseline(Path("/nonexistent/baseline.json"))
+        result = DtoStrictLinter.load_baseline(Path("/nonexistent/baseline.json"))
         assert result == {}
 
     def test_severity_overrides_high(self):

@@ -100,7 +100,7 @@ class TestCLIRealInvocations:
 
         assert result.returncode == 0
 
-    def test_cli_LocCap.generate_baseline(self, cli_project_dir):
+    def test_cli_generate_baseline(self, cli_project_dir):
         """Test CLI baseline generation."""
         result = subprocess.run(
             [
@@ -196,7 +196,7 @@ class TestCLIRealInvocations:
 class TestCLILocCap:
     """Test loc-cap subcommand with real invocations."""
 
-    def test_loc_cap_LocCap.generate_baseline(self, cli_project_dir):
+    def test_loc_cap_generate_baseline(self, cli_project_dir):
         """Test loc-cap baseline generation."""
         result = subprocess.run(
             [

@@ -2,6 +2,7 @@
 
 import tempfile
 from pathlib import Path
+
 from strict_module.config import Config
 from strict_module.linter import DtoStrictLinter
 
