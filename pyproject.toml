@@ -75,6 +75,8 @@ exception_tags = [
 ]
 disabled_rules = []
 severity_overrides = {}
+# Note: strict_module/tests/fixtures/bad/*.py intentionally contain violations
+# for use as test corpus. These files are not linted by CI; see setup.cfg.
 
 [tool.pyright]
 venvPath = "."
