@@ -18,9 +18,9 @@ class AnnotationInspector:
         elif isinstance(annotation, ast.Subscript):
             base = AnnotationInspector.get_annotation_string(annotation.value)
             if hasattr(ast, "Index") and isinstance(annotation.slice, ast.Index):
-                index = AnnotationInspector.get_annotation_string(
-                    annotation.slice.value
-                )  # type: ignore[attr-defined]
+                # Python 3.8 compatibility: ast.Index wraps the actual index
+                slice_value = annotation.slice.value  # type: ignore[attr-defined]
+                index = AnnotationInspector.get_annotation_string(slice_value)
             else:
                 index = AnnotationInspector.get_annotation_string(annotation.slice)
             return f"{base}[{index}]"
