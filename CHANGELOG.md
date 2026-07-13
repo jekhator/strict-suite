@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
+- **Python 3.11+ requirement** - Updated requires-python to >=3.11 (from >=3.10) and bumped ruff target-version to py311 for parity with mixin-suite and domain-suite. Removed Python 3.10 classifier.
 - **Config parity with domain-suite** - Added `paths` configuration and `[tool.strict-module.loc-cap]` section to pyproject.toml for consistency with domain-suite; renamed workflow file from stricts.yml to strict-module.yml to match naming convention.
 - **Em dash normalization** - Replaced all em dashes (-) with regular hyphens (-) in prose, configuration, and documentation for consistency and CI gate compliance.
 - **Inline comment cleanup** - Removed unnecessary inline comments from core modules (cli.py, loc_cap.py) and core source files, preserving only `noqa` and `SENSITIVE` annotations.
