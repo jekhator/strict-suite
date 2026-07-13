@@ -14,6 +14,7 @@ All notable changes to this project will be documented in this file.
 - **Tag format clarification** - Updated exception tag documentation and examples to use consistent hyphen separators (e.g., 'facade - celery schedule' per hardened naming rules).
 - **Extended coverage test suite** - Added 51 targeted test cases covering edge cases in noqa comment parsing, annotation handling, file I/O error paths, baseline filtering, and exit codes. Coverage improved from 92% to 94.68%, with linter.py reaching 99%, rules.py 94%, and cli.py maintaining 96%. CI gate raised from 79% to 94%.
 - **Defensive code markup** - Marked genuinely unreachable code paths (Python 3.8 compatibility checks, exception handlers for robust APIs) with `# pragma: no cover` to ensure meaningful coverage metrics.
+- **Comprehensive checker coverage expansion** - Added 13 new test cases for R001, R006, R007, and R002 edge cases (vararg/kwarg variants, decorator forms, exception tag justification, max tags limits). Created fixture files for real AST-based testing. Coverage improved from 94% to 95.83% (displays as 96% when rounded). CI gate raised from 94% to 95%.
 
 ## [0.1.0] - 2026-07-10
 
