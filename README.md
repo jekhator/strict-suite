@@ -3,13 +3,13 @@
 [![PyPI](https://img.shields.io/pypi/v/strict-suite.svg?style=flat)](https://pypi.org/project/strict-suite/)
 [![CI](https://github.com/jekhator/strict-suite/workflows/CI/badge.svg)](https://github.com/jekhator/strict-suite/actions)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
 AST-based linter for Python DTO discipline and facade-ban enforcement. Consolidated strict Python linting and static analysis tools with complexity metrics.
 
 **Consolidated from strict-module 0.5.0.** This monorepo consolidates the strict-module package and related linting infrastructure. Backward-compatible CLI entry points (`strict-module` and `dto-strict`) are preserved.
 
-> **Python only.** The strict-component (npm/TypeScript) stays in its own repo. This distribution is Python 3.10+ only.
+> **Python only.** The strict-component (npm/TypeScript) stays in its own repo. This distribution is Python 3.11+ only.
 
 ## Overview
 
@@ -61,7 +61,7 @@ dto-strict apps/
 
 ### Run-Verified Example
 
-Create a test file `example.py` with a conformant DTO:
+Create a test file `example.py` with conformant code:
 
 ```python
 from dataclasses import dataclass
@@ -72,9 +72,12 @@ class UserDTO:
     user_id: int
     email: str
 
-def process_user(user: UserDTO) -> None:
-    """Process a user."""
-    print(f"Processing {user.email}")
+class UserService:
+    """Service to process users."""
+
+    def process_user(self, user: UserDTO) -> None:
+        """Process a user."""
+        print(f"Processing {user.email}")
 ```
 
 Then lint it:
@@ -84,22 +87,23 @@ $ strict-module example.py
 # (no output = clean)
 ```
 
-Now create a violating example `bad_example.py`:
+Now create a violating example. Save this as `apps/test/services/bad_user.py`:
 
 ```python
 from typing import Any
 
-def process_user(config: dict[str, Any]) -> None:  # R001: Dict[str, Any] in signature
-    """Process a user."""
-    return config.get("user_id")
+class UserService:
+    def process_user(self, config: dict[str, Any]) -> None:  # R001: Dict[str, Any] in signature
+        """Process a user."""
+        return config.get("user_id")
 ```
 
-Running the linter:
+Running the linter (from the repo root):
 
 ```bash
-$ strict-module bad_example.py
-bad_example.py:3: R001 Dict[str, Any] in signature: process_user
-bad_example.py:3: R006 typing.Any in parameter: process_user
+$ strict-module apps/test/services/bad_user.py
+apps/test/services/bad_user.py:4: R001 Dict[str, Any] in signature: process_user
+apps/test/services/bad_user.py:4: R006 typing.Any in parameter: process_user
 ```
 
 ### All Rules Demonstrated

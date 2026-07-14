@@ -1,14 +1,9 @@
 """Configuration loading for strict-module (formerly dto-strict)."""
 
-import sys
-from typing import Self
-
-if sys.version_info >= (3, 11):
-    import tomllib
-else:
-    import tomli as tomllib
+import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Self
 
 
 @dataclass(frozen=True, slots=True)
