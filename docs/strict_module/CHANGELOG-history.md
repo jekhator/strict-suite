@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
+- **R011 Rule: String literal at raise site** - New rule enforcing that exception message arguments in raise statements must be references to ERR_* constants (via `const.*`), never inline string literals or f-strings. Helps enforce the Phase-16 error-message standard by making the gate mechanical. Exempt: test files, constants modules. HIGH severity, enabled by default.
+
 ### Changed
 
 ### Fixed
