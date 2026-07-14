@@ -1,6 +1,7 @@
 """Configuration loading for strict-module (formerly dto-strict)."""
 
 import sys
+from typing import Self
 
 if sys.version_info >= (3, 11):
     import tomllib
@@ -44,7 +45,7 @@ class Config:
     loc_cap: LocCapConfig = field(default_factory=LocCapConfig)
 
     @classmethod
-    def from_pyproject(cls, path: Path) -> "Config":
+    def from_pyproject(cls, path: Path) -> Self:
         """Load configuration from pyproject.toml."""
         if not path.exists():
             return cls()
