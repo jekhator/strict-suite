@@ -9,6 +9,8 @@ from strict_module.checkers.r005 import R005Checker
 from strict_module.checkers.r006 import R006Checker
 from strict_module.checkers.r007 import R007Checker
 from strict_module.checkers.r008 import R008Checker
+from strict_module.checkers.r009 import R009Checker
+from strict_module.checkers.r010 import R010Checker
 
 __all__ = [
     "BaseChecker",
@@ -20,4 +22,6 @@ __all__ = [
     "R006Checker",
     "R007Checker",
     "R008Checker",
+    "R009Checker",
+    "R010Checker",
 ]
