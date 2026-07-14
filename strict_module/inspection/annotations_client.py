@@ -9,7 +9,11 @@ class AnnotationInspector:
 
     @staticmethod
     def get_annotation_string(annotation: Optional[ast.expr]) -> str:
-        """Convert annotation AST node to string representation."""
+        """Convert annotation AST node to string representation.
+
+        Handles Python 3.8 compatibility where ast.Index wraps the actual index
+        in subscript nodes.
+        """
         if annotation is None:
             return ""
 
@@ -18,7 +22,6 @@ class AnnotationInspector:
         elif isinstance(annotation, ast.Subscript):
             base = AnnotationInspector.get_annotation_string(annotation.value)
             if hasattr(ast, "Index") and isinstance(annotation.slice, ast.Index):
-                # Python 3.8 compatibility: ast.Index wraps the actual index
                 slice_value = annotation.slice.value  # type: ignore[attr-defined]
                 index = AnnotationInspector.get_annotation_string(slice_value)
             else:

@@ -57,6 +57,18 @@ class RuleRegistry:
             RuleSeverity.MEDIUM,
             "Module-level test function def test_*() found. Test functions must be defined as methods in Test<Concern> classes.",
         ),
+        "R009": Rule(
+            "R009",
+            "Module-level function outside allowed entry points",
+            RuleSeverity.HIGH,
+            "Module-level function found in service path. All methods must be defined within classes. Allowed exceptions: main, handle_*, handle_command, handle_event, handle_request.",
+        ),
+        "R010": Rule(
+            "R010",
+            "Legacy typing aliases for abstract base classes",
+            RuleSeverity.MEDIUM,
+            "Import uses typing.* ABC alias instead of collections.abc. Typing aliases are deprecated since Python 3.9. Use collections.abc instead.",
+        ),
     }
 
     @classmethod

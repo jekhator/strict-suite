@@ -35,14 +35,12 @@ class Config:
     strict_collections: bool = field(default=False)
     exception_tag_requires_justification: bool = field(default=False)
     max_exception_tags_per_file: int | None = field(default=None)
-    r003_mode: str = field(default="canonical")  # "canonical" or "legacy"
+    r003_mode: str = field(default="canonical")
     r006_paths: list[str] = field(
         default_factory=lambda: ["apps/*/services/*.py", "**/services/*.py"]
     )
-    min_dict_keys: int = field(default=3)  # NEW: threshold for R002
-    r003_strict_repr: bool = field(
-        default=True
-    )  # NEW: R003 strict mode (flags repr=False)
+    min_dict_keys: int = field(default=3)
+    r003_strict_repr: bool = field(default=True)
     loc_cap: LocCapConfig = field(default_factory=LocCapConfig)
 
     @classmethod

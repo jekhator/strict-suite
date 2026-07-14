@@ -10,7 +10,7 @@ class TestR002MultipleDataclassRegression:
     def test_r002_multiple_dataclass_serializers_both_exempt(self, fixture_dir):
         """Both FirstDTO and SecondDTO to_* methods should be exempt.
 
-        This tests that state is properly reset per class — the second dataclass
+        This tests that state is properly reset per class - the second dataclass
         should not be affected by processing the first.
         """
         config = Config(

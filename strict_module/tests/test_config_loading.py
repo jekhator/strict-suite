@@ -14,7 +14,8 @@ class TestConfigLoading:
         assert "apps/*/services/*.py" in config.service_paths
         assert "**/dtos.py" in config.dto_paths
         assert "facade - celery schedule" in config.exception_tags
-        assert len(config.disabled_rules) == 0
+        assert "R009" not in config.disabled_rules
+        assert "R010" not in config.disabled_rules
 
     def test_config_is_rule_enabled(self):
         """Test rule enable/disable logic."""

@@ -61,9 +61,12 @@ class OrderRequest:
     customer_id: int
     amount: float
 
-def process_order(data: OrderRequest) -> dict:
-    \"\"\"Process order data.\"\"\"
-    return {"status": "ok"}
+class OrderService:
+    \"\"\"Service for processing orders.\"\"\"
+
+    def process_order(self, data: OrderRequest) -> dict:
+        \"\"\"Process order data.\"\"\"
+        return {"status": "ok"}
 """
     )
 
