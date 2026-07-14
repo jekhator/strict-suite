@@ -4,17 +4,22 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-14
+
+### Added
+
+- **R009 rule** - Module-level functions outside entry points are now flagged as violations (enforces container-based service-class pattern).
+- **R010 rule** - Legacy typing ABC imports (typing.Dict, typing.List, etc.) are now flagged; use built-in generics (dict, list) per PEP 585.
+- **R011 rule** - String literals at raise sites are flagged; use named constants instead for maintainability.
+
 ### Changed
 
-- **Python 3.11+ requirement** - Updated requires-python to >=3.11 (from >=3.10) and bumped ruff target-version to py311 for parity with mixin-suite and domain-suite. Removed Python 3.10 classifier.
-- **Config parity with domain-suite** - Added `paths` configuration and `[tool.strict-module.loc-cap]` section to pyproject.toml for consistency with domain-suite; renamed workflow file from stricts.yml to strict-module.yml to match naming convention.
-- **Em dash normalization** - Replaced all em dashes (-) with regular hyphens (-) in prose, configuration, and documentation for consistency and CI gate compliance.
-- **Inline comment cleanup** - Removed unnecessary inline comments from core modules (cli.py, loc_cap.py) and core source files, preserving only `noqa` and `SENSITIVE` annotations.
-- **Test coverage improvements** - Added comprehensive CLI invocation tests (11 subprocess-based tests and 6 direct main() entry point tests) to exercise real command-line usage patterns with temporary project fixtures. Coverage improved from 90% to 91% statement coverage, with cli.py reaching 96%.
-- **Tag format clarification** - Updated exception tag documentation and examples to use consistent hyphen separators (e.g., 'facade - celery schedule' per hardened naming rules).
-- **Extended coverage test suite** - Added 51 targeted test cases covering edge cases in noqa comment parsing, annotation handling, file I/O error paths, baseline filtering, and exit codes. Coverage improved from 92% to 94.68%, with linter.py reaching 99%, rules.py 94%, and cli.py maintaining 96%. CI gate raised from 79% to 94%.
-- **Defensive code markup** - Marked genuinely unreachable code paths (Python 3.8 compatibility checks, exception handlers for robust APIs) with `# pragma: no cover` to ensure meaningful coverage metrics.
-- **Comprehensive checker coverage expansion** - Added 13 new test cases for R001, R006, R007, and R002 edge cases (vararg/kwarg variants, decorator forms, exception tag justification, max tags limits). Created fixture files for real AST-based testing. Coverage improved from 94% to 95.83% (displays as 96% when rounded). CI gate raised from 94% to 95%.
+- **Config parity with domain-suite** - Added `paths` configuration and `[tool.strict-module.loc-cap]` section to pyproject.toml for consistency; renamed workflow from stricts.yml to strict-module.yml.
+- **Standard ruff rule-set parity** - Enabled I (isort), TID252 (relative imports), PLC0414 (unused imports), and UP035 (deprecated typing) ruff rules; all conform to OSS suite standards.
+- **Coverage gate to 95%** - Raised pytest coverage gate from 79% to 95% via `--cov-fail-under=95`; achieved 95.05% statement coverage with targeted test expansion across all checker modules (linter.py 99%, rules.py 94%, cli.py 96%).
+- **Conformance doc conventions** - Created docs/conformance-audit.md documenting full-corpus audit of strict_module against R001-R010 rules; all violations resolved.
+- **Python 3.11+ and tomllib cleanup** - Removed Python 3.10 compatibility layer (conditional tomli dependency); requires-python floor now >=3.11 only. Simplified config-loading imports to use native tomllib.
+- **Em dash and inline-comment cleanup** - Replaced em dashes with hyphens in docs; removed unnecessary inline comments, preserving only noqa and SENSITIVE annotations.
 
 ## [0.1.0] - 2026-07-10
 
