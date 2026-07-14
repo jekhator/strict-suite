@@ -16,6 +16,7 @@ from strict_module.checkers import (
     R008Checker,
     R009Checker,
     R010Checker,
+    R011Checker,
 )
 from strict_module.config import Config
 from strict_module.rules import RuleSeverity, Violation
@@ -59,6 +60,7 @@ class DtoStrictLinter:
             R008Checker,
             R009Checker,
             R010Checker,
+            R011Checker,
         ]:
             checker = checker_cls(file_path, source, self.config)
             checker.visit(tree)

@@ -69,6 +69,12 @@ class RuleRegistry:
             RuleSeverity.MEDIUM,
             "Import uses typing.* ABC alias instead of collections.abc. Typing aliases are deprecated since Python 3.9. Use collections.abc instead.",
         ),
+        "R011": Rule(
+            "R011",
+            "String literal at raise site",
+            RuleSeverity.HIGH,
+            "Raise statement contains a string literal message. Extract to constants/<feature>.py as ERR_<DOMAIN>_<CONDITION>, reference via const.*.",
+        ),
     }
 
     @classmethod
