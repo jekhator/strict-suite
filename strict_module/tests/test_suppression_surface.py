@@ -3,7 +3,6 @@
 import ast
 import tempfile
 from pathlib import Path
-from unittest.mock import Mock
 
 from strict_module.config import Config
 from strict_module.inspection import AnnotationInspector
@@ -199,7 +198,7 @@ class TestNoqaRuleCodeShorthand:
 
     def test_noqa_bare_rule_code_r011(self):
         """# noqa: R011 should suppress R011 only."""
-        source = 'x = 1  # noqa: R011'
+        source = "x = 1  # noqa: R011"
         lines = source.splitlines()
         tree = ast.parse(source)
         assign_node = tree.body[0]
@@ -235,9 +234,7 @@ class TestNoqaRuleCodeShorthand:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert (
-            AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
-        )
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
 
     def test_noqa_dto_strict_compat_still_works(self):
         """Existing # noqa: dto-strict-R006 backward-compat should still work."""
@@ -246,9 +243,7 @@ class TestNoqaRuleCodeShorthand:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert (
-            AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
-        )
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
 
     def test_noqa_bare_code_with_explanation(self):
         """# noqa: R006 - explanation should work."""
@@ -257,9 +252,7 @@ class TestNoqaRuleCodeShorthand:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert (
-            AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
-        )
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is True
 
     def test_noqa_negative_control_without_comment(self):
         """RED control: Without noqa comment, should return False."""
@@ -268,9 +261,7 @@ class TestNoqaRuleCodeShorthand:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert (
-            AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is False
-        )
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is False
 
     def test_noqa_negative_control_wrong_rule(self):
         """RED control: # noqa: R001 should not suppress R006."""
@@ -279,9 +270,7 @@ class TestNoqaRuleCodeShorthand:
         tree = ast.parse(source)
         func_node = tree.body[0]
 
-        assert (
-            AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is False
-        )
+        assert AnnotationInspector.has_noqa_comment(func_node, "R006", lines) is False
 
 
 class TestInfoSeverityFormatting:
