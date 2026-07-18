@@ -19,6 +19,17 @@ from strict_module.checkers import (
     R011Checker,
 )
 from strict_module.config import Config
+from strict_module.constants import (
+    EXIT_CODE_HIGH_VIOLATION,
+    EXIT_CODE_LOW_VIOLATION,
+    EXIT_CODE_MEDIUM_VIOLATION,
+    EXIT_CODE_SUCCESS,
+    FORMAT_GITHUB,
+    FORMAT_JSON,
+    FORMAT_TEXT,
+    PY_EXTENSION,
+    VALID_SEVERITY_LEVELS,
+)
 from strict_module.rules import RuleSeverity, Violation
 
 
@@ -34,7 +45,7 @@ class DtoStrictLinter:
 
     def lint_file(self, file_path: Path) -> list[Violation]:
         """Lint a single Python file."""
-        if not file_path.suffix == ".py":
+        if not file_path.suffix == PY_EXTENSION:
             return []
 
         try:
@@ -98,7 +109,7 @@ class DtoStrictLinter:
         for violation in filtered:
             if violation.rule_id in self.config.severity_overrides:
                 new_severity = self.config.severity_overrides[violation.rule_id].upper()
-                if new_severity in ["HIGH", "MEDIUM", "LOW", "INFO"]:
+                if new_severity in VALID_SEVERITY_LEVELS:
                     violation = Violation(
                         rule_id=violation.rule_id,
                         severity=RuleSeverity[new_severity],
@@ -154,12 +165,12 @@ class DtoStrictLinter:
             return {}
 
     def format_violations(
-        self, violations: list[Violation], format_type: str = "text"
+        self, violations: list[Violation], format_type: str = FORMAT_TEXT
     ) -> str:
         """Format violations for output."""
-        if format_type == "github":
+        if format_type == FORMAT_GITHUB:
             return "\n".join(v.format_github() for v in violations)
-        elif format_type == "json":
+        elif format_type == FORMAT_JSON:
             return json.dumps(
                 [
                     {
@@ -180,7 +191,7 @@ class DtoStrictLinter:
     def get_exit_code(self, violations: list[Violation]) -> int:
         """Determine exit code based on violation severities."""
         if not violations:
-            return 0
+            return EXIT_CODE_SUCCESS
 
         has_high = any(v.severity == RuleSeverity.HIGH for v in violations)
         has_medium = any(v.severity == RuleSeverity.MEDIUM for v in violations)
@@ -188,12 +199,12 @@ class DtoStrictLinter:
         has_info = any(v.severity == RuleSeverity.INFO for v in violations)
 
         if has_high:
-            return 1
+            return EXIT_CODE_HIGH_VIOLATION
         elif has_medium:
-            return 2
+            return EXIT_CODE_MEDIUM_VIOLATION
         elif has_low:
-            return 3
+            return EXIT_CODE_LOW_VIOLATION
         elif has_info:
-            return 0
+            return EXIT_CODE_SUCCESS
         else:
-            return 0
+            return EXIT_CODE_SUCCESS

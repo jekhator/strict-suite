@@ -3,6 +3,12 @@
 from dataclasses import dataclass
 from enum import Enum
 
+from strict_module.constants import (
+    GITHUB_LEVEL_ERROR,
+    GITHUB_LEVEL_NOTICE,
+    GITHUB_LEVEL_WARNING,
+)
+
 
 class RuleSeverity(Enum):
     """Severity levels for violations."""
@@ -31,11 +37,11 @@ class Violation:
     def format_github(self) -> str:
         """Format as GitHub Actions annotation."""
         if self.severity == RuleSeverity.HIGH:
-            level = "error"
+            level = GITHUB_LEVEL_ERROR
         elif self.severity == RuleSeverity.INFO:
-            level = "notice"
+            level = GITHUB_LEVEL_NOTICE
         else:
-            level = "warning"
+            level = GITHUB_LEVEL_WARNING
         return f"::{level} file={self.file},line={self.line},col={self.col}::{self.message}"
 
 
