@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-07-17
+
 ### Fixed
 
 - **Severity overrides now apply correctly** - The `severity_overrides` config now actually applies severity changes to violations (was previously building overridden violations but not returning them).
