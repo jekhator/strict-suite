@@ -81,7 +81,7 @@ class AnnotationInspector:
 
     @staticmethod
     def has_noqa_comment(node: ast.AST, rule_id: str, source_lines: list[str]) -> bool:
-        """Check if node's line has a noqa comment suppressing the given rule (supports backward-compat dto-strict tags)."""
+        """Check if node's line has a noqa comment suppressing the given rule (supports backward-compat dto-strict tags and bare rule codes)."""
         if not hasattr(node, "lineno") or node.lineno is None:
             return False
         if node.lineno > len(source_lines):
@@ -131,6 +131,9 @@ class AnnotationInspector:
                 f"strict-module-{rule_id}" in tokens
                 or f"dto-strict-{rule_id}" in tokens
             ):
+                return True
+
+            if rule_id in tokens:
                 return True
 
         return False

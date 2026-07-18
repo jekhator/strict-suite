@@ -10,6 +10,7 @@ class RuleSeverity(Enum):
     HIGH = "HIGH"
     MEDIUM = "MEDIUM"
     LOW = "LOW"
+    INFO = "INFO"
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,7 +30,12 @@ class Violation:
 
     def format_github(self) -> str:
         """Format as GitHub Actions annotation."""
-        level = "error" if self.severity == RuleSeverity.HIGH else "warning"
+        if self.severity == RuleSeverity.HIGH:
+            level = "error"
+        elif self.severity == RuleSeverity.INFO:
+            level = "notice"
+        else:
+            level = "warning"
         return f"::{level} file={self.file},line={self.line},col={self.col}::{self.message}"
 
 

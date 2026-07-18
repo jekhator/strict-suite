@@ -94,10 +94,11 @@ class DtoStrictLinter:
         if self.baseline:
             filtered = self._filter_by_baseline(filtered)
 
+        overridden = []
         for violation in filtered:
             if violation.rule_id in self.config.severity_overrides:
                 new_severity = self.config.severity_overrides[violation.rule_id].upper()
-                if new_severity in ["HIGH", "MEDIUM", "LOW"]:
+                if new_severity in ["HIGH", "MEDIUM", "LOW", "INFO"]:
                     violation = Violation(
                         rule_id=violation.rule_id,
                         severity=RuleSeverity[new_severity],
@@ -106,8 +107,9 @@ class DtoStrictLinter:
                         col=violation.col,
                         message=violation.message,
                     )
+            overridden.append(violation)
 
-        return filtered
+        return overridden
 
     def _filter_by_baseline(self, violations: list[Violation]) -> list[Violation]:
         """Filter violations by baseline, removing accepted violations by file+line+rule_id."""
@@ -182,10 +184,16 @@ class DtoStrictLinter:
 
         has_high = any(v.severity == RuleSeverity.HIGH for v in violations)
         has_medium = any(v.severity == RuleSeverity.MEDIUM for v in violations)
+        has_low = any(v.severity == RuleSeverity.LOW for v in violations)
+        has_info = any(v.severity == RuleSeverity.INFO for v in violations)
 
         if has_high:
             return 1
         elif has_medium:
             return 2
-        else:
+        elif has_low:
             return 3
+        elif has_info:
+            return 0
+        else:
+            return 0

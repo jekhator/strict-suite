@@ -63,9 +63,9 @@ Configuration is loaded from `pyproject.toml` with the following sections:
 **Options:**
 - `service_paths`: Glob patterns for files to lint with strict rules (e.g., `["**/services/*.py"]`)
 - `dto_paths`: Glob patterns for files expected to contain DTOs (e.g., `["**/dtos.py"]`)
-- `exception_tags`: Recognized justification tags for module-level functions (R004 exceptions)
+- `exception_tags`: Recognized justification tags for module-level functions (R004 and R009 exceptions; e.g., `aws-boundary` exempts from module-level function rules but NOT R006)
 - `disabled_rules`: List of rule IDs to disable globally (e.g., `["R005"]`)
-- `severity_overrides`: Dict mapping rule IDs to override severity levels
+- `severity_overrides`: Dict mapping rule IDs to override severity levels (e.g., `{"R002": "HIGH", "R011": "INFO"}`)
 - `loc_cap`: LOC cap configuration (hard_cap, soft_target, baseline_file)
 
 ### Linter Rules Engine (`strict_module/linter.py`, `strict_module/rules.py`)
@@ -96,6 +96,17 @@ Enforces lines-of-code limits per file:
 - **Generate mode**: Generates baseline from current state (output to stdout)
 
 Test files are excluded from LOC cap checks.
+
+## Suppression via noqa Comments
+
+Violations can be suppressed inline using `# noqa` comments:
+
+- **Bare suppression:** `# noqa` suppresses any rule on that line.
+- **Rule-specific:** `# noqa: R006` suppresses rule R006 only.
+- **Multiple rules:** `# noqa: R006, R011` suppresses both R006 and R011.
+- **Namespaced form (ruff-friendly):** `# noqa: strict-module-R006` uses the external-rule-friendly namespace.
+
+**Ruff coexistence:** When running ruff alongside strict-suite, declare `[tool.ruff.lint] external = ["strict-module"]` to prevent ruff from warning on external rule codes.
 
 ## Backward Compatibility
 

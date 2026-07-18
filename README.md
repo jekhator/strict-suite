@@ -184,7 +184,8 @@ service_paths = ["apps/*/services/*.py", "**/services/*.py"]
 dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
     "facade - celery schedule",
-    "FRAMEWORK"
+    "FRAMEWORK",
+    "aws-boundary"
 ]
 disabled_rules = []
 severity_overrides = {}
@@ -192,11 +193,40 @@ severity_overrides = {}
 
 - **service_paths**: Glob patterns for files to lint with R001 (strict mode).
 - **dto_paths**: Glob patterns for files expected to contain DTO definitions.
-- **exception_tags**: Recognized justification tags for module-level functions (R004).
+- **exception_tags**: Recognized justification tags for module-level functions (R004 and R009). Example: `aws-boundary` exempts a function from the module-level function rules.
 - **disabled_rules**: List of rule IDs to disable (e.g., ["R005"]).
-- **severity_overrides**: Dict mapping rule IDs to override severity (e.g., {"R002": "HIGH"}).
+- **severity_overrides**: Dict mapping rule IDs to override severity (e.g., {"R002": "HIGH", "R011": "INFO"}).
 
 Backward compatibility: `[tool.strict-module]` config and `.strict-module-baseline.json` baseline files are supported.
+
+### Suppressing Violations
+
+Use `# noqa` comments to suppress violations on specific lines. Supported forms:
+
+- **Bare `# noqa`**: Suppress any rule on that line.
+  ```python
+  x = {1: 2, 3: 4, 5: 6}  # noqa
+  ```
+
+- **Rule-specific `# noqa: R006`**: Suppress a single rule by ID.
+  ```python
+  def process(x: Any) -> None:  # noqa: R006
+      pass
+  ```
+
+- **Namespaced `# noqa: strict-module-R006`**: Use the ruff-external-friendly namespaced form (recommended when running ruff alongside).
+  ```python
+  def process(x: Any) -> None:  # noqa: strict-module-R006
+      pass
+  ```
+
+- **Multiple rules `# noqa: R006, R011`**: Suppress multiple rules on one line.
+  ```python
+  def process(x: Any) -> None:  # noqa: R006, R011
+      pass
+  ```
+
+When using ruff in parallel, declare `[tool.ruff.lint] external = ["strict-module"]` in `pyproject.toml` to prevent ruff from warning on the external rule codes.
 
 ## Public API
 
