@@ -3,6 +3,14 @@
 import ast
 from typing import Optional
 
+from strict_module.constants import (
+    BARE_COLLECTION_TYPES,
+    DICT_STR_ANY_PATTERN,
+    NOQA_KEYWORD,
+    PREFIX_DTO_STRICT,
+    PREFIX_STRICT_MODULE,
+)
+
 
 class AnnotationInspector:
     """Inspect Python annotations and noqa comments."""
@@ -52,7 +60,7 @@ class AnnotationInspector:
             return False
 
         ann_lower = ann_str.lower().replace(" ", "")
-        return "dict[str,any]" in ann_lower
+        return DICT_STR_ANY_PATTERN in ann_lower
 
     @staticmethod
     def is_bare_collection(annotation: Optional[ast.expr]) -> bool:
@@ -61,7 +69,7 @@ class AnnotationInspector:
             return False
 
         if isinstance(annotation, ast.Name):
-            return annotation.id in ("dict", "list", "tuple")
+            return annotation.id in BARE_COLLECTION_TYPES
 
         return False
 
@@ -95,10 +103,10 @@ class AnnotationInspector:
         comment_idx = line.find("#")
         comment_part = line[comment_idx + 1 :].strip()
 
-        if not comment_part.startswith("noqa"):
+        if not comment_part.startswith(NOQA_KEYWORD):
             return False
 
-        noqa_part = comment_part[4:].strip()
+        noqa_part = comment_part[len(NOQA_KEYWORD) :].strip()
 
         if not noqa_part or noqa_part.startswith("#") or noqa_part.startswith("-"):
             return True
@@ -114,22 +122,22 @@ class AnnotationInspector:
                 if second and second[0] in "-–—":
                     spec = parts[0]
 
-            if spec == "strict-module":
+            if spec == PREFIX_STRICT_MODULE:
                 return True
 
-            if spec == f"strict-module-{rule_id}":
+            if spec == f"{PREFIX_STRICT_MODULE}-{rule_id}":
                 return True
 
-            if spec == "dto-strict":
+            if spec == PREFIX_DTO_STRICT:
                 return True
 
-            if spec == f"dto-strict-{rule_id}":
+            if spec == f"{PREFIX_DTO_STRICT}-{rule_id}":
                 return True
 
             tokens = [t.strip() for t in spec.split(",")]
             if (
-                f"strict-module-{rule_id}" in tokens
-                or f"dto-strict-{rule_id}" in tokens
+                f"{PREFIX_STRICT_MODULE}-{rule_id}" in tokens
+                or f"{PREFIX_DTO_STRICT}-{rule_id}" in tokens
             ):
                 return True
 

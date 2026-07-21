@@ -6,6 +6,15 @@ import sys
 from pathlib import Path
 
 from strict_module.config import Config
+from strict_module.constants import (
+    DEFAULT_LOC_CAP_BASELINE_FILE,
+    DEFAULT_LOC_HARD_CAP,
+    DEFAULT_LOC_SOFT_TARGET,
+    EXIT_CODE_HIGH_VIOLATION,
+    EXIT_CODE_SUCCESS,
+    FORMAT_TEXT,
+    VALID_FORMATS,
+)
 from strict_module.linter import DtoStrictLinter
 from strict_module.loc_cap import LocCap
 
@@ -25,16 +34,16 @@ def handle_loc_cap(args: list[str]) -> int:
     parser.add_argument(
         "--hard-cap",
         type=int,
-        help="Hard cap limit (default: 694, or from [tool.strict-module.loc-cap].hard_cap)",
+        help=f"Hard cap limit (default: {DEFAULT_LOC_HARD_CAP}, or from [tool.strict-module.loc-cap].hard_cap)",
     )
     parser.add_argument(
         "--soft-target",
         type=int,
-        help="Soft target limit (default: 500, or from [tool.strict-module.loc-cap].soft_target)",
+        help=f"Soft target limit (default: {DEFAULT_LOC_SOFT_TARGET}, or from [tool.strict-module.loc-cap].soft_target)",
     )
     parser.add_argument(
         "--baseline",
-        help="Baseline file path (default: .loc-cap-baseline.txt, or from [tool.strict-module.loc-cap].baseline_file)",
+        help=f"Baseline file path (default: {DEFAULT_LOC_CAP_BASELINE_FILE}, or from [tool.strict-module.loc-cap].baseline_file)",
     )
     parser.add_argument(
         "--generate-baseline",
@@ -81,9 +90,9 @@ def main() -> int:
     )
     parser.add_argument(
         "--format",
-        choices=["text", "github", "json"],
-        default="text",
-        help="Output format (default: text)",
+        choices=VALID_FORMATS,
+        default=FORMAT_TEXT,
+        help=f"Output format (default: {FORMAT_TEXT})",
     )
     parser.add_argument(
         "--generate-baseline",
@@ -104,7 +113,7 @@ def main() -> int:
     if args.generate_baseline:
         if not args.path:
             print("error: --generate-baseline requires PATH argument", file=sys.stderr)
-            return 1
+            return EXIT_CODE_HIGH_VIOLATION
 
         all_violations = []
         for path_str in args.path:
@@ -114,14 +123,14 @@ def main() -> int:
 
         baseline_data = linter.generate_baseline(all_violations)
         print(json.dumps(baseline_data, indent=2))
-        return 0
+        return EXIT_CODE_SUCCESS
 
     if not args.path:
         print(
             "error: PATH argument required (unless using --generate-baseline)",
             file=sys.stderr,
         )
-        return 1
+        return EXIT_CODE_HIGH_VIOLATION
 
     baseline = None
     if args.baseline:

@@ -3,6 +3,16 @@
 import os
 from pathlib import Path
 
+from strict_module.constants import (
+    DEFAULT_EXCLUDE_PATTERNS,
+    DEFAULT_LOC_CAP_BASELINE_FILE,
+    DEFAULT_LOC_HARD_CAP,
+    DEFAULT_LOC_SOFT_TARGET,
+    EXIT_CODE_HIGH_VIOLATION,
+    EXIT_CODE_SUCCESS,
+    LOC_CAP_BASELINE_LEGACY_NAMES,
+    PY_EXTENSION,
+)
 from strict_module.inspection import PathClassifier
 
 
@@ -26,9 +36,8 @@ class LocCap:
         actual_file = None
         if os.path.isfile(baseline_file):
             actual_file = baseline_file
-        elif baseline_file == ".loc-cap-baseline.txt":
-            fallback_names = [".strict-module-baseline.txt", ".dto-strict-baseline.txt"]
-            for fallback in fallback_names:
+        elif baseline_file == DEFAULT_LOC_CAP_BASELINE_FILE:
+            for fallback in LOC_CAP_BASELINE_LEGACY_NAMES:
                 if os.path.isfile(fallback):
                     actual_file = fallback
                     break
@@ -57,7 +66,7 @@ class LocCap:
     @staticmethod
     def find_python_files(
         root_path: str,
-        exclude_patterns: tuple[str, ...] = ("migrations", "management/commands"),
+        exclude_patterns: tuple[str, ...] = DEFAULT_EXCLUDE_PATTERNS,
     ) -> dict[str, int]:
         """Find all Python files under root_path, exempting test files and excluded patterns."""
         current_locs: dict[str, int] = {}
@@ -66,7 +75,7 @@ class LocCap:
         if not root.exists():
             return current_locs
 
-        for file_path in root.rglob("*.py"):
+        for file_path in root.rglob(f"*{PY_EXTENSION}"):
             file_str = str(file_path)
             if any(excl in file_str for excl in exclude_patterns):
                 continue
@@ -82,7 +91,7 @@ class LocCap:
     @staticmethod
     def generate_baseline(
         root_path: str,
-        exclude_patterns: tuple[str, ...] = ("migrations", "management/commands"),
+        exclude_patterns: tuple[str, ...] = DEFAULT_EXCLUDE_PATTERNS,
         floor: int = 0,
     ) -> str:
         """Generate baseline output in path:loc format, sorted by LOC descending."""
@@ -97,17 +106,17 @@ class LocCap:
     @staticmethod
     def run_loc_cap(
         path: str,
-        hard_cap: int = 694,
-        soft_target: int = 500,
-        baseline_file: str = ".loc-cap-baseline.txt",
-        exclude_patterns: tuple[str, ...] = ("migrations", "management/commands"),
+        hard_cap: int = DEFAULT_LOC_HARD_CAP,
+        soft_target: int = DEFAULT_LOC_SOFT_TARGET,
+        baseline_file: str = DEFAULT_LOC_CAP_BASELINE_FILE,
+        exclude_patterns: tuple[str, ...] = DEFAULT_EXCLUDE_PATTERNS,
         generate: bool = False,
     ) -> int:
         """Run LOC cap checker with hard/soft caps and baseline ratchet enforcement."""
         if generate:
             baseline_output = LocCap.generate_baseline(path, exclude_patterns, floor=0)
             print(baseline_output)
-            return 0
+            return EXIT_CODE_SUCCESS
 
         baseline = LocCap.load_baseline(baseline_file)
         current = LocCap.find_python_files(path, exclude_patterns)
@@ -168,9 +177,9 @@ class LocCap:
             print(
                 "Refactor approach: split by COHESION not line count. E.g., bedrock.py -> bedrock/{invoke,embed,dtos}.py"
             )
-            return 1
+            return EXIT_CODE_HIGH_VIOLATION
 
         print(
             f"✓ All Python files within {hard_cap} LOC cap (ratchet: baseline allows improvements)"
         )
-        return 0
+        return EXIT_CODE_SUCCESS

@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-07-17
+
+### Changed
+
+- **Constants sweep** - Extracted hardcoded magic strings and configuration defaults to `strict_module/constants.py` for maintainability and consistency (severity levels, format types, exit codes, LOC cap defaults, config section names, noqa keywords, file patterns, exclude patterns). All 284 tests pass; coverage maintained at 95%.
+
 ## [0.3.0] - 2026-07-17
 
 ### Fixed
