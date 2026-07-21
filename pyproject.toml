@@ -40,19 +40,23 @@ dto-strict = "strict_module.cli:main"
 dev = ["pytest>=8", "pytest-cov", "mypy"]
 
 [tool.hatch.build.targets.wheel]
-packages = ["strict_module"]
+packages = ["strict_checkers", "strict_config", "strict_inspection", "strict_linter", "strict_loc_cap", "strict_rules", "strict_module"]
+exclude = [
+    "*/tests",
+    "*/fixtures",
+]
 
 [tool.hatch.version]
-path = "strict_module/config/_version.py"
+path = "strict_config/_version.py"
 
 [tool.pytest.ini_options]
 minversion = "7.0"
-testpaths = ["strict_module/tests"]
+testpaths = ["strict_checkers/tests"]
 python_files = ["test_*.py"]
 addopts = "-v --tb=short"
 
 [tool.coverage.run]
-source = ["strict_module"]
+source = ["strict_checkers", "strict_config", "strict_inspection", "strict_linter", "strict_loc_cap", "strict_rules", "strict_module"]
 branch = true
 
 [tool.coverage.report]
@@ -68,20 +72,20 @@ exclude_lines = [
 
 [tool.ruff]
 target-version = "py311"
-extend-exclude = ["strict_module/tests/fixtures/bad/"]
+extend-exclude = ["strict_checkers/tests/fixtures/bad/"]
 
 [tool.ruff.lint]
 extend-select = ["I", "TID252", "PLC0414", "UP035"]
 
 [tool.ruff.lint.isort]
 combine-as-imports = true
-known-first-party = ["strict_module"]
+known-first-party = ["strict_checkers", "strict_config", "strict_inspection", "strict_linter", "strict_loc_cap", "strict_rules", "strict_module"]
 
 [tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
 [tool.strict-module]
-paths = ["strict_module/"]
+paths = ["strict_checkers/", "strict_config/", "strict_inspection/", "strict_linter/", "strict_loc_cap/", "strict_rules/", "strict_module/"]
 service_paths = ["apps/*/services/*.py", "**/services/*.py"]
 dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
@@ -90,7 +94,7 @@ exception_tags = [
 ]
 disabled_rules = []
 severity_overrides = {}
-# Note: strict_module/tests/fixtures/bad/*.py intentionally contain violations
+# Note: strict_checkers/tests/fixtures/bad/*.py intentionally contain violations
 # for use as test corpus. These files are not linted by CI; see setup.cfg.
 
 [tool.strict-module.loc-cap]
