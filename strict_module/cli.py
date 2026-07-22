@@ -5,8 +5,8 @@ import json
 import sys
 from pathlib import Path
 
-from strict_module.config import Config
-from strict_module.constants import (
+from strict_config._config import Config
+from strict_config.constants import (
     DEFAULT_LOC_CAP_BASELINE_FILE,
     DEFAULT_LOC_HARD_CAP,
     DEFAULT_LOC_SOFT_TARGET,
@@ -15,8 +15,8 @@ from strict_module.constants import (
     FORMAT_TEXT,
     VALID_FORMATS,
 )
-from strict_module.linter import DtoStrictLinter
-from strict_module.loc_cap import LocCap
+from strict_linter import DtoStrictLinter
+from strict_loc_cap import LocCap
 
 
 def handle_loc_cap(args: list[str]) -> int:

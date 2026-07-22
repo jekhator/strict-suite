@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-21
+
+### Changed
+
+- **Full-split wheel roots** - Restructured strict-suite from monolithic `strict_module` into 7 separate wheel roots (strict_checkers, strict_config, strict_inspection, strict_linter, strict_loc_cap, strict_rules) with acyclic dependency layering. Preserves git history via git mv; public API (strict_module shim) unchanged. Enables independent versioning and subset imports while maintaining backward compatibility.
+
 ## [0.3.1] - 2026-07-17
 
 ### Changed
