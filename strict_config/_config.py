@@ -1,6 +1,10 @@
 """Configuration loading for strict-module (formerly dto-strict)."""
 
-import tomllib
+try:
+    import tomllib
+except ModuleNotFoundError:
+    import tomli as tomllib
+
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Self
