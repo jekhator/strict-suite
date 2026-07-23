@@ -19,35 +19,15 @@ class R015Checker(BaseChecker):
     """
 
     def visit_Try(self, node: ast.Try) -> None:
-        """Visit try statements to check blank-line rhythm."""
+        """Visit try statements to check blank-line rhythm.
+
+        R015 is reserved for P16 blank-line rhythm enforcement.
+        Implementation deferred: requires semantic understanding of operation
+        intent (setup/execution/capture/return) which is difficult to infer
+        from AST. Will be implemented once P16 calibration boundaries arrive.
+        """
         if self.is_suppressed(node, "R015"):
             self.generic_visit(node)
             return
-
-        if not node.handlers:
-            self.generic_visit(node)
-            return
-
-        try_stmt_count = len(node.body)
-
-        for handler in node.handlers:
-            if self.is_suppressed(handler, "R015"):
-                continue
-
-            handler_stmt_count = len(handler.body)
-
-            difference = abs(try_stmt_count - handler_stmt_count)
-
-            if difference > 3:
-                self.violations.append(
-                    Violation(
-                        rule_id="R015",
-                        severity=RuleSeverity.INFO,
-                        file=str(self.file_path),
-                        line=handler.lineno,
-                        col=0,
-                        message=f"Except block has {handler_stmt_count} statements vs try's {try_stmt_count}. Mirror try's internal structure.",
-                    )
-                )
 
         self.generic_visit(node)
