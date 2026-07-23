@@ -226,6 +226,13 @@ Use `# noqa` comments to suppress violations on specific lines. Supported forms:
       pass
   ```
 
+**Special note on R014 (kwarg grouping):** R014 findings report at the offending kwarg line, but noqa suppression only works on the line where the call begins. Place the noqa comment on the CALL line, not the kwarg line:
+```python
+self.log_event(  # noqa: R014
+    const.LOG_EVENT_SUCCESS, a=1, b=2, c=3, d=4,
+)
+```
+
 When using ruff in parallel, declare `[tool.ruff.lint] external = ["strict-module"]` in `pyproject.toml` to prevent ruff from warning on the external rule codes.
 
 ## Public API
