@@ -188,6 +188,48 @@ func(
 
         assert len(checker.violations) == 1
 
+    def test_r012_method_call_short(self):
+        """Method calls under 80 chars should be flagged."""
+        source = """
+obj.method(
+    arg
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_chained_call(self):
+        """Chained method calls under 80 chars should be flagged."""
+        source = """
+obj.method1().method2(
+    x
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_with_complex_arg(self):
+        """Calls with complex arguments under 80 chars should be flagged."""
+        source = """
+process(
+    compute()
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
 
 class TestR013SignatureGrouping:
     """Test R013: reserved stub for signature grouping."""
@@ -280,3 +322,55 @@ except Exception:
         checker.visit(tree)
 
         assert len(checker.violations) == 0
+
+
+class TestRuleRegistry:
+    """Test RuleRegistry for R012-R015 rules."""
+
+    def test_registry_has_r012(self):
+        """R012 is registered in RuleRegistry."""
+        from strict_rules import RuleRegistry
+
+        rule = RuleRegistry.get_rule("R012")
+        assert rule is not None
+        assert rule.rule_id == "R012"
+        assert "single-line" in rule.message.lower()
+
+    def test_registry_has_r013(self):
+        """R013 is registered in RuleRegistry."""
+        from strict_rules import RuleRegistry
+
+        rule = RuleRegistry.get_rule("R013")
+        assert rule is not None
+        assert rule.rule_id == "R013"
+
+    def test_registry_has_r014(self):
+        """R014 is registered in RuleRegistry."""
+        from strict_rules import RuleRegistry
+
+        rule = RuleRegistry.get_rule("R014")
+        assert rule is not None
+        assert rule.rule_id == "R014"
+
+    def test_registry_has_r015(self):
+        """R015 is registered in RuleRegistry."""
+        from strict_rules import RuleRegistry
+
+        rule = RuleRegistry.get_rule("R015")
+        assert rule is not None
+        assert rule.rule_id == "R015"
+
+    def test_registry_missing_rule_returns_none(self):
+        """RuleRegistry returns None for missing rules."""
+        from strict_rules import RuleRegistry
+
+        rule = RuleRegistry.get_rule("R999")
+        assert rule is None
+
+    def test_all_new_rules_info_severity(self):
+        """All R012-R015 rules are INFO severity (non-blocking)."""
+        from strict_rules import RuleRegistry, RuleSeverity
+
+        for rule_id in ["R012", "R013", "R014", "R015"]:
+            rule = RuleRegistry.get_rule(rule_id)
+            assert rule.severity == RuleSeverity.INFO
