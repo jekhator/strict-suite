@@ -47,7 +47,7 @@ class R012Checker(BaseChecker):
                         file=str(self.file_path),
                         line=node.lineno,
                         col=node.col_offset,
-                        message=f"Single-argument call unnecessarily split across lines. Keep on one line.",
+                        message="Single-argument call unnecessarily split across lines. Keep on one line.",
                     )
                 )
         except Exception:

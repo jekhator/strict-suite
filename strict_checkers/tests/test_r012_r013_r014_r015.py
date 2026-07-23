@@ -330,15 +330,55 @@ func(
 
 
 class TestR013SignatureGrouping:
-    """Test R013: reserved stub for signature grouping."""
+    """Test R013: handler signature grouping (2-5 params per line)."""
 
-    def test_r013_disabled_no_violations(self):
-        """R013 is reserved/disabled and does not flag violations."""
+    def test_r013_short_signature_allowed(self):
+        """Signatures with <=3 params are not checked."""
         source = """
-def func(
-    self, x: int,
-    y: int,
-    z: int,
+def log_something(self, x: int, y: int) -> None:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r013_handler_method_single_line(self):
+        """Handler methods on single line are not checked."""
+        source = """
+def log_something(self, a: int, b: int, c: int, d: int, e: int, f: int) -> None: pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r013_handler_method_6plus_params_per_line(self):
+        """Handler method with 6+ params per line should flag."""
+        source = """
+def log_something(
+    self, a: int, b: int, c: int, d: int, e: int, f: int,
+) -> None:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+        assert checker.violations[0].rule_id == "R013"
+
+    def test_r013_handler_method_2_5_params_per_line(self):
+        """Handler method with 2-5 params per line is allowed."""
+        source = """
+def log_something(
+    self, a: int, b: int, c: int,
+    d: int, e: int,
 ) -> None:
     pass
 """
@@ -349,16 +389,90 @@ def func(
 
         assert len(checker.violations) == 0
 
+    def test_r013_classmethod_never_flagged(self):
+        """Factory classmethods are never flagged."""
+        source = """
+@classmethod
+def from_dict(cls, a: int, b: int, c: int, d: int, e: int, f: int) -> Self:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r013_non_handler_method_not_checked(self):
+        """Non-handler methods are not checked for signature grouping."""
+        source = """
+def process_data(
+    self, a: int, b: int, c: int, d: int, e: int, f: int,
+) -> None:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r013_record_handler_method(self):
+        """Record handler methods follow the same rules."""
+        source = """
+def record_event(
+    self, a: int, b: int, c: int, d: int, e: int, f: int,
+) -> None:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+        assert checker.violations[0].rule_id == "R013"
+
+    def test_r013_wrap_handler_method(self):
+        """Wrap handler methods follow the same rules."""
+        source = """
+def wrap_call(
+    self, a: int, b: int, c: int, d: int, e: int, f: int,
+) -> None:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+        assert checker.violations[0].rule_id == "R013"
+
 
 class TestR014KwargCallGrouping:
-    """Test R014: reserved stub for kwarg call grouping."""
+    """Test R014: kwarg call grouping - flag only if 4+ kwargs per line."""
 
-    def test_r014_disabled_no_violations(self):
-        """R014 is reserved/disabled and does not flag violations."""
+    def test_r014_line_with_4_plus_kwargs(self):
+        """Line with 4+ kwargs should flag."""
         source = """
-func(
-    x=1,
-    y=2,
+self.logger.log(
+    a=1, b=2, c=3, d=4,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r014_line_with_3_kwargs_allowed(self):
+        """Line with 3 kwargs is allowed."""
+        source = """
+self.logger.log(
+    a=1, b=2, c=3,
 )
 """
         tree = ast.parse(source)
@@ -370,13 +484,14 @@ func(
 
 
 class TestR015WrapPathSeparation:
-    """Test R015: try/except blocks should mirror blank-line patterns."""
+    """Test R015: reserved/disabled for try/except blank-line rhythm."""
 
-    def test_matching_statement_counts(self):
-        """Try/except with matching statement counts should not flag."""
+    def test_r015_reserved_no_violations(self):
+        """R015 is reserved/disabled and does not flag violations."""
         source = """
 try:
     x = foo()
+
     y = bar()
 except Exception:
     x = foo_fail()
@@ -389,34 +504,67 @@ except Exception:
 
         assert len(checker.violations) == 0
 
-    def test_different_statement_counts_allowed(self):
-        """Try/except with different statement counts (e.g., assignment in try) allowed."""
+
+class TestR013EdgeCases:
+    """Edge cases for R013 signature grouping."""
+
+    def test_r013_async_handler_method(self):
+        """Async handler methods follow the same rules."""
         source = """
-try:
-    result = call()
-    process(result)
-except Exception:
-    process(None)
+async def log_something(
+    self, a: int, b: int, c: int, d: int, e: int, f: int,
+) -> None:
+    pass
 """
         tree = ast.parse(source)
         config = Config()
-        checker = R015Checker(Path("test.py"), source, config)
+        checker = R013Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r013_handler_with_varargs(self):
+        """Handler methods with *args and **kwargs."""
+        source = """
+def log_something(
+    self, a: int, b: int, c: int, d: int, e: int, *args, **kwargs
+) -> None:
+    pass
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R013Checker(Path("test.py"), source, config)
         checker.visit(tree)
 
         assert len(checker.violations) == 0
 
-    def test_r015_noqa_suppression(self):
-        """R015 violations can be suppressed with noqa."""
-        source = """
-try:  # noqa: R015
-    x = foo()
-    y = bar()
-except Exception:
-    x = foo()
+
+class TestR014EdgeCases:
+    """Edge cases for R014 kwarg call grouping."""
+
+    def test_r014_single_line_call(self):
+        """Single-line calls are not checked."""
+        source = """self.logger.log(a=1, b=2, c=3, d=4, e=5)
 """
         tree = ast.parse(source)
         config = Config()
-        checker = R015Checker(Path("test.py"), source, config)
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r014_no_kwargs(self):
+        """Calls without kwargs are not checked."""
+        source = """
+func(
+    a,
+    b,
+    c,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
         checker.visit(tree)
 
         assert len(checker.violations) == 0

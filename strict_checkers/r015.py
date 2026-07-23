@@ -3,29 +3,27 @@
 import ast
 
 from strict_checkers.base import BaseChecker
-from strict_rules import RuleSeverity, Violation
 
 
 class R015Checker(BaseChecker):
-    """Check for wrap-path blank-line rhythm: try and except legs mirror each other.
+    """Check wrap-path blank-line rhythm per P16 calibration.
 
-    The canonical rule from P16 is complex and applies to wrapped operations.
-    This simplified checker currently does NOT flag violations, as the rule
-    requires understanding operation intent (setup/execution/capture/return)
-    which is difficult to infer from AST alone.
+    Reserved: Implementation deferred.
 
-    Future work: expand to detect clearly asymmetric blank-line patterns
-    in wrap function pairs (after collecting concrete test cases).
+    Per 2026-07-23 calibration:
+    - Try/except legs must have identical blank-line structure
+    - Timing-capture statements (perf_counter + latency calc) must be contiguous
+    - Blank lines separate operation/timing/logging/return-raise groups
+
+    NOTE: Calibration specification flags violations in canonical gold files
+    (backend/apps/cloud/adapters/logging/comprehend.py). Indicates discrepancy
+    between mechanical invariants and actual code style. Requires recalibration
+    or clarification of "blank-line parity" vs "semantic grouping" intent before
+    implementation can proceed.
     """
 
     def visit_Try(self, node: ast.Try) -> None:
-        """Visit try statements to check blank-line rhythm.
-
-        R015 is reserved for P16 blank-line rhythm enforcement.
-        Implementation deferred: requires semantic understanding of operation
-        intent (setup/execution/capture/return) which is difficult to infer
-        from AST. Will be implemented once P16 calibration boundaries arrive.
-        """
+        """Visit try statements - deferred pending recalibration."""
         if self.is_suppressed(node, "R015"):
             self.generic_visit(node)
             return
