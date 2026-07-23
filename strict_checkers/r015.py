@@ -7,18 +7,18 @@ from strict_rules import RuleSeverity, Violation
 
 
 class R015Checker(BaseChecker):
-    """Check wrap-path blank-line rhythm per P16 calibration (authority: formatting-rule-boundaries.md).
+    """Check wrap-path blank-line rhythm per P16 final calibration.
 
     Applies ONLY to wrap-function try/except constructs:
     - Nested function inside a wrapper class/method
     - Try/except block with re-raise in except
-    - NOT handler if/else constructs (e.g., comprehend_client.py log_detect_phi)
+    - NOT handler if/else constructs
 
-    Per-leg structure (NOT cross-leg parity):
-    - Statement groups separated by exactly one blank
-    - Timing-capture pair (perf_counter + latency calc) contiguous (zero internal blanks)
-    - Terminal return/raise preceded by exactly one blank
-    - Legs may be asymmetric in blank-line count
+    Checks exactly two things:
+    (a) Statement groups within a leg are separated by EXACTLY one blank line
+        - Flag 2+ consecutive blanks inside a leg
+    (b) The timing-capture pair (perf_counter assignment + round latency line)
+        is contiguous - flag any blank inside it
     """
 
     def visit_Try(self, node: ast.Try) -> None:
@@ -31,18 +31,13 @@ class R015Checker(BaseChecker):
             self.generic_visit(node)
             return
 
-        # NOTE: R015 implementation deferred pending recalibration
-        # Current interpretation flags valid gold patterns; requires coordinator clarification
-        # on the exact blank-line-precedence semantics for multi-group legs
-        # Check if this is a wrap-function try/except (nested function context)
-        # if self._is_wrap_function_try(node):
-        #     self._check_wrap_function_structure(node)
+        if self._is_wrap_function_try(node):
+            self._check_wrap_function_structure(node)
 
         self.generic_visit(node)
 
     def _is_wrap_function_try(self, node: ast.Try) -> bool:
         """Check if try block is within a wrap function (nested inside wrapper class method)."""
-        # Conservative check: must have except with raise
         if not node.handlers:
             return False
 
@@ -65,40 +60,42 @@ class R015Checker(BaseChecker):
     def _check_leg_structure(
         self, statements: list[ast.stmt], start_line: int | None, leg_type: str
     ) -> None:
-        """Check per-leg: timing-capture contiguity and terminal return/raise preceded by blank."""
+        """Check per-leg structure: group separation and timing-capture contiguity."""
         if not statements or start_line is None:
             return
 
         # Check for timing-capture contiguity (no blank within timing pair)
         self._check_timing_capture_contiguity(statements)
 
-        # Check terminal return/raise preceded by blank
-        # ONLY if leg has 2+ blank-separated groups BEFORE terminal; single contiguous group is conformant
-        if statements:
-            last_stmt = statements[-1]
-            if isinstance(last_stmt, (ast.Return, ast.Raise)):
-                # Count internal blank separations BEFORE terminal statement (in pre-terminal statements only)
-                internal_blanks_before_terminal = 0
-                for i in range(len(statements) - 2):  # Only check up to second-to-last statement
-                    if (statements[i].end_lineno and statements[i + 1].lineno
-                            and statements[i + 1].lineno - statements[i].end_lineno > 1):
-                        internal_blanks_before_terminal += 1
+        # Check for statement group separation: exactly one blank between groups
+        self._check_group_separation(statements, leg_type)
 
-                # Terminal return/raise requires blank ONLY if pre-terminal statements have 2+ groups (1+ internal blank)
-                if internal_blanks_before_terminal > 0 and len(statements) > 1:
-                    prev_stmt = statements[-2]
-                    if (prev_stmt.end_lineno and last_stmt.lineno
-                            and last_stmt.lineno - prev_stmt.end_lineno <= 1):
-                        self.violations.append(
-                            Violation(
-                                rule_id="R015",
-                                severity=RuleSeverity.INFO,
-                                file=str(self.file_path),
-                                line=last_stmt.lineno or start_line,
-                                col=0,
-                                message=f"{leg_type.capitalize()} leg: terminal {last_stmt.__class__.__name__.lower()} must be preceded by a blank line.",
-                            )
-                        )
+    def _check_group_separation(
+        self, statements: list[ast.stmt], leg_type: str
+    ) -> None:
+        """Check that statement groups are separated by EXACTLY one blank line."""
+        for i in range(len(statements) - 1):
+            curr = statements[i]
+            next_stmt = statements[i + 1]
+
+            if curr.end_lineno is None or next_stmt.lineno is None:
+                continue
+
+            gap = next_stmt.lineno - curr.end_lineno
+            # gap == 1: no blank (statements are contiguous)
+            # gap == 2: one blank (correct separation)
+            # gap > 2: multiple blanks (incorrect)
+            if gap > 2:
+                self.violations.append(
+                    Violation(
+                        rule_id="R015",
+                        severity=RuleSeverity.INFO,
+                        file=str(self.file_path),
+                        line=next_stmt.lineno,
+                        col=0,
+                        message=f"{leg_type.capitalize()} leg: statement groups must be separated by EXACTLY one blank line.",
+                    )
+                )
 
     def _check_timing_capture_contiguity(self, statements: list[ast.stmt]) -> None:
         """Check that timing-capture pair (perf_counter + latency calculation) has zero internal blanks."""
@@ -108,18 +105,19 @@ class R015Checker(BaseChecker):
 
             if self._is_timing_start(curr) and self._is_timing_end(next_stmt):
                 # Timing pair found - check for gap
-                if (curr.end_lineno and next_stmt.lineno
-                        and next_stmt.lineno - curr.end_lineno > 1):
-                    self.violations.append(
-                        Violation(
-                            rule_id="R015",
-                            severity=RuleSeverity.INFO,
-                            file=str(self.file_path),
-                            line=next_stmt.lineno or 0,
-                            col=0,
-                            message="Timing-capture pair (perf_counter + latency calc) must be contiguous (no blank lines within).",
+                if curr.end_lineno is not None and next_stmt.lineno is not None:
+                    gap = next_stmt.lineno - curr.end_lineno
+                    if gap > 1:
+                        self.violations.append(
+                            Violation(
+                                rule_id="R015",
+                                severity=RuleSeverity.INFO,
+                                file=str(self.file_path),
+                                line=next_stmt.lineno,
+                                col=0,
+                                message="Timing-capture pair (perf_counter + latency calc) must be contiguous (no blank lines within).",
+                            )
                         )
-                    )
 
     def _is_timing_start(self, stmt: ast.stmt) -> bool:
         """Check if statement is a timing-start (perf_counter call)."""
