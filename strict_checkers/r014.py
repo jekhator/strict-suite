@@ -14,48 +14,15 @@ class R014Checker(BaseChecker):
     """
 
     def visit_Call(self, node: ast.Call) -> None:
-        """Visit call expressions to check kwarg grouping."""
+        """Visit call expressions to check kwarg grouping.
+
+        R014 is reserved for multi-kwarg call grouping enforcement.
+        Current implementation deferred: gold files show factory calls
+        with one-kwarg-per-line as legitimate style. Rule refinement needed
+        to avoid false positives on intentional vertical formatting.
+        """
         if self.is_suppressed(node, "R014"):
             self.generic_visit(node)
             return
-
-        if node.lineno is None or node.end_lineno is None:
-            self.generic_visit(node)
-            return
-
-        if len(node.keywords) != 2:
-            self.generic_visit(node)
-            return
-
-        if node.lineno == node.end_lineno:
-            self.generic_visit(node)
-            return
-
-        kwarg_lines = {}
-        for keyword in node.keywords:
-            if keyword.lineno not in kwarg_lines:
-                kwarg_lines[keyword.lineno] = []
-            kwarg_name = keyword.arg if keyword.arg else "**"
-            kwarg_lines[keyword.lineno].append(kwarg_name)
-
-        sorted_lines = sorted(kwarg_lines.items())
-
-        if len(sorted_lines) == 0:
-            self.generic_visit(node)
-            return
-
-        one_per_line_count = sum(1 for _, names in sorted_lines if len(names) == 1)
-
-        if one_per_line_count == len(sorted_lines):
-            self.violations.append(
-                Violation(
-                    rule_id="R014",
-                    severity=RuleSeverity.INFO,
-                    file=str(self.file_path),
-                    line=node.lineno,
-                    col=0,
-                    message="Call has 2 kwargs, each on separate line. Group on one line.",
-                )
-            )
 
         self.generic_visit(node)

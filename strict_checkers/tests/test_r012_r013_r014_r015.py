@@ -190,10 +190,10 @@ func(
 
 
 class TestR013SignatureGrouping:
-    """Test R013: multi-parameter signatures should group 2-3 per line (currently disabled)."""
+    """Test R013: reserved stub for signature grouping."""
 
-    def test_r013_all_patterns_pass(self):
-        """R013 is currently disabled and does not flag any violations."""
+    def test_r013_disabled_no_violations(self):
+        """R013 is reserved/disabled and does not flag violations."""
         source = """
 def func(
     self, x: int,
@@ -211,10 +211,10 @@ def func(
 
 
 class TestR014KwargCallGrouping:
-    """Test R014: multi-kwarg calls should group 2-3 per line (currently disabled)."""
+    """Test R014: reserved stub for kwarg call grouping."""
 
-    def test_r014_all_patterns_pass(self):
-        """R014 is currently disabled and does not flag any violations."""
+    def test_r014_disabled_no_violations(self):
+        """R014 is reserved/disabled and does not flag violations."""
         source = """
 func(
     x=1,
