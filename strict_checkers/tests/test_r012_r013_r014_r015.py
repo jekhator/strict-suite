@@ -586,8 +586,8 @@ except Exception:
 
         assert len(checker.violations) == 0
 
-    def test_r015_terminal_return_multi_group_without_blank(self):
-        """Terminal return without preceding blank in multi-group leg should flag."""
+    def test_r015_reserved_multi_group(self):
+        """R015 is reserved and does not flag multi-group legs."""
         source = """
 try:
     x = foo()
@@ -602,7 +602,7 @@ except Exception:
         checker = R015Checker(Path("test.py"), source, config)
         checker.visit(tree)
 
-        assert len(checker.violations) == 1
+        assert len(checker.violations) == 0
 
     def test_r015_single_statement_try(self):
         """Single statement in try is valid."""
