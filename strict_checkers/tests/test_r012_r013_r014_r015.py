@@ -452,27 +452,14 @@ def wrap_call(
 
 
 class TestR014KwargCallGrouping:
-    """Test R014: kwarg call grouping - flag only if 4+ kwargs per line."""
+    """Test R014: kwarg call grouping per P15 full specification."""
 
-    def test_r014_line_with_4_plus_kwargs(self):
-        """Line with 4+ kwargs should flag."""
+    def test_r014_log_event_4_plus_kwargs_pack_2_3(self):
+        """Log event call >=4 kwargs must pack 2-3 per line."""
         source = """
-self.logger.log(
-    a=1, b=2, c=3, d=4,
-)
-"""
-        tree = ast.parse(source)
-        config = Config()
-        checker = R014Checker(Path("test.py"), source, config)
-        checker.visit(tree)
-
-        assert len(checker.violations) == 1
-
-    def test_r014_line_with_3_kwargs_allowed(self):
-        """Line with 3 kwargs is allowed."""
-        source = """
-self.logger.log(
-    a=1, b=2, c=3,
+self.log_info(
+    const.LOG_EVENT_INVOKE_SUCCESS, a=1, b=2,
+    c=3, d=4,
 )
 """
         tree = ast.parse(source)
@@ -482,20 +469,149 @@ self.logger.log(
 
         assert len(checker.violations) == 0
 
+    def test_r014_log_event_4_plus_kwargs_one_per_line_flag(self):
+        """Log event call >=4 kwargs one-per-line should flag."""
+        source = """
+self.log_info(
+    const.LOG_EVENT_INVOKE_SUCCESS,
+    a=1,
+    b=2,
+    c=3,
+    d=4,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 4
+
+    def test_r014_log_event_2_3_kwargs_full_explode(self):
+        """Log event call 2-3 kwargs must FULL-EXPLODE one-per-line."""
+        source = """
+self.log_info(
+    const.LOG_EVENT_INVOKE_SUCCESS,
+    a=1,
+    b=2,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r014_log_event_2_3_kwargs_packed_flag(self):
+        """Log event call 2-3 kwargs packed (not full-explode) should flag."""
+        source = """
+self.log_info(
+    const.LOG_EVENT_INVOKE_SUCCESS, a=1, b=2,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
 
 class TestR015WrapPathSeparation:
-    """Test R015: reserved/disabled for try/except blank-line rhythm."""
+    """Test R015: wrap-path blank-line rhythm."""
 
-    def test_r015_reserved_no_violations(self):
-        """R015 is reserved/disabled and does not flag violations."""
+    def test_r015_timing_capture_contiguous(self):
+        """Timing-capture pair (perf_counter + round) must be contiguous."""
+        source = """
+try:
+    start = time.perf_counter()
+    latency = round((start - end) * 1000, 1)
+
+    return result
+except Exception:
+    raise
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R015Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r015_timing_capture_with_gap(self):
+        """Timing-capture pair with gap should flag."""
+        source = """
+try:
+    start = time.perf_counter()
+    x = foo()
+    latency = round((start - end) * 1000, 1)
+    return result
+except Exception:
+    raise
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R015Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r015_terminal_return_with_blank(self):
+        """Terminal return preceded by blank should pass."""
+        source = """
+try:
+    result = foo()
+
+    return result
+except Exception:
+    raise
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R015Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r015_terminal_return_without_blank(self):
+        """Terminal return not preceded by blank should flag."""
+        source = """
+try:
+    result = foo()
+    return result
+except Exception:
+    raise
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R015Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r015_single_statement_try(self):
+        """Single statement in try is valid."""
+        source = """
+try:
+    return foo()
+except Exception:
+    raise
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R015Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r015_no_handlers(self):
+        """Try without except is not a wrap function."""
         source = """
 try:
     x = foo()
-
-    y = bar()
-except Exception:
-    x = foo_fail()
-    y = bar_fail()
+finally:
+    cleanup()
 """
         tree = ast.parse(source)
         config = Config()
@@ -560,6 +676,39 @@ func(
     a,
     b,
     c,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r014_non_log_event_call_not_checked(self):
+        """Non-log-event calls (no LOG_EVENT constant) are not checked."""
+        source = """
+self.some_method(
+    a=1,
+    b=2,
+    c=3,
+    d=4,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r014_log_with_name_constant(self):
+        """Log call with LOG_EVENT as Name (not Attribute) is detected."""
+        source = """
+self.log_info(
+    LOG_EVENT_SUCCESS,
+    a=1,
+    b=2,
 )
 """
         tree = ast.parse(source)
