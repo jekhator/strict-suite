@@ -17,6 +17,10 @@ from strict_checkers import (
     R009Checker,
     R010Checker,
     R011Checker,
+    R012Checker,
+    R013Checker,
+    R014Checker,
+    R015Checker,
 )
 from strict_config._config import Config
 from strict_config.constants import (
@@ -72,6 +76,10 @@ class DtoStrictLinter:
             R009Checker,
             R010Checker,
             R011Checker,
+            R012Checker,
+            R013Checker,
+            R014Checker,
+            R015Checker,
         ]:
             checker = checker_cls(file_path, source, self.config)
             checker.visit(tree)
