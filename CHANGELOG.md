@@ -4,6 +4,20 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-22
+
+### Added
+
+- **Four formatting dialect rules (R012-R015)** - New INFO-tier rules enforce formatting patterns from qhcg canonical standard:
+  - **R012 (fits-one-line-stays)** - Flags single-argument calls under 80 chars split unnecessarily across lines.
+  - **R013 (signature grouping)** - Reserved for multi-parameter signature grouping enforcement (stub).
+  - **R014 (kwarg-call grouping)** - Reserved for multi-kwarg call grouping enforcement (stub).
+  - **R015 (wrap-path blank-line rhythm)** - Reserved for try/except blank-line rhythm enforcement (stub).
+
+### Changed
+
+- **INFO severity as non-blocking tier** - R012-R015 implemented at INFO severity; violations report but do not fail CI (exit code 0). Suppressible via `# noqa: R01X`.
+
 ## [0.4.0] - 2026-07-21
 
 ### Changed
