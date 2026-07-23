@@ -230,6 +230,104 @@ process(
 
         assert len(checker.violations) == 1
 
+    def test_r012_attribute_access_call(self):
+        """Attribute access calls under 80 chars should be flagged."""
+        source = """
+obj.attr(
+    val
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_subscript_call(self):
+        """Subscript calls under 80 chars should be flagged."""
+        source = """
+d["key"](
+    x
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_call_with_named_arg_short(self):
+        """Calls with named args under 80 chars should be flagged."""
+        source = """
+build(
+    key=val
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_call_with_attribute_arg(self):
+        """Calls with attribute access args under 80 chars should be flagged."""
+        source = """
+fn(
+    obj.attr
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_call_with_list_arg(self):
+        """Calls with list literal args under 80 chars should be flagged."""
+        source = """
+proc(
+    [1, 2]
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_call_with_dict_arg(self):
+        """Calls with dict literal args under 80 chars should be flagged."""
+        source = """
+run(
+    {x: y}
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
+    def test_r012_call_with_tuple_arg(self):
+        """Calls with tuple literal args under 80 chars should be flagged."""
+        source = """
+func(
+    (a, b)
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R012Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
+
 
 class TestR013SignatureGrouping:
     """Test R013: reserved stub for signature grouping."""
@@ -333,8 +431,8 @@ class TestRuleRegistry:
 
         rule = RuleRegistry.get_rule("R012")
         assert rule is not None
-        assert rule.rule_id == "R012"
-        assert "single-line" in rule.message.lower()
+        assert rule.id == "R012"
+        assert "100-char" in rule.description.lower()
 
     def test_registry_has_r013(self):
         """R013 is registered in RuleRegistry."""
@@ -342,7 +440,7 @@ class TestRuleRegistry:
 
         rule = RuleRegistry.get_rule("R013")
         assert rule is not None
-        assert rule.rule_id == "R013"
+        assert rule.id == "R013"
 
     def test_registry_has_r014(self):
         """R014 is registered in RuleRegistry."""
@@ -350,7 +448,7 @@ class TestRuleRegistry:
 
         rule = RuleRegistry.get_rule("R014")
         assert rule is not None
-        assert rule.rule_id == "R014"
+        assert rule.id == "R014"
 
     def test_registry_has_r015(self):
         """R015 is registered in RuleRegistry."""
@@ -358,7 +456,7 @@ class TestRuleRegistry:
 
         rule = RuleRegistry.get_rule("R015")
         assert rule is not None
-        assert rule.rule_id == "R015"
+        assert rule.id == "R015"
 
     def test_registry_missing_rule_returns_none(self):
         """RuleRegistry returns None for missing rules."""
