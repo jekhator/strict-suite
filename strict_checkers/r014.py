@@ -92,37 +92,22 @@ class R014Checker(BaseChecker):
     def _check_log_event_pack_2_3(
         self, sorted_lines: list[tuple[int, list[str]]], first_kwarg_line: int | None, call_line: int | None
     ) -> None:
-        """Check >=4 kwargs: must pack 2-3 per line (first line may carry constant)."""
-        for line_idx, (line_num, kwarg_names) in enumerate(sorted_lines):
+        """Check >=4 kwargs: flag ONLY over-packing (>3 per line). One-per-line never flagged."""
+        for line_num, kwarg_names in sorted_lines:
             count = len(kwarg_names)
-            is_first_line = line_num == first_kwarg_line and call_line is not None and line_num - call_line < 2
-
-            # First line: may have 1-2 kwargs (if it carries the constant)
-            # Subsequent lines: must have 2-3 kwargs
-            if is_first_line:
-                if count > 2:
-                    self.violations.append(
-                        Violation(
-                            rule_id="R014",
-                            severity=RuleSeverity.INFO,
-                            file=str(self.file_path),
-                            line=line_num,
-                            col=0,
-                            message=f"Log event call >=4 kwargs: first line may have 1-2 kwargs (found {count}).",
-                        )
+            # Only flag if line has MORE than 3 kwargs (over-packing)
+            # One-per-line is never flagged for any call, any size
+            if count > 3:
+                self.violations.append(
+                    Violation(
+                        rule_id="R014",
+                        severity=RuleSeverity.INFO,
+                        file=str(self.file_path),
+                        line=line_num,
+                        col=0,
+                        message=f"Log event call: pack maximum 3 kwargs per line (found {count}).",
                     )
-            else:
-                if count == 1 or count > 3:
-                    self.violations.append(
-                        Violation(
-                            rule_id="R014",
-                            severity=RuleSeverity.INFO,
-                            file=str(self.file_path),
-                            line=line_num,
-                            col=0,
-                            message=f"Log event call >=4 kwargs: pack 2-3 per line (found {count}).",
-                        )
-                    )
+                )
 
     def _check_log_event_full_explode(
         self, sorted_lines: list[tuple[int, list[str]]], node: ast.Call

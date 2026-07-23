@@ -70,12 +70,19 @@ class R015Checker(BaseChecker):
         self._check_timing_capture_contiguity(statements)
 
         # Check terminal return/raise preceded by blank
+        # ONLY if leg has 2+ blank-separated groups; single contiguous group is conformant
         if statements:
             last_stmt = statements[-1]
             if isinstance(last_stmt, (ast.Return, ast.Raise)):
-                # Terminal return/raise should be preceded by blank
-                # (i.e., previous statement should have gap > 1 to this statement)
-                if len(statements) > 1:
+                # Count internal blank separations (gaps > 1 between consecutive statements)
+                internal_blanks = 0
+                for i in range(len(statements) - 1):
+                    if (statements[i].end_lineno and statements[i + 1].lineno
+                            and statements[i + 1].lineno - statements[i].end_lineno > 1):
+                        internal_blanks += 1
+
+                # Terminal return/raise requires blank ONLY if leg has 2+ groups (1+ internal blank)
+                if internal_blanks > 0 and len(statements) > 1:
                     prev_stmt = statements[-2]
                     if (prev_stmt.end_lineno and last_stmt.lineno
                             and last_stmt.lineno - prev_stmt.end_lineno <= 1):

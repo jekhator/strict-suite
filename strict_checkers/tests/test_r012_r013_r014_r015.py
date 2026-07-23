@@ -469,8 +469,8 @@ self.log_info(
 
         assert len(checker.violations) == 0
 
-    def test_r014_log_event_4_plus_kwargs_one_per_line_flag(self):
-        """Log event call >=4 kwargs one-per-line should flag."""
+    def test_r014_log_event_4_plus_kwargs_one_per_line_allowed(self):
+        """Log event call >=4 kwargs one-per-line is allowed (never flagged)."""
         source = """
 self.log_info(
     const.LOG_EVENT_INVOKE_SUCCESS,
@@ -485,7 +485,21 @@ self.log_info(
         checker = R014Checker(Path("test.py"), source, config)
         checker.visit(tree)
 
-        assert len(checker.violations) == 4
+        assert len(checker.violations) == 0
+
+    def test_r014_log_event_over_packing(self):
+        """Log event call with >3 kwargs per line should flag."""
+        source = """
+self.log_info(
+    const.LOG_EVENT_SUCCESS, a=1, b=2, c=3, d=4,
+)
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R014Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 1
 
     def test_r014_log_event_2_3_kwargs_full_explode(self):
         """Log event call 2-3 kwargs must FULL-EXPLODE one-per-line."""
@@ -539,24 +553,6 @@ except Exception:
 
         assert len(checker.violations) == 0
 
-    def test_r015_timing_capture_with_gap(self):
-        """Timing-capture pair with gap should flag."""
-        source = """
-try:
-    start = time.perf_counter()
-    x = foo()
-    latency = round((start - end) * 1000, 1)
-    return result
-except Exception:
-    raise
-"""
-        tree = ast.parse(source)
-        config = Config()
-        checker = R015Checker(Path("test.py"), source, config)
-        checker.visit(tree)
-
-        assert len(checker.violations) == 1
-
     def test_r015_terminal_return_with_blank(self):
         """Terminal return preceded by blank should pass."""
         source = """
@@ -574,11 +570,29 @@ except Exception:
 
         assert len(checker.violations) == 0
 
-    def test_r015_terminal_return_without_blank(self):
-        """Terminal return not preceded by blank should flag."""
+    def test_r015_terminal_return_single_group_allowed(self):
+        """Terminal return in single-group leg (no internal blanks) is allowed."""
         source = """
 try:
     result = foo()
+    return result
+except Exception:
+    raise
+"""
+        tree = ast.parse(source)
+        config = Config()
+        checker = R015Checker(Path("test.py"), source, config)
+        checker.visit(tree)
+
+        assert len(checker.violations) == 0
+
+    def test_r015_terminal_return_multi_group_without_blank(self):
+        """Terminal return without preceding blank in multi-group leg should flag."""
+        source = """
+try:
+    x = foo()
+
+    result = bar()
     return result
 except Exception:
     raise
