@@ -75,6 +75,30 @@ class RuleRegistry:
             RuleSeverity.HIGH,
             "Raise statement contains a string literal message. Extract to constants/<feature>.py as ERR_<DOMAIN>_<CONDITION>, reference via const.*.",
         ),
+        "R012": Rule(
+            "R012",
+            "Call fits on one line but is exploded (P3 amendment)",
+            RuleSeverity.INFO,
+            "Multi-line call would fit within 100-char line length. Collapse to single line.",
+        ),
+        "R013": Rule(
+            "R013",
+            "Signature grouping (P14 compact method signatures)",
+            RuleSeverity.INFO,
+            "Multi-parameter signature should group 2-3 parameters per line, not one-per-line or 4+.",
+        ),
+        "R014": Rule(
+            "R014",
+            "Kwarg-call grouping (P15 packed keyword groups)",
+            RuleSeverity.INFO,
+            "Multi-kwarg call should group 2-3 kwargs per line, not one-per-line or 4+.",
+        ),
+        "R015": Rule(
+            "R015",
+            "Wrap-path blank-line rhythm (P16 try/except symmetry)",
+            RuleSeverity.INFO,
+            "Except block blank-line rhythm differs from try block. Mirror try's internal spacing.",
+        ),
     }
 
     @classmethod

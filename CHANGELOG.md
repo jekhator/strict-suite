@@ -4,6 +4,21 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-07-22
+
+### Added
+
+- **Four formatting dialect rules (R012-R015)** - New INFO-tier rules enforce formatting patterns from qhcg canonical standard (P14-P16):
+  - **R012 (fits-one-line-stays)** - Flags single-argument calls under 80 chars split unnecessarily across lines. Enforces P3 amendment principle.
+  - **R013 (signature grouping)** - Flags multi-parameter method signatures (3-4+ params after self/cls) where each parameter is on its own line when grouping 2-3 per line would fit. Enforces P14 compact method signatures.
+  - **R014 (kwarg-call grouping)** - Flags multi-kwarg calls (2 kwargs) split across separate lines when they could be grouped. Enforces P15 packed keyword groups principle. Findings report at the offending kwarg line; place `# noqa: R014` on the call line, not the kwarg line.
+  - **R015 (wrap-path blank-line rhythm)** - Flags try/except blocks where statement count difference exceeds 3 statements, indicating asymmetric blank-line rhythm. Enforces P16 wrap-path separation.
+
+### Changed
+
+- **INFO severity as non-blocking tier** - R012-R015 implemented at INFO severity; violations report but do not fail CI (exit code 0). Suppressible via `# noqa: R01X`. First release of formatting rules as advisory tier for one adoption cycle.
+- **Canonical calibration** - All four rules validated against 29 qhcg gold canonical files; zero violations on canonical implementations. R014 grandfathered violations (5-file corpus: bedrock 2, comprehend 4, s3 7) correctly flagged; R012/R013/R015 zero violations both gold and re-aligned.
+
 ## [0.4.0] - 2026-07-21
 
 ### Changed
