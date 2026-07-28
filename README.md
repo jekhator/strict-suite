@@ -5,7 +5,7 @@
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 
-AST-based linter for Python DTO discipline and facade-ban enforcement. Consolidated strict Python linting and static analysis tools with complexity metrics.
+Consolidated Python linter with R001-R015 rules for DTO discipline, module structure, typing compliance, constants enforcement, and formatting standards.
 
 **Consolidated from strict-module 0.5.0.** This monorepo consolidates the strict-module package and related linting infrastructure. Backward-compatible CLI entry points (`strict-module` and `dto-strict`) are preserved.
 
