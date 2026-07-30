@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 [project]
 name = "strict-suite"
 dynamic = ["version"]
-description = "Consolidated strict Python linting and static analysis tools - AST-based DTO discipline, facade-ban enforcement, and complexity metrics."
+description = "Consolidated Python linter with R001-R015 rules for DTO discipline, module structure, typing compliance, constants enforcement, and formatting standards."
 readme = "README.md"
 license = { text = "Apache-2.0" }
 authors = [{ name = "James Ekhator" }]
