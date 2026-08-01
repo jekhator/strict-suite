@@ -29,12 +29,11 @@ jobs:
       - name: Run strict-module
         run: |
           uv run --python 3.12 python -m strict_module.cli \
-            strict_module/__init__.py \
-            strict_module/checkers/ \
-            strict_module/cli.py \
-            strict_module/config/ \
-            strict_module/inspection/ \
-            strict_module/linter/ \
-            strict_module/loc_cap/ \
-            strict_module/rules/ \
+            strict_checkers/ \
+            strict_config/ \
+            strict_inspection/ \
+            strict_linter/ \
+            strict_loc_cap/ \
+            strict_rules/ \
+            strict_module/ \
             --format github
