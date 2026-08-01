@@ -42,4 +42,4 @@ jobs:
       - name: Sync dependencies
         run: uv sync --all-extras
       - name: Type-check
-        run: uv run mypy strict_module/
+        run: uv run mypy strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/
