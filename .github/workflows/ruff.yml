@@ -24,6 +24,6 @@ jobs:
         with:
           enable-cache: true
       - name: Ruff lint
-        run: uvx ruff@0.15.14 check strict_module/
+        run: uvx ruff@0.15.14 check strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/
       - name: Ruff format check
         run: uvx ruff@0.15.14 format --check strict_module/

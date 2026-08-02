@@ -10,6 +10,7 @@ from strict_config.constants import (
     DEFAULT_LOC_CAP_BASELINE_FILE,
     DEFAULT_LOC_HARD_CAP,
     DEFAULT_LOC_SOFT_TARGET,
+    ERR_NONEXISTENT_PATH,
     EXIT_CODE_HIGH_VIOLATION,
     EXIT_CODE_SUCCESS,
     FORMAT_TEXT,
@@ -131,6 +132,12 @@ def main() -> int:
             file=sys.stderr,
         )
         return EXIT_CODE_HIGH_VIOLATION
+
+    for path_str in args.path:
+        target_path = Path(path_str)
+        if not target_path.exists():
+            print(ERR_NONEXISTENT_PATH.format(path=path_str), file=sys.stderr)
+            return EXIT_CODE_HIGH_VIOLATION
 
     baseline = None
     if args.baseline:
