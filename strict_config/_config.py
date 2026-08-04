@@ -50,6 +50,8 @@ class Config:
     r006_paths: list[str] = field(default_factory=lambda: DEFAULT_R006_PATHS.copy())
     min_dict_keys: int = field(default=DEFAULT_MIN_DICT_KEYS)
     r003_strict_repr: bool = field(default=True)
+    r003_sensitivity_bases: list[str] = field(default_factory=lambda: ["SensitiveRepr"])
+    r003_sensitivity_allowlist: list[str] = field(default_factory=list)
     loc_cap: LocCapConfig = field(default_factory=LocCapConfig)
 
     @classmethod
@@ -93,6 +95,12 @@ class Config:
             r006_paths=config_data.get("r006_paths", DEFAULT_R006_PATHS),
             min_dict_keys=config_data.get("min_dict_keys", DEFAULT_MIN_DICT_KEYS),
             r003_strict_repr=config_data.get("r003_strict_repr", True),
+            r003_sensitivity_bases=config_data.get(
+                "r003_sensitivity_bases", ["SensitiveRepr"]
+            ),
+            r003_sensitivity_allowlist=config_data.get(
+                "r003_sensitivity_allowlist", []
+            ),
             loc_cap=loc_cap,
         )
 
