@@ -2101,7 +2101,7 @@ finally:
         source = """
 try:
     x = 1
-except ValueError as e:
+except ValueError as error:
     raise
 """
         tree = ast.parse(source)

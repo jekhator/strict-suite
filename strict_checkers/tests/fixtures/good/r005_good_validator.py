@@ -25,8 +25,8 @@ def validate_user_payload(payload: dict) -> UserDTO:
             email=payload["email"],
         )
         return user
-    except (KeyError, TypeError) as e:
-        raise ValidationError(f"Invalid payload: {e}")
+    except (KeyError, TypeError) as error:
+        raise ValidationError(f"Invalid payload: {error}")
 
 
 def validate_config(payload: dict) -> bool:
