@@ -214,8 +214,8 @@ class Handler:
     def handle_error(self, exc):
         try:
             x = 1 / 0
-        except Exception as e:
-            raise ValueError(const.ERR_X) from e
+        except Exception as error:
+            raise ValueError(const.ERR_X) from error
 """)
         config = Config(
             service_paths=["**/*.py"],
@@ -264,7 +264,7 @@ class MyService:
     def process(self):
         try:
             do_work()
-        except Exception as e:
+        except Exception as error:
             exc = ValueError(sys.exc_info()[1])
             raise exc
 """)
