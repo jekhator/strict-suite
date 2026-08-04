@@ -47,5 +47,5 @@ def from_clause(exc):
     """Function with from clause but const in original."""
     try:
         1 / 0
-    except Exception as e:
-        raise ValueError(const.ERR_X) from e
+    except Exception as error:
+        raise ValueError(const.ERR_X) from error
