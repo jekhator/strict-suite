@@ -73,6 +73,14 @@ exclude_lines = [
 target-version = "py312"
 extend-exclude = ["strict_checkers/tests/fixtures/bad/"]
 
+[tool.ruff.format]
+exclude = [
+    "strict_checkers/r012.py",
+    "strict_checkers/r013.py",
+    "strict_checkers/r014.py",
+    "strict_checkers/tests/test_r012_r013_r014_r015.py",
+]
+
 [tool.ruff.lint]
 extend-select = ["I", "TID252", "PLC0414", "UP035"]
 
