@@ -128,8 +128,12 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
 4. **Standard Lint Branch** (no --generate-baseline)
    ├─ Require PATH argument (error if missing)
    ├─ Load baseline (if --baseline provided)
-   │  └─ DtoStrictLinter.load_baseline(baseline_path) → dict[(file, line, rule_id)] -> message_hash
-   │     ⚠ Exception → return {}
+   │  ├─ Try: DtoStrictLinter.load_baseline(baseline_path) → dict[(file, line, rule_id)] -> message_hash
+   │  │   └─ Print MSG_BASELINE_LOADED to stderr with count and path
+   │  └─ Catch BaselineLoadError:
+   │     ├─ Print error message to stderr (ERR_BASELINE_MISSING, ERR_BASELINE_INVALID_JSON, ERR_BASELINE_NOT_LIST, ERR_BASELINE_ENTRY_NOT_OBJECT, or ERR_BASELINE_ENTRY_SHAPE)
+   │     ├─ Return EXIT_CODE_HIGH_VIOLATION (exit code 1)
+   │     └─ (Linter initialization is skipped; baseline load failure halts execution)
    └─ Create DtoStrictLinter(config, baseline=baseline)
 
 ### Linting Pipeline

@@ -14,9 +14,10 @@ from strict_config.constants import (
     EXIT_CODE_HIGH_VIOLATION,
     EXIT_CODE_SUCCESS,
     FORMAT_TEXT,
+    MSG_BASELINE_LOADED,
     VALID_FORMATS,
 )
-from strict_linter import DtoStrictLinter
+from strict_linter import BaselineLoadError, DtoStrictLinter
 from strict_loc_cap import LocCap
 
 
@@ -141,7 +142,16 @@ def main() -> int:
 
     baseline = None
     if args.baseline:
-        baseline = DtoStrictLinter.load_baseline(args.baseline)
+        try:
+            baseline = DtoStrictLinter.load_baseline(args.baseline)
+            baseline_count = len(baseline)
+            print(
+                MSG_BASELINE_LOADED.format(count=baseline_count, path=args.baseline),
+                file=sys.stderr,
+            )
+        except BaselineLoadError as error:
+            print(str(error), file=sys.stderr)
+            return EXIT_CODE_HIGH_VIOLATION
 
     linter = DtoStrictLinter(config, baseline=baseline)
     all_violations = []
