@@ -220,3 +220,41 @@ def bad_function_2(x: Dict[str, Any]):
             assert str(caught.value) == ERR_BASELINE_ENTRY_NOT_OBJECT.format(
                 index=0, path=baseline_path
             )
+
+    def test_baseline_undecodable_bytes_raises_error(self):
+        """Baseline: Load raises BaselineLoadError on undecodable (non-UTF-8) bytes."""
+        with TemporaryDirectory() as tmpdir:
+            baseline_path = Path(tmpdir) / "baseline.json"
+            baseline_path.write_bytes(b"\xff\xfe\x00\x01")
+
+            with pytest.raises(BaselineLoadError) as caught:
+                DtoStrictLinter.load_baseline(baseline_path)
+            assert str(caught.value) == ERR_BASELINE_INVALID_JSON.format(
+                path=baseline_path
+            )
+
+    def test_baseline_generate_then_load_round_trip(self):
+        """Baseline: Generate-then-load round-trip preserves violations."""
+        source = """
+def bad_function(x: Dict[str, Any]):
+    return {"key": "value"}
+"""
+        with TemporaryDirectory() as tmpdir:
+            test_file = Path(tmpdir) / "test.py"
+            test_file.write_text(source)
+
+            config = Config(service_paths=["**/*.py"])
+            linter = DtoStrictLinter(config)
+            violations = linter.lint_file(test_file)
+            assert len(violations) > 0, "Should have violations to baseline"
+
+            baseline_data = linter.generate_baseline(violations)
+            baseline_path = Path(tmpdir) / "baseline.json"
+            baseline_path.write_text(json.dumps(baseline_data))
+
+            loaded_baseline = DtoStrictLinter.load_baseline(baseline_path)
+            assert len(loaded_baseline) == len(violations)
+            for v in violations:
+                key = (v.file, v.line, v.rule_id)
+                assert key in loaded_baseline
+                assert loaded_baseline[key] == linter._hash_message(v.message)

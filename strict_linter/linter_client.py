@@ -171,7 +171,7 @@ class DtoStrictLinter:
         try:
             with open(baseline_path, "r") as f:
                 data = json.load(f)
-        except json.JSONDecodeError as error:
+        except (json.JSONDecodeError, UnicodeDecodeError) as error:
             raise BaselineLoadError(
                 ERR_BASELINE_INVALID_JSON.format(path=baseline_path)
             ) from error
