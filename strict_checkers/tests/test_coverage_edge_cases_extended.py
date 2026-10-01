@@ -7,9 +7,15 @@ import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
+import pytest
+
 from strict_config._config import Config
+from strict_config.constants import (
+    ERR_BASELINE_INVALID_JSON,
+    ERR_BASELINE_MISSING,
+)
 from strict_inspection import AnnotationInspector
-from strict_linter import DtoStrictLinter
+from strict_linter import BaselineLoadError, DtoStrictLinter
 from strict_rules.rules_client import RuleRegistry
 
 
@@ -462,18 +468,23 @@ class TestLinterFileHandling:
             assert ("test.py", 1, "R001") in result
 
     def test_load_baseline_invalid_json(self):
-        """Test loading invalid JSON baseline."""
+        """Test loading invalid JSON baseline raises error."""
         with tempfile.TemporaryDirectory() as tmpdir:
             baseline_file = Path(tmpdir) / "baseline.json"
             baseline_file.write_text("not json")
 
-            result = DtoStrictLinter.load_baseline(baseline_file)
-            assert result == {}
+            with pytest.raises(BaselineLoadError) as caught:
+                DtoStrictLinter.load_baseline(baseline_file)
+            assert str(caught.value) == ERR_BASELINE_INVALID_JSON.format(
+                path=baseline_file
+            )
 
     def test_load_baseline_nonexistent(self):
-        """Test loading nonexistent baseline file."""
-        result = DtoStrictLinter.load_baseline(Path("/nonexistent/baseline.json"))
-        assert result == {}
+        """Test loading nonexistent baseline file raises error."""
+        baseline_file = Path("/nonexistent/baseline.json")
+        with pytest.raises(BaselineLoadError) as caught:
+            DtoStrictLinter.load_baseline(baseline_file)
+        assert str(caught.value) == ERR_BASELINE_MISSING.format(path=baseline_file)
 
     def test_severity_overrides_high(self):
         """Test severity override to HIGH."""

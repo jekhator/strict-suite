@@ -24,6 +24,11 @@ from strict_checkers import (
 )
 from strict_config._config import Config
 from strict_config.constants import (
+    ERR_BASELINE_ENTRY_NOT_OBJECT,
+    ERR_BASELINE_ENTRY_SHAPE,
+    ERR_BASELINE_INVALID_JSON,
+    ERR_BASELINE_MISSING,
+    ERR_BASELINE_NOT_LIST,
     EXIT_CODE_HIGH_VIOLATION,
     EXIT_CODE_LOW_VIOLATION,
     EXIT_CODE_MEDIUM_VIOLATION,
@@ -32,8 +37,10 @@ from strict_config.constants import (
     FORMAT_JSON,
     FORMAT_TEXT,
     PY_EXTENSION,
+    REQUIRED_BASELINE_KEYS,
     VALID_SEVERITY_LEVELS,
 )
+from strict_linter.linter_objects import BaselineLoadError
 from strict_rules import RuleSeverity, Violation
 
 
@@ -164,13 +171,36 @@ class DtoStrictLinter:
         try:
             with open(baseline_path, "r") as f:
                 data = json.load(f)
-            baseline = {}
-            for entry in data:
-                key = (entry["file"], entry["line"], entry["rule_id"])
-                baseline[key] = entry["message_hash"]
-            return baseline
-        except Exception:
-            return {}
+        except json.JSONDecodeError as error:
+            raise BaselineLoadError(
+                ERR_BASELINE_INVALID_JSON.format(path=baseline_path)
+            ) from error
+        except OSError as error:
+            raise BaselineLoadError(
+                ERR_BASELINE_MISSING.format(path=baseline_path)
+            ) from error
+
+        if not isinstance(data, list):
+            raise BaselineLoadError(ERR_BASELINE_NOT_LIST.format(path=baseline_path))
+
+        baseline = {}
+        for index, entry in enumerate(data):
+            if not isinstance(entry, dict):
+                raise BaselineLoadError(
+                    ERR_BASELINE_ENTRY_NOT_OBJECT.format(
+                        index=index, path=baseline_path
+                    )
+                )
+            for key in REQUIRED_BASELINE_KEYS:
+                if key not in entry:
+                    raise BaselineLoadError(
+                        ERR_BASELINE_ENTRY_SHAPE.format(
+                            index=index, key=key, path=baseline_path
+                        )
+                    )
+            baseline_key = (entry["file"], entry["line"], entry["rule_id"])
+            baseline[baseline_key] = entry["message_hash"]
+        return baseline
 
     def format_violations(
         self, violations: list[Violation], format_type: str = FORMAT_TEXT
