@@ -4,6 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- **Baseline loading error handling** - `load_baseline()` now raises a typed `BaselineLoadError` for missing, unreadable, malformed, undecodable (non-UTF-8), or structurally invalid baseline files instead of silently returning an empty dict. Missing or malformed baselines are now hard errors that fail the gate with exit code 1, preventing silent ratchet disablement.
+
+### Changed
+
+- **Baseline file validation is strict** - Previously, any error loading a baseline file (missing path, invalid JSON, missing entry keys) silently disabled the ratchet. Now all validation errors raise `BaselineLoadError` with a descriptive message to stderr. The ratchet only activates when a valid baseline is loaded.
+
 ## [0.5.0] - 2026-07-22
 
 ### Added

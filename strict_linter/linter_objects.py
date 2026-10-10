@@ -3,6 +3,10 @@
 from dataclasses import dataclass
 
 
+class BaselineLoadError(ValueError):
+    """Error loading or parsing baseline file."""
+
+
 @dataclass(frozen=True, slots=True)
 class BaselineEntry:
     """Baseline entry for tracking accepted violations."""

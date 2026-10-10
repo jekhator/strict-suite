@@ -15,6 +15,16 @@ EXIT_CODE_MEDIUM_VIOLATION = 2
 EXIT_CODE_LOW_VIOLATION = 3
 
 ERR_NONEXISTENT_PATH = "error: path does not exist: {path}"
+ERR_BASELINE_MISSING = "error: baseline file not found or unreadable: {path}"
+ERR_BASELINE_INVALID_JSON = "error: baseline file contains invalid JSON: {path}"
+ERR_BASELINE_NOT_LIST = "error: baseline file top level must be a list: {path}"
+ERR_BASELINE_ENTRY_NOT_OBJECT = "error: baseline entry {index} is not an object: {path}"
+ERR_BASELINE_ENTRY_SHAPE = (
+    "error: baseline entry {index} is missing required key '{key}': {path}"
+)
+MSG_BASELINE_LOADED = "baseline: {count} entries loaded from {path}"
+
+REQUIRED_BASELINE_KEYS: tuple[str, ...] = ("file", "line", "rule_id", "message_hash")
 
 VALID_SEVERITY_LEVELS = ["HIGH", "MEDIUM", "LOW", "INFO"]
 
