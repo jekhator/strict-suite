@@ -27,7 +27,7 @@ def validate_user_payload(payload: dict) -> UserDTO:  # module-level: fixture he
             email=payload["email"],
         )
         return user
-    except (KeyError, TypeError) as error:
+    except (KeyError, TypeError):
         raise ValidationError(const.ERR_PAYLOAD_INVALID)
 
 

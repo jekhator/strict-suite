@@ -7,34 +7,43 @@ import pytest
 
 @pytest.fixture
 def fixture_dir():
-    """Get fixtures directory."""
+    """Path to the linter fixture tree (good and bad examples).
+
+    Used by: TestCli, TestR001DictStrAny, TestR001VarArgKwarg, TestR002InlineDict,
+    TestR002MultipleDataclassRegression, TestR002SerializerExemption,
+    TestR002TagJustification, TestR003DataclassTrio, TestR004ModuleFacade,
+    TestR005ValidatorPattern, TestR006VarArgKwarg, TestR007FixtureDecorators,
+    TestR007Fixtures, TestR008TestFunctions, TestR009ModuleLevelFunctions,
+    TestR010LegacyTypingABC, TestR011RaiseLiterals.
+    """
     return Path(__file__).parent / "fixtures"
 
 
 @pytest.fixture
 def config():
-    """Get default config."""
+    """A default Config instance.
+
+    Used by: TestBranchCoverage, TestConfigLoading, TestCoverageTargets,
+    TestDirectASTManipulation, TestErrorHandlingPaths, TestExceptionHandling,
+    TestFinalCoverageBoost, TestInfoSeverityLevel, TestLinterEdgeCases,
+    TestLinterFileHandling, TestR012EdgeCases, TestR012FitsOneLineStays,
+    TestR012RecoveryPaths, TestR013CoveragePaths, TestR013EdgeCases, TestR013MoreEdgeCases,
+    TestR013SignatureGrouping, TestR014CoveragePaths, TestR014EdgeCases,
+    TestR014KwargCallGrouping, TestR014MoreEdgeCases, TestR015CoveragePaths,
+    TestR015EdgeCases, TestR015WrapPathSeparation, TestSeverityOverridesFix,
+    test_optimization_pass._lint, test_r004_auto_detect._lint_source.
+    """
     from strict_config._config import Config
 
     return Config()
 
 
 @pytest.fixture
-def temp_project(tmp_path):
-    """Create a temporary project directory with Python files."""
-    project_root = tmp_path / "project"
-    project_root.mkdir()
-
-    src_dir = project_root / "src"
-    src_dir.mkdir()
-    (src_dir / "__init__.py").touch()
-
-    return project_root
-
-
-@pytest.fixture
 def project_dir(tmp_path):
-    """Create a temporary project with test files for CLI testing."""
+    """A temporary project with a bad and a good service file and a pyproject for CLI tests.
+
+    Used by: TestCLILocCap, TestCLIRealInvocations.
+    """
     project_root = tmp_path / "cli_project"
 
     bad_service_file = project_root / "apps" / "services" / "bad.py"
@@ -82,14 +91,11 @@ service_paths = ["apps/*/services/*.py"]
 
 
 @pytest.fixture
-def cli_project_dir(project_dir):
-    """CLI project directory fixture."""
-    return project_dir
-
-
-@pytest.fixture
 def temp_project_with_test_files(tmp_path):
-    """Create a temporary project structure with test and source files."""
+    """A temporary project with source files and test files that loc-cap must exempt.
+
+    Used by: TestLocCapTestExemption.
+    """
     root = tmp_path
 
     # Create source file (should be counted)
@@ -123,7 +129,7 @@ def temp_project_with_test_files(tmp_path):
 def run_cli(monkeypatch, capsys):
     """Run the strict-module CLI in-process and return (exit_code, stdout, stderr).
 
-    Used by TestUnreadableInputs.
+    Used by: TestUnreadableInputs.
     """
 
     def _run(argv):
