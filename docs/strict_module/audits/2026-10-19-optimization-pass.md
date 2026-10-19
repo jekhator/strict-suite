@@ -173,3 +173,61 @@ Each item below was found by the lenses above and was not changed in this pass. 
 | The first part of the pass also changed the R009 default severity and the R004 facade rule, documented in the same changelog section. | `strict_checkers/r004.py`, `strict_checkers/r009.py` | Changed: R009 advisory by default; R004 narrowed to the facade shape |
 
 The `strict_config` export surface (names and `__all__`) is unchanged by the explicit re-export.
+
+## Gate Results
+
+Counts: 35 source modules and 80 test-tree files were reviewed (115 Python files are type-checked by the mypy gate). 41 test-tree files changed; 3 were added. Source modules changed in this pass are marked in the source table. Tests before the pass: 464 passed at 97.45 percent coverage; tests after: 476 passed at 97.64 percent coverage on Python 3.12 and on Python 3.14. Findings before the pass: 288 across the test tree; after: 50, all listed under Deferred Candidates.
+
+Test suite on Python 3.12 (`uv run pytest -v --cov --cov-fail-under=95`), tail:
+
+```
+TOTAL                                                                      4826     50    602     72    98%
+Required test coverage of 95% reached. Total coverage: 97.64%
+============================= 476 passed in 9.05s ==============================
+```
+
+Test suite on Python 3.14 (`uv run --python 3.14 pytest -v --cov --cov-fail-under=95`), tail:
+
+```
+TOTAL                                                                      4826     50    602     72    98%
+Required test coverage of 95% reached. Total coverage: 97.64%
+============================= 476 passed in 8.44s ==============================
+```
+
+Type check (`uv run mypy strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/`), tail:
+
+```
+Success: no issues found in 115 source files
+```
+
+Lint (`uvx ruff@0.15.14 check strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/`), tail:
+
+```
+All checks passed!
+```
+
+Format check (`uvx ruff@0.15.14 format --check strict_module/`), tail:
+
+```
+2 files already formatted
+```
+
+Self-lint (the verbatim command from the strict-module workflow), exit 0 with no output.
+
+Lockfile (`uv lock --check`), tail:
+
+```
+Resolved 15 packages in 1ms
+```
+
+Changelog header:
+
+```
+## [0.6.0] - 2026-10-18
+```
+
+Version file at the tip of the branch:
+
+```
+__version__ = "0.6.0"
+```
