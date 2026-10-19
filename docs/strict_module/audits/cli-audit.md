@@ -2,11 +2,11 @@
 
 **Date:** 2026-07-09
 **Component:** strict_module/cli.py
-**Scope:** Command-line argument parsing and subcommand dispatch
+**Scope:** Command-line argument parsing and subcommand selection
 
 ## Security Assessment
 
-The CLI module provides command-line entry points for the linter and LOC cap subcommands. This audit evaluates argument parsing safety, dispatch logic, and error handling.
+The CLI module provides command-line entry points for the linter and LOC cap subcommands. This audit evaluates argument parsing safety, subcommand selection logic, and error handling.
 
 ### Argument Parsing (argparse)
 
@@ -24,12 +24,12 @@ Security considerations:
 
 No injection vulnerabilities identified.
 
-### Subcommand Dispatch
+### Subcommand Selection
 
 The main() function checks sys.argv[1] to detect "loc-cap" subcommand. If present, handle_loc_cap() is called; otherwise, the linter subcommand is executed.
 
 Security considerations:
-- Dispatch is string-based; no dynamic code loading.
+- Selection is string-based; no dynamic code loading.
 - sys.argv parsing is direct; no environment variable expansion.
 - Subcommand handlers are hardcoded functions, not dynamically loaded.
 
@@ -49,6 +49,6 @@ Assessment: Exit code semantics are standard and correct.
 
 ## Conclusion
 
-Argument parsing is safe from injection. Subcommand dispatch is direct and does not involve dynamic code loading. Path handling delegates to caller.
+Argument parsing is safe from injection. Subcommand selection is direct and does not involve dynamic code loading. Path handling delegates to caller.
 
 No security vulnerabilities identified in CLI module.

@@ -6,7 +6,7 @@ All notable changes to this project will be documented in this file.
 
 ### Added
 
-- **R011 Rule: String literal at raise site** - New rule enforcing that exception message arguments in raise statements must be references to ERR_* constants (via `const.*`), never inline string literals or f-strings. Helps enforce the Phase-16 error-message standard by making the gate mechanical. Exempt: test files, constants modules. HIGH severity, enabled by default.
+- **R011 Rule: String literal at raise site** - New rule enforcing that exception message arguments in raise statements must be references to ERR_* constants (via `const.*`), never inline string literals or f-strings. Helps enforce the error-message standard by making the gate mechanical. Exempt: test files, constants modules. HIGH severity, enabled by default.
 
 ### Changed
 
@@ -79,7 +79,7 @@ All notable changes to this project will be documented in this file.
 
 ### Changed
 
-- **CLI now dispatches on subcommand**: `sys.argv[1] == "loc-cap"` routes to `handle_loc_cap()` before standard argparse. Bare `dto-strict <path>` DTO-discipline lint is unchanged (backcompat preserved).
+- **CLI now selects the subcommand**: `sys.argv[1] == "loc-cap"` routes to `handle_loc_cap()` before standard argparse. Bare `dto-strict <path>` DTO-discipline lint is unchanged (backcompat preserved).
 - **Added tomli backport dependency** for Python 3.10 (tomllib native in 3.11+), enabling pyproject.toml parsing for loc-cap config in both Python versions.
 
 ### Improved

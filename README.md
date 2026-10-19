@@ -9,7 +9,7 @@ Consolidated Python linter with R001-R015 rules for DTO discipline, module struc
 
 **Consolidated from strict-module 0.5.0.** This monorepo consolidates the strict-module package and related linting infrastructure. Backward-compatible CLI entry points (`strict-module` and `dto-strict`) are preserved.
 
-> **Python only.** The strict-component (npm/TypeScript) stays in its own repo. This distribution is Python 3.12+ only.
+> **Python only.** This distribution supports Python 3.12 and later.
 
 ## Overview
 
@@ -116,7 +116,7 @@ def example():
     data = {"key1": "val1", "key2": "val2", "key3": "val3"}
 ```
 
-**R003** (anti-canonical repr=False on dataclass):
+**R003** (anti-canonical repr=False on dataclass; the rule applies to DTO paths such as `apps/orders/dtos.py`):
 ```python
 # violation
 from dataclasses import dataclass
@@ -149,7 +149,7 @@ def scale_value(value: int) -> int:  # module-level: stateless helper with no ow
     return value * 2
 ```
 
-**R007** (pytest fixtures outside conftest.py):
+**R007** (pytest fixtures outside conftest.py; the rule applies to test files such as `tests/test_orders.py`):
 ```python
 # violation
 import pytest
@@ -159,7 +159,7 @@ def my_fixture():
     return "value"
 ```
 
-**R008** (bare module-level test functions):
+**R008** (bare module-level test functions; the rule applies to test files such as `tests/test_orders.py`):
 ```python
 # violation
 def test_something():
@@ -172,9 +172,17 @@ Check lines-of-code limits:
 
 ```bash
 $ strict-module loc-cap src/
-src/long_module.py: soft-target 500 exceeded (523 lines)
-src/another.py: hard-cap 694 exceeded (750 lines) FAIL
+::warning::Files over soft target (500 LOC) - consider decomposition:
+  523  <root>/src/long_module.py
+
+::error::Files exceed hard cap of 694 LOC. Decompose by cohesion:
+  750  <root>/src/another.py (NEW OFFENDER)
+
+Tests: cap applies. Decompose by class-under-test; lift fixtures to conftest if needed.
+Refactor approach: split by COHESION not line count. E.g., service.py -> service/{invoke,embed,types}.py
 ```
+
+The command exits 1 when a file is over the hard cap. The paths are printed as absolute paths; `<root>` stands for the directory that contains `src/`.
 
 Generate baseline:
 
@@ -222,7 +230,7 @@ R009 is advisory (INFO) by default. To make it blocking again, add one line:
 severity_overrides = { R009 = "HIGH" }
 ```
 
-Backward compatibility: `[tool.strict-module]` config and `.strict-module-baseline.json` baseline files are supported.
+Backward compatibility: when `[tool.strict-module]` is absent, the legacy `[tool.dto-strict]` table is read. Any path can be passed to `--baseline`; the LOC cap baseline also falls back to the legacy names `.strict-module-baseline.txt` and `.dto-strict-baseline.txt`.
 
 ### Suppressing Violations
 
@@ -239,7 +247,7 @@ Use `# noqa` comments to suppress violations on specific lines. Supported forms:
       pass
   ```
 
-- **Namespaced `# noqa: strict-module-R006`**: Use the ruff-external-friendly namespaced form (recommended when running ruff alongside).
+- **Namespaced `# noqa: strict-module-R006`**: Accepted by strict-module. Ruff 0.15.14 reports an invalid `# noqa` directive for this form, so prefer the bare rule code on lines that ruff also checks.
   ```python
   def process(x: Any) -> None:  # noqa: strict-module-R006
       pass
@@ -258,13 +266,13 @@ self.log_event(  # noqa: R014
 )
 ```
 
-When using ruff in parallel, declare `[tool.ruff.lint] external = ["strict-module"]` in `pyproject.toml` to prevent ruff from warning on the external rule codes.
+Ruff 0.15.14 does not accept the namespaced form without a warning, and the `external` setting does not change that. When ruff checks the same file, use the bare rule code (`# noqa: R006`).
 
 ## Public API
 
 The package exports the following public symbols:
 
-- **`__version__`**: Package version string (e.g., "0.1.0")
+- **`__version__`**: Package version string (for example, "0.6.0")
 - **`DtoStrictLinter`**: Main linter class for running AST analysis
 - **`Rule`**: Rule definition dataclass
 - **`RuleSeverity`**: Enum for rule severity levels (HIGH, MEDIUM, LOW, INFO)
@@ -305,11 +313,12 @@ Run tests:
 uv run pytest -v --cov --cov-fail-under=95
 ```
 
-Run the self-lint check:
+Run the self-lint check (the same command the CI workflow runs):
 
 ```bash
-strict-module strict_module/ --format text
-dto-strict strict_module/
+uv run --python 3.12 python -m strict_module.cli \
+  $(find strict_checkers strict_config strict_inspection strict_linter strict_loc_cap strict_rules strict_module -name "*.py" ! -path "*/tests/*" ! -path "*/fixtures/*" | sort) \
+  --format github
 ```
 
 Run format and style checks:

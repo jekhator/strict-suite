@@ -48,7 +48,7 @@ strict_module is a CLI linter (not a decorator) that enforces DTO and facade dis
 
 ## Flow Trace
 
-### Entry Point and Dispatch
+### Entry Point and Subcommand Selection
 
 1. **CLI entry** (`strict_module/cli.py::main()`)
    - `sys.argv[1] == "loc-cap"` -> `handle_loc_cap(sys.argv)`.

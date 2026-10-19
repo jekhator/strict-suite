@@ -6,7 +6,7 @@
 
 ## Interface Design
 
-The CLI exposes two subcommands via dispatch:
+The CLI exposes two subcommands, selected by a check on the first argument:
 1. `strict-module <path>`: Linter subcommand (default)
 2. `strict-module loc-cap <path>`: LOC cap subcommand
 
@@ -18,15 +18,15 @@ Main arguments for linter:
 
 Assessment: Interface is clean. Positional path argument is intuitive. Format options match GitHub Actions annotation style.
 
-## Subcommand Dispatch
+## Subcommand Selection
 
 main() checks sys.argv[1] for "loc-cap" string. If found, handle_loc_cap() is called; otherwise, linter is invoked.
 
-Assessment: Early dispatch via string check is explicit and efficient. Alternative would be argparse subparsers; current approach is simpler for two subcommands.
+Assessment: Early selection via string check is explicit and efficient. Alternative would be argparse subparsers; current approach is simpler for two subcommands.
 
 ## Argument Parsing Strategy
 
-Linter uses argparse.ArgumentParser with standard options. LOC cap dispatch happens before argparse initialization, avoiding conflicts between linter and LOC cap arguments.
+Linter uses argparse.ArgumentParser with standard options. LOC cap selection happens before argparse initialization, avoiding conflicts between linter and LOC cap arguments.
 
 Strength: Two separate parsers (linter in main(), LOC cap in handle_loc_cap()) avoid mutual interference.
 
@@ -59,6 +59,6 @@ Assessment: Standard and correct.
 
 ## Conclusion
 
-The CLI is well-designed. Subcommand dispatch via string check is pragmatic. Config layering is clear. Dual output formats support both CI and local use.
+The CLI is well-designed. Subcommand selection via string check is pragmatic. Config layering is clear. Dual output formats support both CI and local use.
 
 No significant code quality issues identified.

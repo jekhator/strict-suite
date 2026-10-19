@@ -8,7 +8,7 @@
 
 The LOC cap enforcer is split into three concerns:
 - `loc_cap.py`: Core logic for file discovery, line counting, and baseline comparison.
-- `cli.py`: Argument parsing and subcommand dispatch (handle_loc_cap, main).
+- `cli.py`: Argument parsing and subcommand selection (handle_loc_cap, main).
 - `LocCapConfig`: Dataclass for configuration storage (hard_cap, soft_target, baseline_file).
 
 Assessment: Separation is clean. LOC cap logic is independent of CLI layer, enabling reuse.
@@ -56,9 +56,9 @@ Assessment: Ratcheting logic is correct and serves the intended goal.
 
 ## CLI Integration
 
-handle_loc_cap() dispatches based on sys.argv[1] == 'loc-cap'. Subcommand arguments are parsed separately; config is loaded from pyproject.toml, with CLI flags overriding config file values.
+handle_loc_cap() is selected when sys.argv[1] == 'loc-cap'. Subcommand arguments are parsed separately; config is loaded from pyproject.toml, with CLI flags overriding config file values.
 
-Assessment: Dispatch logic is clear. Config layering (CLI > file > default) is intuitive.
+Assessment: Subcommand selection logic is clear. Config layering (CLI > file > default) is intuitive.
 
 ## Conclusion
 

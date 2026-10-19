@@ -4,7 +4,7 @@ This document records the full-corpus conformance audit of strict-suite against 
 
 ## Quick Summary
 
-⚠️ **99% conformant**. One violation found and fixed post-audit (see Violations Fixed section below).
+**Result: 99% conformant.** One violation found and fixed post-audit (see Violations Found and Fixed below).
 
 - **CI Gates**: All pass (strict-module self-lint, ruff, mypy, pytest, attribution)
 - **Rules Audited**: 230+
@@ -15,23 +15,23 @@ This document records the full-corpus conformance audit of strict-suite against 
 ## Detailed Audit
 
 See inline documentation in rule application:
-- **Import/Namespace**: 6/6 ✅
-- **Type Hints**: 4/5 ✅ (1 violation found: quoted self-annotation `-> "Config"` instead of `-> Self` in _config.py:47, fixed)
-- **Code Style**: 9/9 ✅
-- **Constants**: 10/10 ✅
-- **Containers & Methods**: 11/11 ✅
-- **Error Handling**: 7/7 ✅
-- **Documentation**: 13/13 ✅
-- **Git & CI**: 11/11 ✅
-- **Testing**: 13/13 ✅
-- **Package Layout**: 11/11 ✅
-- **Logging**: 6/6 ✅ (foundational package, N/A for instrumentation)
-- **Audit & Security**: 7/7 ✅
-- **Integration**: 5/5 ✅
-- **Phases & Routine**: 15/15 ✅
-- **Verification**: 6/6 ✅
-- **Dispatcher Discipline**: 8/8 ✅
-- **Strict-Suite Rules (R001-R010)**: 10/10 ✅
+- **Import/Namespace**: 6/6 PASS
+- **Type Hints**: 4/5 PASS (1 violation found: quoted self-annotation `-> "Config"` instead of `-> Self` in _config.py:47, fixed)
+- **Code Style**: 9/9 PASS
+- **Constants**: 10/10 PASS
+- **Containers & Methods**: 11/11 PASS
+- **Error Handling**: 7/7 PASS
+- **Documentation**: 13/13 PASS
+- **Git & CI**: 11/11 PASS
+- **Testing**: 13/13 PASS
+- **Package Layout**: 11/11 PASS
+- **Logging**: 6/6 PASS (foundational package, N/A for instrumentation)
+- **Audit & Security**: 7/7 PASS
+- **Integration**: 5/5 PASS
+- **Process checklist**: 15/15 PASS
+- **Verification**: 6/6 PASS
+- **Command routing discipline**: 8/8 PASS
+- **Strict-Suite Rules (R001-R010)**: 10/10 PASS
 
 ## Violations Found and Fixed
 
@@ -41,7 +41,7 @@ Audit missed one code violation:
 - **File**: strict_module/config/_config.py
 - **Line**: 47
 - **Issue**: Method `from_pyproject()` used quoted return annotation `-> "Config"` instead of the suite standard `-> Self`
-- **Standard**: Per domain-errors and mixin-adapter exemplars, self-class return types must use `from typing import Self; -> Self` (not quoted strings)
+- **Standard**: Per the reference packages used by the review checklist, self-class return types must use `from typing import Self; -> Self` (not quoted strings)
 - **Fix Applied**: 
   1. Added `from typing import Self` import
   2. Changed `-> "Config"` to `-> Self`
@@ -61,21 +61,20 @@ The pinned gate uses precision-0 rounding: 94.83% rounds to 95% and the gate pas
 
 ## Audit Date
 
-2026-07-13 (James-directed comprehensive audit)
+2026-07-13 (maintainer-directed comprehensive audit)
 
 ## Standards Sources
 
 Audit checklist extracted from:
-- ~/.claude/commands/STANDARDS.md (116 lines)
-- ~/arc-modality/docs/routine/ (28 files: phases 00-19, testing.md, diagrams.md, progressive-structure.md, sdk-contract.md, teammates.md, README.md, STATUS.md)
-- ~/strict-suite/CONTRIBUTING.md
-- ~/strict-suite/docs/README.md
+- The maintainers' private review checklist (not part of this repository)
+- CONTRIBUTING.md
+- docs/README.md
 
 Total: 230+ normative rules applied to strict-suite codebase.
 
 ## Special Scope Note
 
-Strict-suite is a foundational Python linting package. Per standards (STANDARDS.md line 169), foundational packages skip Phase 7-13 work (logging instrumentation, audit capture, security wiring, etc.). These 15+ rules are marked N/A, not violations.
+Strict-suite is a foundational Python linting package. Per the review checklist, foundational packages skip the instrumentation work (logging instrumentation, audit capture, security wiring, and similar items). These 15+ rules are marked N/A, not violations.
 
 ---
 

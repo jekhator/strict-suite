@@ -20,7 +20,7 @@ The linter ships 15 rules. The severity shown is the default. `severity_override
 | R010 | Legacy typing aliases for ABCs | MEDIUM | ABC imports must come from `collections.abc`, not `typing` |
 | R011 | String literal at raise site | HIGH | Raise statements must reference `ERR_*` constants, not inline string literals or f-strings |
 | R012 | Call fits on one line but is exploded | INFO | A multi-line call with one argument that fits on one line should be collapsed |
-| R013 | Signature grouping (compact method signatures) | INFO | Handler method signatures should group 2-5 parameters per line |
+| R013 | Signature grouping (compact method signatures) | INFO | Handler methods (names starting with `log_`, `record_` or `wrap_`) should group 2-5 parameters per line |
 | R014 | Kwarg-call grouping (packed keyword groups) | INFO | Log-event calls should pack 2-3 kwargs per line |
 | R015 | Wrap-path blank-line rhythm | INFO | An except block's blank-line rhythm should mirror its try block |
 
@@ -132,16 +132,16 @@ Violations can be suppressed inline using `# noqa` comments:
 - **Bare suppression:** `# noqa` suppresses any rule on that line.
 - **Rule-specific:** `# noqa: R006` suppresses rule R006 only.
 - **Multiple rules:** `# noqa: R006, R011` suppresses both R006 and R011.
-- **Namespaced form (ruff-friendly):** `# noqa: strict-module-R006` uses the external-rule-friendly namespace.
+- **Namespaced form:** `# noqa: strict-module-R006` is accepted by strict-module. Ruff 0.15.14 reports an invalid `# noqa` directive for this form.
 
-**Ruff coexistence:** When running ruff alongside strict-suite, declare `[tool.ruff.lint] external = ["strict-module"]` to prevent ruff from warning on external rule codes.
+**Ruff coexistence:** Ruff 0.15.14 warns about the namespaced form, and the `external` setting does not change that. When ruff checks the same file, use the bare rule code (`# noqa: R006`).
 
 ## Backward Compatibility
 
 As of v0.1.0, strict-suite consolidates the strict-module v0.5.0 package. The following are preserved:
 
 - **Config section names:** Both `[tool.strict-module]` and legacy `[tool.dto-strict]` are recognized
-- **Baseline files:** Both `.strict-module-baseline.json` and legacy `.dto-strict-baseline.json` are supported
+- **Baseline files:** Any path can be passed to `--baseline`; the LOC cap baseline also falls back to the legacy names `.strict-module-baseline.txt` and `.dto-strict-baseline.txt`
 - **CLI entry points:** Both `strict-module` and `dto-strict` commands work identically
 
 ## Development
