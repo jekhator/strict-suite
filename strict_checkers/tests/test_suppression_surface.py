@@ -30,9 +30,8 @@ class TestSeverityOverridesFix:
                         "Override not applied: R011 should have LOW severity"
                     )
 
-    def test_severity_override_not_applied_without_override_config(self):
+    def test_severity_override_not_applied_without_override_config(self, config):
         """Without override, R011 should keep original severity (HIGH)."""
-        config = Config()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             bad_file = Path(tmpdir) / "bad.py"
@@ -92,7 +91,7 @@ class TestSeverityOverridesFix:
 class TestInfoSeverityLevel:
     """Test Fix B: INFO severity level for non-blocking violations."""
 
-    def test_info_severity_exit_code_zero(self):
+    def test_info_severity_exit_code_zero(self, config):
         """Violations with only INFO severity should exit 0."""
         info_violation = Violation(
             rule_id="R011",
@@ -103,7 +102,6 @@ class TestInfoSeverityLevel:
             message="Test info violation",
         )
 
-        config = Config()
         linter = DtoStrictLinter(config)
         exit_code = linter.get_exit_code([info_violation])
 
@@ -128,7 +126,7 @@ class TestInfoSeverityLevel:
 
             assert exit_code == 0, "Exit code should be 0 when only INFO violations"
 
-    def test_info_not_blocking_with_other_violations(self):
+    def test_info_not_blocking_with_other_violations(self, config):
         """When INFO and LOW are present, should exit 3 (LOW blocking)."""
         violations = [
             Violation(
@@ -149,13 +147,12 @@ class TestInfoSeverityLevel:
             ),
         ]
 
-        config = Config()
         linter = DtoStrictLinter(config)
         exit_code = linter.get_exit_code(violations)
 
         assert exit_code == 3, "Exit code should be 3 when LOW violations present"
 
-    def test_high_overrides_info(self):
+    def test_high_overrides_info(self, config):
         """HIGH severity should block even with INFO present."""
         violations = [
             Violation(
@@ -176,7 +173,6 @@ class TestInfoSeverityLevel:
             ),
         ]
 
-        config = Config()
         linter = DtoStrictLinter(config)
         exit_code = linter.get_exit_code(violations)
 

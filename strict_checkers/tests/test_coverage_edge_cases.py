@@ -52,28 +52,25 @@ class TestNoqaCommentParsing:
 class TestLinterEdgeCases:
     """Test linter with edge cases."""
 
-    def test_linter_with_empty_file(self, tmp_path):
+    def test_linter_with_empty_file(self, tmp_path, config):
         """Test linting an empty file."""
         empty_file = tmp_path / "empty.py"
         empty_file.write_text("")
-        config = Config()
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(empty_file)
         assert len(violations) == 0
 
-    def test_linter_with_syntax_error_file(self, tmp_path):
+    def test_linter_with_syntax_error_file(self, tmp_path, config):
         """Test that a file with a syntax error raises LintInputError instead of passing."""
         bad_file = tmp_path / "syntax_error.py"
         bad_file.write_text("def foo(:\n")
-        config = Config()
         linter = DtoStrictLinter(config)
         with pytest.raises(LintInputError, match="cannot parse Python source"):
             linter.lint_file(bad_file)
 
-    def test_linter_with_nonexistent_file(self, tmp_path):
+    def test_linter_with_nonexistent_file(self, tmp_path, config):
         """Test that a nonexistent file raises LintInputError instead of passing."""
         nonexistent = tmp_path / "nonexistent.py"
-        config = Config()
         linter = DtoStrictLinter(config)
         with pytest.raises(LintInputError, match="cannot read Python source"):
             linter.lint_file(nonexistent)
@@ -111,24 +108,22 @@ def process(data: Any) -> dict:
         r006_violations = [v for v in violations if v.rule_id == "R006"]
         assert len(r006_violations) == 0
 
-    def test_generate_baseline_empty_violations(self, tmp_path):
+    def test_generate_baseline_empty_violations(self, tmp_path, config):
         """Test baseline generation with no violations."""
         clean_file = tmp_path / "clean.py"
         clean_file.write_text("x = 1")
-        config = Config()
         linter = DtoStrictLinter(config)
         violations = []
         baseline = linter.generate_baseline(violations)
         assert isinstance(baseline, (dict, list))
 
-    def test_baseline_ratchet_improvement(self, tmp_path):
+    def test_baseline_ratchet_improvement(self, tmp_path, config):
         """Test baseline ratchet allows improvements."""
         test_file = tmp_path / "test.py"
         test_file.write_text("x = 1")
 
         baseline = {str(test_file): 10}
 
-        config = Config()
         linter = DtoStrictLinter(config, baseline=baseline)
         violations = []
 
