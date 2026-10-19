@@ -4,16 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
-### Fixed
+## [0.6.0] - 2026-10-18
 
-- **Baseline loading error handling** - `load_baseline()` now raises a typed `BaselineLoadError` for missing, unreadable, malformed, undecodable (non-UTF-8), or structurally invalid baseline files instead of silently returning an empty dict. Missing or malformed baselines are now hard errors that fail the gate with exit code 1, preventing silent ratchet disablement.
-- **Malformed pyproject.toml exits with an error** - A file that cannot be read or parsed, or whose strict-module table is not a table, previously disabled all configuration silently. The CLI now prints the path and exits 1. A missing file still uses the defaults.
-- **Annotation matching is by name** - R006 no longer flags identifiers that only contain the letters "any" (for example `Company`). R001 detects a qualified `typing.Any` inside `Dict[str, typing.Any]` and no longer matches names such as `AnyStr`.
-- **R002 function context** - A dict literal after a function that carried an exception tag is no longer excused by that tag.
-- **R011 constants modules** - Only a `constants.py` file, a `*_const.py` file, or a file under a directory named `constants` is exempt. A path that merely contains the word no longer is.
-- **R003 on Python 3.14** - A dataclass keyword set to a bare name no longer raises on Python 3.14, which removed the legacy node class the rule referenced.
-- **Unreadable or unparseable input fails the run** - A Python file the linter cannot decode or parse, or a file or baseline the LOC cap cannot decode, previously passed silently (the linter skipped the file and the LOC cap counted it as zero lines). The run now prints the path and the reason to stderr and exits 1. This includes `--generate-baseline`, which refuses to write a baseline from an unparseable file.
-- **R007 duplicate reports** - A fixture function with more than one fixture decorator yields one violation instead of one per decorator.
+### Added
+
+- **"module-level:" default exception tag** - `# module-level: <reason>` is recognized out of the box, so a function that records why it is module-level is exempt from R009. The existing defaults (`facade - celery schedule`, `FRAMEWORK`) are unchanged.
 
 ### Changed
 
@@ -27,9 +22,16 @@ All notable changes to this project will be documented in this file.
 - **loc-cap success line is ASCII** - The success line that the LOC cap prints when every file is within the cap now starts with `OK:` instead of a check-mark glyph.
 - **Linter internals** - The unused `violations` attribute of `DtoStrictLinter` is removed; no public name changed.
 
-### Added
+### Fixed
 
-- **"module-level:" default exception tag** - `# module-level: <reason>` is recognized out of the box, so a function that records why it is module-level is exempt from R009. The existing defaults (`facade - celery schedule`, `FRAMEWORK`) are unchanged.
+- **Baseline loading error handling** - `load_baseline()` now raises a typed `BaselineLoadError` for missing, unreadable, malformed, undecodable (non-UTF-8), or structurally invalid baseline files instead of silently returning an empty dict. Missing or malformed baselines are now hard errors that fail the gate with exit code 1, preventing silent ratchet disablement.
+- **Malformed pyproject.toml exits with an error** - A file that cannot be read or parsed, or whose strict-module table is not a table, previously disabled all configuration silently. The CLI now prints the path and exits 1. A missing file still uses the defaults.
+- **Annotation matching is by name** - R006 no longer flags identifiers that only contain the letters "any" (for example `Company`). R001 detects a qualified `typing.Any` inside `Dict[str, typing.Any]` and no longer matches names such as `AnyStr`.
+- **R002 function context** - A dict literal after a function that carried an exception tag is no longer excused by that tag.
+- **R011 constants modules** - Only a `constants.py` file, a `*_const.py` file, or a file under a directory named `constants` is exempt. A path that merely contains the word no longer is.
+- **R003 on Python 3.14** - A dataclass keyword set to a bare name no longer raises on Python 3.14, which removed the legacy node class the rule referenced.
+- **Unreadable or unparseable input fails the run** - A Python file the linter cannot decode or parse, or a file or baseline the LOC cap cannot decode, previously passed silently (the linter skipped the file and the LOC cap counted it as zero lines). The run now prints the path and the reason to stderr and exits 1. This includes `--generate-baseline`, which refuses to write a baseline from an unparseable file.
+- **R007 duplicate reports** - A fixture function with more than one fixture decorator yields one violation instead of one per decorator.
 
 ### Removed
 
