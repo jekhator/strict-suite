@@ -73,7 +73,7 @@ class TestR009ModuleLevelFunctions:
         )
         r009_violations = [v for v in violations if v.rule_id == "R009"]
 
-        assert len(r009_violations) > 0
+        assert len(r009_violations) == 2
         message = r009_violations[0].message
         assert "main" in message, "Message should mention 'main' entry point"
         assert "handle_" in message, "Message should mention 'handle_*' pattern"

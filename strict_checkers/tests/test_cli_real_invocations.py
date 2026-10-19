@@ -52,7 +52,7 @@ class TestCLIRealInvocations:
         data = json.loads(result.stdout)
         assert isinstance(data, (dict, list))
         if isinstance(data, list):
-            assert len(data) > 0
+            assert len(data) == 2
             assert "rule_id" in data[0]
         else:
             assert any(
@@ -174,11 +174,7 @@ class TestCLIRealInvocations:
             text=True,
         )
 
-        assert (
-            "Python files" in result.stdout
-            or "LOC" in result.stdout
-            or result.returncode in [0, 1]
-        )
+        assert result.returncode == 0
 
     def test_cli_missing_path_error(self, cli_project_dir):
         """Test CLI error when path is missing."""
@@ -214,7 +210,7 @@ class TestCLILocCap:
 
         assert result.returncode == 0
         lines = result.stdout.strip().split("\n")
-        assert len(lines) > 0
+        assert len(lines) == 2
         for line in lines:
             if line.strip():
                 assert ":" in line
@@ -238,7 +234,7 @@ class TestCLILocCap:
             text=True,
         )
 
-        assert result.returncode in [0, 1]
+        assert result.returncode == 0
 
     def test_loc_cap_with_baseline(self, cli_project_dir):
         """Test loc-cap with baseline file."""
@@ -260,4 +256,4 @@ class TestCLILocCap:
             text=True,
         )
 
-        assert result.returncode in [0, 1]
+        assert result.returncode == 0

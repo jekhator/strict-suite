@@ -208,7 +208,7 @@ class TestAnnotationParsingEdgeCases:
         arg = func.args.args[0]
 
         result = AnnotationInspector.get_annotation_string(arg.annotation)
-        assert "tuple" in result.lower() or "int" in result.lower()
+        assert result.startswith("tuple[") and "int" in result and "str" in result
 
     def test_get_annotation_string_attribute(self):
         """Test annotation string for attribute."""
@@ -218,7 +218,7 @@ class TestAnnotationParsingEdgeCases:
         arg = func.args.args[0]
 
         result = AnnotationInspector.get_annotation_string(arg.annotation)
-        assert len(result) > 0
+        assert result == "typing.Optional[int]"
 
     def test_get_annotation_string_constant(self):
         """Test annotation string for constant."""

@@ -2,7 +2,7 @@
 
 import sys
 
-from strict_config.constants import ERR_NONEXISTENT_PATH
+from strict_config.constants import ERR_NONEXISTENT_PATH, EXIT_CODE_HIGH_VIOLATION
 from strict_module.cli import main
 
 
@@ -49,7 +49,7 @@ service_paths = ["**/*.py"]
         )
 
         exit_code = main()
-        assert exit_code > 0
+        assert exit_code == EXIT_CODE_HIGH_VIOLATION
 
         captured = capsys.readouterr()
         assert "R001" in captured.out
@@ -80,14 +80,14 @@ service_paths = ["**/*.py"]
         )
 
         exit_code = main()
-        assert exit_code > 0
+        assert exit_code == EXIT_CODE_HIGH_VIOLATION
 
         captured = capsys.readouterr()
         assert "::error" in captured.out or "::warning" in captured.out
 
     def test_cli_nonexistent_path(self, monkeypatch, capsys, tmp_path):
         """Test CLI errors on nonexistent path."""
-        nonexistent_path = "/tmp/does-not-exist-xyz-12345"
+        nonexistent_path = str(tmp_path / "does-not-exist.py")
 
         config_file = tmp_path / "pyproject.toml"
         config_file.write_text(

@@ -69,6 +69,6 @@ class TestR010LegacyTypingABC:
         violations = linter.lint_file(fixture_dir / "bad" / "r010_legacy_typing_abc.py")
         r010_violations = [v for v in violations if v.rule_id == "R010"]
 
-        assert len(r010_violations) > 0
+        assert len(r010_violations) == 4
         message = r010_violations[0].message
         assert "collections.abc" in message, "Message should suggest collections.abc"

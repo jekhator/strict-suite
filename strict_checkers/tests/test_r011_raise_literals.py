@@ -73,7 +73,7 @@ class TestR011RaiseLiterals:
         )
         r011_violations = [v for v in violations if v.rule_id == "R011"]
 
-        assert len(r011_violations) > 0
+        assert len(r011_violations) == 4
         message = r011_violations[0].message
         assert "constants" in message.lower(), (
             "Message should mention extracting to constants module"
