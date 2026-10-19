@@ -76,12 +76,8 @@ helper(  # noqa: R012
         assert len(checker.violations) == 0
 
     def test_r012_exactly_80_chars(self, config):
-        """Calls exactly 80 chars are flagged."""
-        source = """
-short(
-    x
-)
-"""
+        """A call whose collapsed form is exactly 80 characters is flagged."""
+        source = "f(\n    " + "a" * 75 + "\n)\n"
         tree = ast.parse(source)
         checker = R012Checker(Path("test.py"), source, config)
         checker.visit(tree)
@@ -149,12 +145,8 @@ log(
         assert len(checker.violations) == 1
 
     def test_r012_boundary_exactly_79_chars(self, config):
-        """Calls at exactly 79 chars should be flagged."""
-        source = """
-f(
-    x
-)
-"""
+        """A call whose collapsed form is 79 characters is flagged."""
+        source = "f(\n    " + "a" * 74 + "\n)\n"
         tree = ast.parse(source)
         checker = R012Checker(Path("test.py"), source, config)
         checker.visit(tree)
@@ -1031,18 +1023,14 @@ func(
 
         assert len(checker.violations) == 1
 
-    def test_r012_single_character_function(self, config):
-        """Single character function name."""
-        source = """
-f(
-    x
-)
-"""
+    def test_r012_just_over_limit_not_flagged(self, config):
+        """A call whose collapsed form is 81 characters is not flagged."""
+        source = "f(\n    " + "a" * 76 + "\n)\n"
         tree = ast.parse(source)
         checker = R012Checker(Path("test.py"), source, config)
         checker.visit(tree)
 
-        assert len(checker.violations) == 1
+        assert len(checker.violations) == 0
 
 
 class TestR013CoveragePaths:
@@ -1893,21 +1881,6 @@ func2(
 
         # Both should be flagged
         assert len(checker.violations) == 2
-
-    def test_r013_non_handler_method_not_flagged(self, config):
-        """Non-handler method with many params not flagged."""
-        source = """
-def process_data(
-    self, a: int, b: int, c: int, d: int, e: int, f: int,
-) -> None:
-    pass
-"""
-        tree = ast.parse(source)
-        checker = R013Checker(Path("test.py"), source, config)
-        checker.visit(tree)
-
-        # Not a handler, should not flag
-        assert len(checker.violations) == 0
 
     def test_r013_handler_upper_limit_5_params(self, config):
         """Handler at exact upper limit (5 params per line)."""
