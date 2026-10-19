@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002Justification:
-    """Test suite for related functionality."""
+    """Tests for R002: exception_tag_requires_justification mode."""
 
     def test_r002_tag_without_justification(self, tmp_path):
         """Tag without justification flagged when required."""

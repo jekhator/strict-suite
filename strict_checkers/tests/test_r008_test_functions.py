@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR008TestFunctions:
-    """Test suite for related functionality."""
+    """Tests for R008: bare module-level test functions."""
 
     def test_r008_bad_bare_test_functions(self, fixture_dir):
         """Bad: test functions defined at module level."""

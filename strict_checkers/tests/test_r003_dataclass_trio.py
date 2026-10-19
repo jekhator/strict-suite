@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR003DataclassTrio:
-    """Test suite for related functionality."""
+    """Tests for R003: Dataclass missing frozen+slots+repr=False trio."""
 
     def test_r003_good_complete_trio(self, fixture_dir):
         """Good: dataclass with frozen=True, slots=True, repr=False."""

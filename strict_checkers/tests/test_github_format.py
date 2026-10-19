@@ -4,7 +4,7 @@ from strict_rules.rules_objects import RuleSeverity, Violation
 
 
 class TestGithubFormat:
-    """Test suite for related functionality."""
+    """Tests for GitHub format output."""
 
     def test_github_format_error(self):
         """Test GitHub format for HIGH severity."""

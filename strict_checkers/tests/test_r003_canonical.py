@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR003Canonical:
-    """Test suite for related functionality."""
+    """Tests for R003: Canonical mode (repr=False as anti-canonical)."""
 
     def test_r003_canonical_mode_flags_repr_false(self, tmp_path):
         """repr=False flagged as anti-canonical in canonical mode."""

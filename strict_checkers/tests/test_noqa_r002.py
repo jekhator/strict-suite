@@ -9,7 +9,7 @@ from tempfile import TemporaryDirectory
 
 
 class TestNoqaR002:
-    """Test suite for related functionality."""
+    """Test R002 noqa suppression with various dash formats and multi-line dicts."""
 
     def test_r002_noqa_trailing_hyphen(self):
         """R002 violation with trailing noqa on same line as dict opening."""

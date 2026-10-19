@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR001DictStrAny:
-    """Test suite for related functionality."""
+    """Tests for R001: Dict[str, Any] in service signatures."""
 
     def test_r001_good_no_dict_str_any(self, fixture_dir):
         """Good: no Dict[str, Any] in signatures."""

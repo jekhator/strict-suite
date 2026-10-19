@@ -6,7 +6,7 @@ from strict_config._config import Config
 
 
 class TestConfigLoading:
-    """Test suite for related functionality."""
+    """Tests for configuration loading."""
 
     def test_config_defaults(self, config):
         """Test default configuration."""

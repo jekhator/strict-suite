@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR001StrictCollections:
-    """Test suite for related functionality."""
+    """Tests for R001: Bare dict/list/tuple detection with strict_collections mode."""
 
     def test_r001_strict_collections_bare_dict(self, tmp_path):
         """Bare dict flagged with strict_collections=True."""

@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002TagSeparatorFormat:
-    """Test suite for related functionality."""
+    """Test R002 exception tag format and separator alignment."""
 
     def test_r002_tag_separator_format_in_message(self, tmp_path):
         """Test that R002 error message uses correct tag separator format colon."""

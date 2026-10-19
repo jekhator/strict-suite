@@ -8,16 +8,10 @@ from strict_linter import DtoStrictLinter
 
 
 class TestServiceTestExemption:
-    """Test suite for related functionality."""
+    """Tests for service test file exemption from R001, R004, R006 rules."""
 
     def test_service_test_file_exempt_from_r001_r004_r006(self):
-        """Test files in services/ are exempt from R001, R004, R006.
-
-        This test verifies that a conftest.py with:
-        - module-level @pytest.fixture (would trigger R004 in production code)
-        - @pytest.fixture with type[Any] (would trigger R006 in production code)
-        are NOT flagged because the file is a test file.
-        """
+        """A conftest.py in services/ is exempt from R001, R004 and R006 as a test file."""
         config = Config(
             service_paths=["**/services/*.py"],
             r006_paths=["**/services/*.py"],
@@ -63,10 +57,7 @@ def helper_function():
             )
 
     def test_production_service_file_still_flagged_for_r001_r004_r006(self):
-        """Verify that production code in services/ is still properly flagged.
-
-        This ensures the exemption only applies to test files, not all service files.
-        """
+        """Production code in services/ is still flagged for R001, R004 and R006."""
         config = Config(
             service_paths=["**/services/*.py"],
             r006_paths=["**/services/*.py"],

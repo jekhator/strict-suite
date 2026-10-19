@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002SerializerExemption:
-    """Test suite for related functionality."""
+    """Tests for R002 exemption: dict literals in to_* methods of dataclasses."""
 
     def test_r002_exempt_serializer_methods(self, fixture_dir):
         """Good: dict literals in to_* methods of dataclasses are exempt."""

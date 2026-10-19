@@ -8,7 +8,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR003StrictRelaxed:
-    """Test suite for related functionality."""
+    """Tests for R003 strict/relaxed modes (Issue #3)."""
 
     def test_r003_strict_mode_flags_repr_false(self):
         """R003 strict mode (default): repr=False is anti-canonical and flagged."""

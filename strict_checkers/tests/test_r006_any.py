@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR006Any:
-    """Test suite for related functionality."""
+    """Tests for R006: typing.Any in signatures."""
 
     def test_r006_any_in_parameter(self, tmp_path):
         """typing.Any in parameter flagged."""

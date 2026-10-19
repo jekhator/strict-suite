@@ -18,7 +18,7 @@ from strict_linter import BaselineLoadError, DtoStrictLinter
 
 
 class TestBaselineRatchet:
-    """Test suite for related functionality."""
+    """Tests for R-baseline ratchet-from-baseline mode (Issue #4)."""
 
     def test_baseline_generate(self):
         """Baseline: Generate baseline JSON from violations."""
