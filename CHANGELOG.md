@@ -20,7 +20,7 @@ All notable changes to this project will be documented in this file.
 - **R009 advisory by default** - R009 is INFO, so its findings print and never change the exit code. Decorated functions, dunder and `pytest_*` hooks, and functions tagged on the def line or in the first docstring line are exempt. Set `severity_overrides = { R009 = "HIGH" }` to restore the blocking behaviour.
 - **R004 narrowed to the facade shape** - R004 flags only module-level functions in service paths whose body is a bare delegation to a class method (`Name.method(...)`, `Name(...).method(...)`, or an instance built and called on the next line). Untagged functions with real logic in service paths no longer fail; they are R009 advice. Wrappers that the old attribute-call test exempted (for example `return UserService.get_user(...)`) now fail unless tagged.
 - **Exception tag matching is shared** - R004 and R009 use one matcher: case-insensitive, read from the def line or the first docstring line. R004 previously matched case-sensitively and read the whole docstring.
-- **loc-cap advisory text** - The hard-cap advisory no longer names an internal memory file, and its refactor example uses a generic module name.
+- **loc-cap advisory text** - The hard-cap advisory no longer refers to a document that is not part of the public repository, and its refactor example uses a generic module name.
 - **Linter internals** - The unused `violations` attribute of `DtoStrictLinter` is removed; no public name changed.
 
 ### Added

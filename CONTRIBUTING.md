@@ -31,7 +31,7 @@ The same gates run in CI. Run them from the repository root.
 5. Self-lint: `uv run --python 3.12 python -m strict_module.cli $(find strict_checkers strict_config strict_inspection strict_linter strict_loc_cap strict_rules strict_module -name "*.py" ! -path "*/tests/*" ! -path "*/fixtures/*" | sort) --format github`
 6. Add an entry under the `[Unreleased]` section of `CHANGELOG.md` for every user-visible change.
 
-Commit messages must not carry tool or assistant attribution lines; the attribution workflow rejects them.
+Commit messages must not carry attribution or sign-off lines beyond the author; the attribution workflow rejects them.
 
 ## License
 
