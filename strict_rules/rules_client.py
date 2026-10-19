@@ -1,14 +1,12 @@
 """Rule registry for linting rules."""
 
-from typing import Optional
-
 from strict_rules.rules_objects import Rule, RuleSeverity
 
 
 class RuleRegistry:
     """Registry of all linting rules."""
 
-    RULES = {
+    RULES: dict[str, Rule] = {
         "R001": Rule(
             "R001",
             "Dict[str, Any] or bare collections in service signatures",
@@ -107,6 +105,6 @@ class RuleRegistry:
     }
 
     @classmethod
-    def get_rule(cls, rule_id: str) -> Optional[Rule]:
+    def get_rule(cls, rule_id: str) -> Rule | None:
         """Get rule by ID."""
         return cls.RULES.get(rule_id)
