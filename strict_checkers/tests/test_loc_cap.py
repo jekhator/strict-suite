@@ -2,6 +2,7 @@
 
 import pytest
 
+from strict_config import constants as const
 from strict_config._config import Config, LocCapConfig
 from strict_loc_cap import LocCap
 from strict_loc_cap.loc_cap_objects import LocCapInputError
@@ -28,10 +29,10 @@ class TestCountLines:
         test_file.write_text("")
         assert LocCap.count_lines(str(test_file)) == 0
 
-    def test_count_lines_nonexistent_file(self):
+    def test_count_lines_nonexistent_file(self, tmp_path, error_prefix):
         """Counting lines in a nonexistent file raises LocCapInputError instead of returning zero."""
-        with pytest.raises(LocCapInputError, match="cannot read file for LOC count"):
-            LocCap.count_lines("/nonexistent/file.py")
+        with pytest.raises(LocCapInputError, match=error_prefix(const.ERR_LOC_CAP_UNREADABLE)):
+            LocCap.count_lines(str(tmp_path / "missing.py"))
 
 
 class TestLoadBaseline:

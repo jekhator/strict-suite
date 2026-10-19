@@ -141,3 +141,17 @@ def run_cli(monkeypatch, capsys):
         return code, captured.out, captured.err
 
     return _run
+
+
+@pytest.fixture
+def error_prefix():
+    """Return a function that turns an error message template into its fixed prefix.
+
+    Used by: TestCountLines, TestLinterEdgeCases, TestLinterFileHandling,
+    TestUnreadableInputs.
+    """
+
+    def _prefix(template):
+        return template.split("{", 1)[0].rstrip(": ")
+
+    return _prefix

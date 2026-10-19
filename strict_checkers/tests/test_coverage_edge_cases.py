@@ -4,6 +4,7 @@ import ast
 
 import pytest
 
+from strict_config import constants as const
 from strict_config._config import Config
 from strict_inspection import AnnotationInspector
 from strict_linter import DtoStrictLinter, LintInputError
@@ -60,19 +61,19 @@ class TestLinterEdgeCases:
         violations = linter.lint_file(empty_file)
         assert len(violations) == 0
 
-    def test_linter_with_syntax_error_file(self, tmp_path, config):
+    def test_linter_with_syntax_error_file(self, tmp_path, config, error_prefix):
         """Test that a file with a syntax error raises LintInputError instead of passing."""
         bad_file = tmp_path / "syntax_error.py"
         bad_file.write_text("def foo(:\n")
         linter = DtoStrictLinter(config)
-        with pytest.raises(LintInputError, match="cannot parse Python source"):
+        with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_SYNTAX)):
             linter.lint_file(bad_file)
 
-    def test_linter_with_nonexistent_file(self, tmp_path, config):
+    def test_linter_with_nonexistent_file(self, tmp_path, config, error_prefix):
         """Test that a nonexistent file raises LintInputError instead of passing."""
         nonexistent = tmp_path / "nonexistent.py"
         linter = DtoStrictLinter(config)
-        with pytest.raises(LintInputError, match="cannot read Python source"):
+        with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
             linter.lint_file(nonexistent)
 
     def test_linter_format_github_high_severity(self, tmp_path):

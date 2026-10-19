@@ -8,6 +8,7 @@ from unittest.mock import Mock
 
 import pytest
 
+from strict_config import constants as const
 from strict_config._config import Config
 from strict_config.constants import (
     ERR_BASELINE_INVALID_JSON,
@@ -343,16 +344,16 @@ class TestLinterFileHandling:
             result = linter.lint_file(text_file)
             assert result == []
 
-    def test_lint_file_unreadable(self, config, tmp_path):
+    def test_lint_file_unreadable(self, config, tmp_path, error_prefix):
         """Test that a path that cannot be read as a file raises LintInputError."""
         linter = DtoStrictLinter(config)
         py_file = tmp_path / "test.py"
         py_file.mkdir()
 
-        with pytest.raises(LintInputError, match="cannot read Python source"):
+        with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
             linter.lint_file(py_file)
 
-    def test_lint_file_invalid_encoding(self, config):
+    def test_lint_file_invalid_encoding(self, config, error_prefix):
         """Test linting a file with invalid encoding raises LintInputError."""
         linter = DtoStrictLinter(config)
 
@@ -360,10 +361,10 @@ class TestLinterFileHandling:
             py_file = Path(tmpdir) / "test.py"
             py_file.write_bytes(b"\x80\x81\x82\x83")
 
-            with pytest.raises(LintInputError, match="cannot read Python source"):
+            with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
                 linter.lint_file(py_file)
 
-    def test_lint_file_syntax_error(self, config):
+    def test_lint_file_syntax_error(self, config, error_prefix):
         """Test linting a file with a syntax error raises LintInputError."""
         linter = DtoStrictLinter(config)
 
@@ -371,7 +372,7 @@ class TestLinterFileHandling:
             py_file = Path(tmpdir) / "test.py"
             py_file.write_text("x = (")
 
-            with pytest.raises(LintInputError, match="cannot parse Python source"):
+            with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_SYNTAX)):
                 linter.lint_file(py_file)
 
     def test_lint_path_single_file(self, config):
