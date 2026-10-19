@@ -180,28 +180,28 @@ The `strict_config` export surface (names and `__all__`) is unchanged by the exp
 
 ## Gate Results
 
-Counts: 35 source modules and 80 test-tree files were reviewed (115 Python files are type-checked by the mypy gate). 41 test-tree files changed; 3 were added. Source modules changed in this pass are marked in the source table. Tests before the pass: 464 passed at 97.45 percent coverage; tests after: 476 passed at 97.64 percent coverage on Python 3.12 and on Python 3.14. Findings before the pass: 288 across the test tree; after: 50, all listed under Deferred Candidates.
+Counts: 35 source modules and 80 test-tree files were reviewed in the pass; 83 test-tree files exist after the pass (six added). 44 test-tree files changed. Tests before the pass: 464 passed at 97.45 percent coverage. Tests after the pass: 479 passed at 97.66 percent coverage on Python 3.12 and 97.65 percent on Python 3.14. Findings before the pass: 288 across the test tree; after: 24, all listed under Deferred Candidates. Strict-module rule findings on the test tree for R012: 26 before the R012 fix (21 false positives on multi-line string arguments and 5 genuinely collapsible calls, since collapsed); 1 after (the intentional R012 bad fixture).
 
-Test suite on Python 3.12 (`uv run pytest -v --cov --cov-fail-under=95`), tail:
-
-```
-TOTAL                                                                      4826     50    602     72    98%
-Required test coverage of 95% reached. Total coverage: 97.64%
-============================= 476 passed in 9.05s ==============================
-```
-
-Test suite on Python 3.14 (`uv run --python 3.14 pytest -v --cov --cov-fail-under=95`), tail:
+Test suite on Python 3.12 (`uv run --all-extras pytest -v --cov --cov-fail-under=95`), tail:
 
 ```
-TOTAL                                                                      4826     50    602     72    98%
-Required test coverage of 95% reached. Total coverage: 97.64%
-============================= 476 passed in 8.44s ==============================
+TOTAL                                                                      4864     50    604     72    98%
+Required test coverage of 95% reached. Total coverage: 97.66%
+============================= 479 passed in 7.22s ==============================
 ```
 
-Type check (`uv run mypy strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/`), tail:
+Test suite on Python 3.14 (`uv run --all-extras --python 3.14 pytest -v --cov --cov-fail-under=95`), tail:
 
 ```
-Success: no issues found in 115 source files
+TOTAL                                                                      4850     50    604     72    98%
+Required test coverage of 95% reached. Total coverage: 97.65%
+============================= 479 passed in 8.28s ==============================
+```
+
+Type check (`uv run --all-extras mypy strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/`), tail:
+
+```
+Success: no issues found in 118 source files
 ```
 
 Lint (`uvx ruff@0.15.14 check strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/`), tail:
@@ -218,10 +218,10 @@ Format check (`uvx ruff@0.15.14 format --check strict_module/`), tail:
 
 Self-lint (the verbatim command from the strict-module workflow), exit 0 with no output.
 
-Lockfile (`uv lock --check`), tail:
+Wheel root markers (`uv build`, then the py.typed entries of the wheel):
 
 ```
-Resolved 15 packages in 1ms
+['strict_checkers/py.typed', 'strict_config/py.typed', 'strict_inspection/py.typed', 'strict_linter/py.typed', 'strict_loc_cap/py.typed', 'strict_module/py.typed', 'strict_rules/py.typed']
 ```
 
 Changelog header:
