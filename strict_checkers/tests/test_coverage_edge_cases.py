@@ -53,26 +53,23 @@ class TestNoqaCommentParsing:
 class TestLinterEdgeCases:
     """Test linter with edge cases."""
 
-    def test_linter_with_empty_file(self, tmp_path, config):
+    def test_linter_with_empty_file(self, tmp_path, config, linter):
         """Test linting an empty file."""
         empty_file = tmp_path / "empty.py"
         empty_file.write_text("")
-        linter = DtoStrictLinter(config)
         violations = linter.lint_file(empty_file)
         assert len(violations) == 0
 
-    def test_linter_with_syntax_error_file(self, tmp_path, config, error_prefix):
+    def test_linter_with_syntax_error_file(self, tmp_path, config, error_prefix, linter):
         """Test that a file with a syntax error raises LintInputError instead of passing."""
         bad_file = tmp_path / "syntax_error.py"
         bad_file.write_text("def foo(:\n")
-        linter = DtoStrictLinter(config)
         with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_SYNTAX)):
             linter.lint_file(bad_file)
 
-    def test_linter_with_nonexistent_file(self, tmp_path, config, error_prefix):
+    def test_linter_with_nonexistent_file(self, tmp_path, config, error_prefix, linter):
         """Test that a nonexistent file raises LintInputError instead of passing."""
         nonexistent = tmp_path / "nonexistent.py"
-        linter = DtoStrictLinter(config)
         with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
             linter.lint_file(nonexistent)
 
@@ -109,11 +106,10 @@ def process(data: Any) -> dict:
         r006_violations = [v for v in violations if v.rule_id == "R006"]
         assert len(r006_violations) == 0
 
-    def test_generate_baseline_empty_violations(self, tmp_path, config):
+    def test_generate_baseline_empty_violations(self, tmp_path, config, linter):
         """Test baseline generation with no violations."""
         clean_file = tmp_path / "clean.py"
         clean_file.write_text("x = 1")
-        linter = DtoStrictLinter(config)
         violations = []
         baseline = linter.generate_baseline(violations)
         assert isinstance(baseline, (dict, list))

@@ -39,6 +39,18 @@ def config():
 
 
 @pytest.fixture
+def linter(config):
+    """A DtoStrictLinter built from the default config fixture.
+
+    Used by: TestInfoSeverityLevel, TestLinterEdgeCases, TestLinterFileHandling,
+    TestR009ModuleLevelFunctions, TestUnreadableInputs.
+    """
+    from strict_linter import DtoStrictLinter
+
+    return DtoStrictLinter(config)
+
+
+@pytest.fixture
 def project_dir(tmp_path):
     """A temporary project with a bad and a good service file and a pyproject for CLI tests.
 
@@ -147,8 +159,7 @@ def run_cli(monkeypatch, capsys):
 def error_prefix():
     """Return a function that turns an error message template into its fixed prefix.
 
-    Used by: TestCountLines, TestLinterEdgeCases, TestLinterFileHandling,
-    TestUnreadableInputs.
+    Used by: TestCountLines, TestLinterEdgeCases, TestLinterFileHandling, TestUnreadableInputs.
     """
 
     def _prefix(template):

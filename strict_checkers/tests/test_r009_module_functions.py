@@ -9,9 +9,8 @@ from strict_rules import RuleSeverity
 class TestR009ModuleLevelFunctions:
     """Test suite for R009 module-level function detection."""
 
-    def test_r009_reports_untagged_module_function_as_info(self, fixture_dir):
+    def test_r009_reports_untagged_module_function_as_info(self, fixture_dir, linter):
         """R009 flags untagged module-level functions at INFO severity."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(
             fixture_dir / "bad" / "r009_module_function_outside_entry_point.py"
         )
@@ -23,9 +22,8 @@ class TestR009ModuleLevelFunctions:
         )
         assert all(v.severity == RuleSeverity.INFO for v in r009_violations)
 
-    def test_r009_allows_entry_points(self, fixture_dir):
+    def test_r009_allows_entry_points(self, fixture_dir, linter):
         """R009 allows main, handle_*, and related entry points."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(
             fixture_dir / "good" / "r009_allowed_entry_points.py"
         )
@@ -36,9 +34,8 @@ class TestR009ModuleLevelFunctions:
             f"got {len(r009_violations)}: {r009_violations}"
         )
 
-    def test_r009_exempts_test_files(self, fixture_dir):
+    def test_r009_exempts_test_files(self, fixture_dir, linter):
         """R009 does not flag functions in test files."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(
             fixture_dir / "good" / "test_r008_good_test_class.py"
         )
@@ -46,17 +43,15 @@ class TestR009ModuleLevelFunctions:
 
         assert len(r009_violations) == 0, "R009 should not flag functions in test files"
 
-    def test_r009_exempts_pytest_fixtures(self, fixture_dir):
+    def test_r009_exempts_pytest_fixtures(self, fixture_dir, linter):
         """R009 does not flag pytest fixtures."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(fixture_dir / "bad" / "test_r007_bad_fixtures.py")
         r009_violations = [v for v in violations if v.rule_id == "R009"]
 
         assert len(r009_violations) == 0, "R009 should exempt pytest fixtures"
 
-    def test_r009_exempts_decorators_hooks_and_recorded_reasons(self, fixture_dir):
+    def test_r009_exempts_decorators_hooks_and_recorded_reasons(self, fixture_dir, linter):
         """R009 exempts decorated functions, dunder and pytest hooks, and tagged functions."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(fixture_dir / "good" / "r009_exempt_shapes.py")
         r009_violations = [v for v in violations if v.rule_id == "R009"]
 
@@ -65,9 +60,8 @@ class TestR009ModuleLevelFunctions:
             f"got {r009_violations}"
         )
 
-    def test_r009_message_names_entry_points_and_tag(self, fixture_dir):
+    def test_r009_message_names_entry_points_and_tag(self, fixture_dir, linter):
         """R009 message lists the entry points and the recorded-reason tag."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(
             fixture_dir / "bad" / "r009_module_function_outside_entry_point.py"
         )
@@ -87,9 +81,8 @@ class TestR009ModuleLevelFunctions:
         """The default tag is the written form with a colon, so prose cannot satisfy it."""
         assert const.TAG_MODULE_LEVEL == "module-level:"
 
-    def test_r009_prose_docstring_does_not_exempt(self, fixture_dir):
+    def test_r009_prose_docstring_does_not_exempt(self, fixture_dir, linter):
         """A first docstring line that only mentions module-level as prose still gets an R009 finding."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_file(
             fixture_dir / "bad" / "r009_prose_docstring_not_a_tag.py"
         )
@@ -101,9 +94,8 @@ class TestR009ModuleLevelFunctions:
         )
         assert "strip_prefix" in r009_violations[0].message
 
-    def test_r009_default_run_exits_zero(self, fixture_dir):
+    def test_r009_default_run_exits_zero(self, fixture_dir, linter):
         """With default severity, R009 findings are advisory and the run exits zero."""
-        linter = DtoStrictLinter(Config())
         violations = linter.lint_path(
             fixture_dir / "bad" / "r009_module_function_outside_entry_point.py"
         )

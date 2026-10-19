@@ -3,8 +3,7 @@
 import pytest
 
 from strict_config import constants as const
-from strict_config._config import Config
-from strict_linter import DtoStrictLinter, LintInputError
+from strict_linter import LintInputError
 
 UNDECODABLE_BYTES = b"\x80\x81\x82\x83"
 
@@ -12,10 +11,9 @@ UNDECODABLE_BYTES = b"\x80\x81\x82\x83"
 class TestUnreadableInputs:
     """Unreadable and unparseable inputs produce an error line and exit 1."""
 
-    def test_lint_path_raises_for_undecodable_file_in_directory(self, tmp_path, error_prefix):
+    def test_lint_path_raises_for_undecodable_file_in_directory(self, tmp_path, error_prefix, linter):
         """A directory walk raises LintInputError when one member cannot be decoded."""
         (tmp_path / "bad.py").write_bytes(UNDECODABLE_BYTES)
-        linter = DtoStrictLinter(Config())
 
         with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
             linter.lint_path(tmp_path)
