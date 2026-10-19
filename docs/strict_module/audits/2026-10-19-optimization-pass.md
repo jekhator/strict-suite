@@ -19,7 +19,7 @@ Source files that only re-export names (package `__init__.py` files) were review
 | strict_checkers/r009.py | 2 | yes | Rewritten as an advisory rule with decorator, dunder and pytest hook, and recorded-reason exemptions; the former fixture-only helpers are replaced by the decorator check. |
 | strict_checkers/r010.py | 1 | yes | Suppression check moved out of the per-alias loop; the legacy-name table is a module constant. |
 | strict_checkers/r011.py | 3 | yes | Constants-module exemption matches the file name or a constants directory, not any path substring (a substring match exempted unrelated paths); the generic-visit branches collapsed to one exit. |
-| strict_checkers/r012.py | 2 | yes | Removed two broad exception handlers that silently discarded results; the early-return chain collapsed to one predicate; line limit named as a constant. |
+| strict_checkers/r012.py | 2 | yes | Removed two broad exception handlers that silently discarded results; the early-return chain collapsed to one predicate; line limit named as a constant. Decision applied: a call whose single argument is itself multi-line is not reported (false positive on multi-line string arguments). |
 | strict_checkers/r013.py | 3 | yes | Duplicate async and sync visitor bodies share one check; removed unnecessary type-ignore comments; the grouping uses a defaultdict. |
 | strict_checkers/r014.py | 3 | yes | Removed unused parameters from the log-event checks; removed unnecessary type-ignore comments; line limit named as a constant. |
 | strict_checkers/r015.py | 2 | yes | Removed an unused parameter; the timing-capture check keeps the bare round builtin as the only latency calculation, as before, with the perf-counter and round checks separate. |
@@ -57,7 +57,7 @@ These decisions were taken from the review of the first part of the pass and app
 
 Findings are counted with these lenses: class and method docstrings that are missing, multi-line or generic; determinism (chmod-based or machine-specific paths); weak assertions (length-only, exit-code sets, OR-combined alternatives, conditional checks); repeated default configuration setup; non-ASCII characters; exception bindings other than `error`; and strict-module rule findings that are not the purpose of a fixture. Findings before are counted on the tree at the start of the pass; findings after are counted on the tree at the end of the pass. Fixture purpose findings (for example the R010 findings in the R010 bad fixture) are not counted.
 
-Test-tree summary: 77 files before the pass, 80 after (three added: `test_unreadable_inputs.py`, `test_package_exports.py` and the R009 prose fixture). 41 files changed. Findings before: 288. Findings after: 50, all listed under Deferred Candidates.
+Test-tree summary: 77 files before the pass, 83 after (six added: `test_unreadable_inputs.py`, `test_package_exports.py`, `test_r012_multiline_argument.py`, the R009 prose fixture and the two R012 fixtures). 44 files changed. Findings before: 288. Findings after: 24, all listed under Deferred Candidates.
 
 | path | findings before | findings after | changed | note |
 |------|-----------------|----------------|---------|------|
@@ -81,6 +81,8 @@ Test-tree summary: 77 files before the pass, 80 after (three added: `test_unread
 | strict_checkers/tests/fixtures/bad/r009_prose_docstring_not_a_tag.py | 0 | 0 | yes | Added in this pass: a docstring that mentions the tag as prose must not exempt the function (asserted by a named R009 test). |
 | strict_checkers/tests/fixtures/bad/r010_legacy_typing_abc.py | 0 | 0 | no | Purpose unchanged: intentional R010 findings (the test asserts four). |
 | strict_checkers/tests/fixtures/bad/r011_raise_literal_message.py | 2 | 2 | no | Deferred: extra R009 INFO findings are not asserted by the test; the R011 findings are the purpose. |
+| strict_checkers/tests/fixtures/bad/r012_bad_split_short_call.py | 0 | 0 | yes | Added in this pass: a short call split across lines is still reported as R012 (the purpose of the fixture). |
+| strict_checkers/tests/fixtures/good/r012_multiline_string_argument.py | 0 | 0 | yes | Added in this pass: a single multi-line string argument keeps its split and is not reported. |
 | strict_checkers/tests/fixtures/bad/test_r007_bad_fixtures.py | 0 | 0 | no | Purpose unchanged: intentional R007 and R008 findings. |
 | strict_checkers/tests/fixtures/bad/test_r007_bare_fixture_decorator.py | 0 | 0 | no | Purpose unchanged: intentional R007 and R008 findings. |
 | strict_checkers/tests/fixtures/bad/test_r007_fixture_with_call.py | 0 | 0 | no | Purpose unchanged: intentional R007 and R008 findings. |
@@ -88,7 +90,7 @@ Test-tree summary: 77 files before the pass, 80 after (three added: `test_unread
 | strict_checkers/tests/fixtures/good/r001_good_basic.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/fixtures/good/r002_good_dict.py | 3 | 0 | yes | Module-level helpers tagged with a recorded reason; the good fixture is now clean. |
 | strict_checkers/tests/fixtures/good/r002_good_serializer.py | 0 | 0 | no | No findings. |
-| strict_checkers/tests/fixtures/good/r002_multiple_dataclass_serializers.py | 0 | 0 | no | Method without docstring is fixture input and is not changed (method docstrings pending ruling); not counted. |
+| strict_checkers/tests/fixtures/good/r002_multiple_dataclass_serializers.py | 0 | 0 | no | Method without docstring is fixture input and is not changed (method docstrings are a separate decision); not counted. |
 | strict_checkers/tests/fixtures/good/r003_good_dataclass.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/fixtures/good/r004_good_facade.py | 1 | 1 | no | Deferred: the test asserts that the untagged helper with logic is one R009 advisory; kept intentionally. |
 | strict_checkers/tests/fixtures/good/r005_good_validator.py | 4 | 0 | yes | Raises go through constants (R011 was flagging them); helpers tagged; the good fixture is now clean. |
@@ -98,21 +100,21 @@ Test-tree summary: 77 files before the pass, 80 after (three added: `test_unread
 | strict_checkers/tests/fixtures/good/r011_const_reference_raise.py | 5 | 0 | yes | Module-level helpers tagged with a recorded reason; the good fixture is now clean. |
 | strict_checkers/tests/fixtures/good/test_r008_good_test_class.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_baseline_ratchet.py | 6 | 4 | yes | Length assertion tightened to the violation count; a TemporaryDirectory retained; three precondition guards kept (deferred). |
-| strict_checkers/tests/test_cli.py | 6 | 4 | yes | Exit codes asserted exactly. Deferred: 4 R012 INFO findings on multi-line string arguments (checker false positive). |
-| strict_checkers/tests/test_cli_main_entry.py | 9 | 7 | yes | Exit codes asserted exactly. Deferred: 7 R012 INFO findings on multi-line string arguments (checker false positive). |
+| strict_checkers/tests/test_cli.py | 6 | 0 | yes | Exit codes asserted exactly. The R012 false positive on multi-line string arguments is fixed in the checker. |
+| strict_checkers/tests/test_cli_main_entry.py | 9 | 0 | yes | Exit codes asserted exactly. The R012 false positive on multi-line string arguments is fixed in the checker. |
 | strict_checkers/tests/test_cli_malformed_config.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_cli_real_invocations.py | 10 | 0 | yes | Loose OR and length assertions replaced by exact expectations; alias fixture renamed to project_dir. Deferred: none; R012 not raised here. |
 | strict_checkers/tests/test_compat_fallback.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_config_loading.py | 3 | 1 | yes | Config fixture used; absent-path literal kept (deterministic). |
 | strict_checkers/tests/test_coverage_checkers_comprehensive.py | 0 | 0 | no | No findings. |
-| strict_checkers/tests/test_coverage_edge_cases.py | 7 | 1 | yes | Unparseable and missing inputs assert LintInputError through constants. Deferred: 1 R012 INFO finding on a multi-line string argument. |
+| strict_checkers/tests/test_coverage_edge_cases.py | 7 | 0 | yes | Unparseable and missing inputs assert LintInputError through constants. The R012 false positive is fixed in the checker. |
 | strict_checkers/tests/test_coverage_edge_cases_extended.py | 25 | 2 | yes | Chmod-based unreadable test replaced by a directory; dashes replaced by escapes; annotation strings asserted exactly; unused import removed. |
 | strict_checkers/tests/test_coverage_negative_control.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_github_format.py | 1 | 0 | yes | Lens findings fixed in this pass. |
 | strict_checkers/tests/test_loc_cap.py | 2 | 1 | yes | Unreadable counted file raises LocCapInputError through constants; success line asserted as the ASCII OK line. |
 | strict_checkers/tests/test_loc_cap_test_exemption.py | 1 | 0 | yes | Lens findings fixed in this pass. |
 | strict_checkers/tests/test_noqa.py | 0 | 0 | no | No findings. |
-| strict_checkers/tests/test_noqa_r002.py | 13 | 9 | yes | Em dashes replaced by escapes. Deferred: 9 R012 INFO findings on multi-line string arguments (checker false positive). |
+| strict_checkers/tests/test_noqa_r002.py | 13 | 0 | yes | Em dashes replaced by escapes. The R012 false positive is fixed in the checker. |
 | strict_checkers/tests/test_optimization_pass.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_package_exports.py | 0 | 0 | yes | Added in this pass: export surface and version-to-changelog lockstep tests. |
 | strict_checkers/tests/test_r001_dict_str_any.py | 1 | 0 | yes | Lens findings fixed in this pass. |
@@ -131,12 +133,13 @@ Test-tree summary: 77 files before the pass, 80 after (three added: `test_unread
 | strict_checkers/tests/test_r004_auto_detect.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_r004_module_facade.py | 0 | 0 | no | No findings. |
 | strict_checkers/tests/test_r005_validator_pattern.py | 1 | 0 | yes | Lens findings fixed in this pass. |
-| strict_checkers/tests/test_r006_any.py | 6 | 5 | yes | Deferred: 5 R012 INFO findings on multi-line string arguments (checker false positive). |
+| strict_checkers/tests/test_r006_any.py | 6 | 0 | yes | Five calls that were genuinely collapsible are written on one line; the R012 false positive is fixed in the checker. |
 | strict_checkers/tests/test_r007_fixtures.py | 2 | 0 | yes | Multi-line test docstring condensed to one line. |
 | strict_checkers/tests/test_r008_test_functions.py | 1 | 0 | yes | Lens findings fixed in this pass. |
 | strict_checkers/tests/test_r009_module_functions.py | 8 | 0 | yes | Named tests added for the prose-docstring case and the colon form; linter fixture folded; exact count asserted. |
 | strict_checkers/tests/test_r010_legacy_typing.py | 1 | 0 | yes | Lens findings fixed in this pass. |
 | strict_checkers/tests/test_r011_raise_literals.py | 1 | 0 | yes | Lens findings fixed in this pass. |
+| strict_checkers/tests/test_r012_multiline_argument.py | 0 | 0 | yes | Added in this pass: tests for the multi-line string argument, the genuinely split short call, and the keyword argument case. |
 | strict_checkers/tests/test_r012_r013_r014_r015.py | 131 | 0 | yes | Config fixture folded into 131 tests; two vacuous boundary tests replaced by real 79/80/81 character inputs; duplicate R013 test removed. |
 | strict_checkers/tests/test_service_test_exemption.py | 3 | 0 | yes | Multi-line test docstrings condensed to one line. |
 | strict_checkers/tests/test_suppression_surface.py | 5 | 0 | yes | Config and linter fixtures folded; loose OR assertion replaced. |
@@ -146,19 +149,18 @@ Test-tree summary: 77 files before the pass, 80 after (three added: `test_unread
 
 Each item below was found by the lenses above and was not changed in this pass. The reason is given for each.
 
-1. **R012 false positives on multi-line string arguments (26 INFO findings).** `test_cli.py` (4), `test_cli_main_entry.py` (7), `test_coverage_edge_cases.py` (1), `test_noqa_r002.py` (9) and `test_r006_any.py` (5). Each finding is a single-argument call whose argument is a triple-quoted string spanning several lines, which cannot be written on one line. The fix belongs in the rule implementation (`strict_checkers/r012.py`), which is outside the test-tree pass. A per-line suppression was not added because it would hide the checker defect at 26 sites.
-2. **Incidental R009 findings in bad fixtures (15 INFO findings).** `r001_bad_param.py` (2), `r001_bad_return.py` (2), `r002_bad_inline.py` (2), `r004_bad_facade.py` (4), `r005_bad_validator.py` (3) and `r011_raise_literal_message.py` (2). No test asserts these; they are advisory findings on module-level helpers in the fixtures. Removing them would change the fixture shape for no test benefit.
-3. **One R009 advisory in a good fixture (`r004_good_facade.py`, `format_total`).** `test_r004_ignores_untagged_helper_with_logic` asserts it: the untagged helper with real logic is the case this fixture exists to show.
-4. **Absent-path literals (5).** `/nonexistent/...` paths in `test_baseline_ratchet.py`, `test_config_loading.py`, `test_coverage_edge_cases_extended.py` (2) and `test_loc_cap.py`. The paths are absent by construction and the tests are deterministic; `tmp_path`-derived paths would be equally valid.
-5. **Precondition guards (3).** `assert len(violations) > 0` in `test_baseline_ratchet.py`. Each is followed by exact assertions in the same test.
-6. **Temporary directories instead of `tmp_path` (42 uses in 7 files).** `test_baseline_ratchet.py`, `test_compat_fallback.py`, `test_coverage_edge_cases_extended.py`, `test_noqa_r002.py`, `test_r007_fixtures.py`, `test_service_test_exemption.py` and `test_suppression_surface.py`. Each test is already isolated in its own directory; converting them is mechanical churn with no determinism defect.
-7. **Method docstrings.** Not added or stripped (pending ruling). The `RegularClass.__init__` method in `fixtures/good/r002_multiple_dataclass_serializers.py` has no docstring; the fixture is linter input.
-8. **Constants and `__all__`.** The constants re-exported by name from `strict_config` are reachable as attributes but are not listed in `__all__`, as before this pass. Whether to declare them is a maintainer decision.
-9. **Annotation rendering (observation).** `AnnotationInspector` renders `tuple[int, str]` as `tuple[(int, str)]`. The test checks the prefix only. Source behaviour is unchanged.
-10. **Service-path glob (observation).** Service-path matching uses `fnmatch`, so `**/services/*.py` does not match a root-level `services/x.py`. Behaviour is unchanged; the flow-trace examples use `apps/demo/services/`.
-11. **Absolute paths in loc-cap output (observation).** The loc-cap command resolves its root, so it prints absolute paths. Behaviour is unchanged; the README shows the output with the root elided.
-12. **Workflow echo line (outside scope).** `.github/workflows/cleanup-guard.yml` prints a check-mark glyph in an `echo`. It is a workflow file, not a source, test or markdown file, and was not changed.
-13. **Package metadata (outside scope).** The `authors` field in `pyproject.toml` is package metadata, not markdown, and was not changed.
+1. **Incidental R009 findings in bad fixtures (15 INFO findings).** `r001_bad_param.py` (2), `r001_bad_return.py` (2), `r002_bad_inline.py` (2), `r004_bad_facade.py` (4), `r005_bad_validator.py` (3) and `r011_raise_literal_message.py` (2). No test asserts these; they are advisory findings on module-level helpers in the fixtures. Removing them would change the fixture shape for no test benefit.
+2. **One R009 advisory in a good fixture (`r004_good_facade.py`, `format_total`).** `test_r004_ignores_untagged_helper_with_logic` asserts it: the untagged helper with real logic is the case this fixture exists to show.
+3. **Absent-path literals (5).** `/nonexistent/...` paths in `test_baseline_ratchet.py`, `test_config_loading.py`, `test_coverage_edge_cases_extended.py` (2) and `test_loc_cap.py`. The paths are absent by construction and the tests are deterministic; `tmp_path`-derived paths would be equally valid.
+4. **Precondition guards (3).** `assert len(violations) > 0` in `test_baseline_ratchet.py`. Each is followed by exact assertions in the same test.
+5. **Temporary directories instead of `tmp_path` (42 uses in 7 files).** `test_baseline_ratchet.py`, `test_compat_fallback.py`, `test_coverage_edge_cases_extended.py`, `test_noqa_r002.py`, `test_r007_fixtures.py`, `test_service_test_exemption.py` and `test_suppression_surface.py`. Each test is already isolated in its own directory; converting them is mechanical churn with no determinism defect.
+6. **Method docstrings.** Not added or stripped; this is a separate decision. The `RegularClass.__init__` method in `fixtures/good/r002_multiple_dataclass_serializers.py` has no docstring; the fixture is linter input.
+7. **Constants and `__all__`.** The constants re-exported by name from `strict_config` are reachable as attributes but are not listed in `__all__`, as before this pass. Whether to declare them is a maintainer decision.
+8. **Annotation rendering (observation).** `AnnotationInspector` renders `tuple[int, str]` as `tuple[(int, str)]`. The test checks the prefix only. Source behaviour is unchanged.
+9. **Service-path glob (observation).** Service-path matching uses `fnmatch`, so `**/services/*.py` does not match a root-level `services/x.py`. Behaviour is unchanged; the flow-trace examples use `apps/demo/services/`.
+10. **Absolute paths in loc-cap output (observation).** The loc-cap command resolves its root, so it prints absolute paths. Behaviour is unchanged; the README shows the output with the root elided.
+11. **Workflow echo line (outside scope).** `.github/workflows/cleanup-guard.yml` prints a check-mark glyph in an `echo`. It is a workflow file, not a source, test or markdown file, and was not changed.
+12. **Package metadata (outside scope).** The `authors` field in `pyproject.toml` is package metadata, not markdown, and was not changed.
 
 ## Behavior Changes
 
@@ -170,6 +172,8 @@ Each item below was found by the lenses above and was not changed in this pass. 
 | New public exception classes `LintInputError` (linter) and `LocCapInputError` (loc-cap) are raised by the library API. | `strict_linter`, `strict_loc_cap` | Changed: unreadable input raises a typed error from the library API |
 | `DICT_STR_ANY_PATTERN` is removed. | `strict_config/constants.py` | Removed |
 | The loc-cap success line starts with `OK:` instead of a check-mark glyph. | `strict_loc_cap/loc_cap_client.py` | Changed: loc-cap success line is ASCII |
+| R012 no longer reports a call whose single argument is itself multi-line (for example a triple-quoted string). | `strict_checkers/r012.py` | Fixed: R012 multi-line string arguments |
+| Every wheel root ships its `py.typed` marker (six roots added). | `strict_checkers/py.typed` and five more | Fixed: every wheel root ships its py.typed marker |
 | The first part of the pass also changed the R009 default severity and the R004 facade rule, documented in the same changelog section. | `strict_checkers/r004.py`, `strict_checkers/r009.py` | Changed: R009 advisory by default; R004 narrowed to the facade shape |
 
 The `strict_config` export surface (names and `__all__`) is unchanged by the explicit re-export.
