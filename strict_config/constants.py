@@ -22,6 +22,9 @@ ERR_BASELINE_ENTRY_NOT_OBJECT = "error: baseline entry {index} is not an object:
 ERR_BASELINE_ENTRY_SHAPE = (
     "error: baseline entry {index} is missing required key '{key}': {path}"
 )
+ERR_CONFIG_INVALID = (
+    "error: config file is not valid TOML or has an invalid [tool.strict-module] table: {path}"
+)
 MSG_BASELINE_LOADED = "baseline: {count} entries loaded from {path}"
 
 REQUIRED_BASELINE_KEYS: tuple[str, ...] = ("file", "line", "rule_id", "message_hash")
