@@ -2,7 +2,6 @@
 
 import ast
 import json
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock
@@ -47,7 +46,7 @@ class TestNoqaCommentEdgeCases:
     def test_noqa_malformed_with_em_dash_explanation(self):
         """Test noqa comment with em-dash explanation."""
         source = [
-            "x = 1  # noqa: strict-module-R001 — explanation here",
+            "x = 1  # noqa: strict-module-R001 \u2014 explanation here",
         ]
         node = Mock()
         node.lineno = 1
@@ -58,7 +57,7 @@ class TestNoqaCommentEdgeCases:
     def test_noqa_malformed_with_en_dash_explanation(self):
         """Test noqa comment with en-dash explanation."""
         source = [
-            "x = 1  # noqa: strict-module-R001 – explanation",
+            "x = 1  # noqa: strict-module-R001 \u2013 explanation",
         ]
         node = Mock()
         node.lineno = 1
@@ -344,20 +343,14 @@ class TestLinterFileHandling:
             result = linter.lint_file(text_file)
             assert result == []
 
-    def test_lint_file_unreadable(self, config):
-        """Test linting an unreadable file raises LintInputError."""
+    def test_lint_file_unreadable(self, config, tmp_path):
+        """Test that a path that cannot be read as a file raises LintInputError."""
         linter = DtoStrictLinter(config)
+        py_file = tmp_path / "test.py"
+        py_file.mkdir()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            py_file = Path(tmpdir) / "test.py"
-            py_file.write_text("x = 1")
-
-            os.chmod(py_file, 0o000)
-            try:
-                with pytest.raises(LintInputError, match="cannot read Python source"):
-                    linter.lint_file(py_file)
-            finally:
-                os.chmod(py_file, 0o644)
+        with pytest.raises(LintInputError, match="cannot read Python source"):
+            linter.lint_file(py_file)
 
     def test_lint_file_invalid_encoding(self, config):
         """Test linting a file with invalid encoding raises LintInputError."""

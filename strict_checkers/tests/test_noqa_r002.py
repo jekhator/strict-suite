@@ -45,14 +45,14 @@ class TestNoqaR002:
             )
 
     def test_r002_noqa_trailing_emdash(self):
-        """R002 violation with trailing noqa using em-dash (—)."""
+        """R002 violation with trailing noqa followed by an em-dash separator."""
         with TemporaryDirectory() as tmpdir:
             test_file = Path(tmpdir) / "services" / "test.py"
             test_file.parent.mkdir(parents=True)
             test_file.write_text(
                 textwrap.dedent("""
                 def fn():
-                    return {"a": 1, "b": 2, "c": 3}  # noqa: dto-strict-R002 — explanation
+                    return {"a": 1, "b": 2, "c": 3}  # noqa: dto-strict-R002 \u2014 explanation
             """)
             )
             config = Path(tmpdir) / "pyproject.toml"
@@ -85,7 +85,7 @@ class TestNoqaR002:
             test_file.write_text(
                 textwrap.dedent("""
                 def fn():
-                    return {  # noqa: dto-strict-R002 — opening-brace
+                    return {  # noqa: dto-strict-R002 \u2014 opening-brace
                         "a": 1,
                         "b": 2,
                         "c": 3,
