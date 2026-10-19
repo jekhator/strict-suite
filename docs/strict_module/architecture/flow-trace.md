@@ -27,7 +27,7 @@ strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + 
             │ ├─ Parses [tool.strict-module] or [tool.dto-strict] │
             │ ├─ Loads: service_paths, dto_paths, exception_tags  │
             │ ├─       disabled_rules, r003_mode, loc_cap config  │
-            │ └─ Missing file: defaults; malformed: exit 1        │
+            |  - Missing file: defaults; malformed: exit 1        |
             └─────────────────────────────────────────────────────┘
                     │
                     ▶ DtoStrictLinter(config, baseline?)

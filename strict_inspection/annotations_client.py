@@ -12,7 +12,7 @@ from strict_config.constants import (
 DICT_TYPE_NAMES = ("dict",)
 STR_TYPE_NAME = "str"
 ANY_TYPE_NAME = "any"
-NOQA_SEPARATORS = "-–—"
+NOQA_SEPARATORS = "-\u2013\u2014"
 
 
 class AnnotationInspector:
