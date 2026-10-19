@@ -113,11 +113,17 @@ class DtoStrictLinter:
             for py_file in path.rglob("*.py"):
                 all_violations.extend(self.lint_file(py_file))
 
-        return [self._apply_severity_override(v) for v in all_violations]
+        return [
+            self._apply_severity_override(violation) for violation in all_violations
+        ]
 
     def _filter(self, violations: list[Violation]) -> list[Violation]:
         """Drop violations of disabled rules and violations accepted by the baseline."""
-        enabled = [v for v in violations if self.config.is_rule_enabled(v.rule_id)]
+        enabled = [
+            violation
+            for violation in violations
+            if self.config.is_rule_enabled(violation.rule_id)
+        ]
         if self.baseline:
             return self._filter_by_baseline(enabled)
         return enabled
@@ -144,7 +150,9 @@ class DtoStrictLinter:
     def _filter_by_baseline(self, violations: list[Violation]) -> list[Violation]:
         """Filter violations by baseline, removing accepted violations by file+line+rule_id."""
         return [
-            v for v in violations if (v.file, v.line, v.rule_id) not in self.baseline
+            violation
+            for violation in violations
+            if (violation.file, violation.line, violation.rule_id) not in self.baseline
         ]
 
     @staticmethod
@@ -158,20 +166,20 @@ class DtoStrictLinter:
         """Generate baseline JSON from violations."""
         return [
             {
-                "file": v.file,
-                "line": v.line,
-                "rule_id": v.rule_id,
-                "message_hash": self._hash_message(v.message),
+                "file": violation.file,
+                "line": violation.line,
+                "rule_id": violation.rule_id,
+                "message_hash": self._hash_message(violation.message),
             }
-            for v in violations
+            for violation in violations
         ]
 
     @staticmethod
     def load_baseline(baseline_path: Path) -> dict[tuple[str, int, str], str]:
         """Load baseline JSON file."""
         try:
-            with open(baseline_path, "r") as f:
-                data = json.load(f)
+            with open(baseline_path, "r") as handle:
+                data = json.load(handle)
         except (json.JSONDecodeError, UnicodeDecodeError) as error:
             raise BaselineLoadError(
                 ERR_BASELINE_INVALID_JSON.format(path=baseline_path)
@@ -208,28 +216,28 @@ class DtoStrictLinter:
     ) -> str:
         """Format violations for output."""
         if format_type == FORMAT_GITHUB:
-            return "\n".join(v.format_github() for v in violations)
+            return "\n".join(violation.format_github() for violation in violations)
         if format_type == FORMAT_JSON:
             return json.dumps(
                 [
                     {
-                        "rule_id": v.rule_id,
-                        "severity": v.severity.value,
-                        "file": v.file,
-                        "line": v.line,
-                        "col": v.col,
-                        "message": v.message,
+                        "rule_id": violation.rule_id,
+                        "severity": violation.severity.value,
+                        "file": violation.file,
+                        "line": violation.line,
+                        "col": violation.col,
+                        "message": violation.message,
                     }
-                    for v in violations
+                    for violation in violations
                 ],
                 indent=2,
             )
-        return "\n".join(v.format_text() for v in violations)
+        return "\n".join(violation.format_text() for violation in violations)
 
     @staticmethod
     def get_exit_code(violations: list[Violation]) -> int:
         """Determine exit code from the most severe blocking violation (INFO never blocks)."""
-        severities = {v.severity for v in violations}
+        severities = {violation.severity for violation in violations}
         for severity, exit_code in EXIT_CODE_BY_SEVERITY.items():
             if severity in severities:
                 return exit_code
