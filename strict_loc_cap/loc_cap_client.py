@@ -23,8 +23,8 @@ class LocCap:
     def count_lines(file_path: str) -> int:
         """Count all lines (matches wc -l semantics for baseline compatibility)."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return sum(1 for _ in f)
+            with open(file_path, "r", encoding="utf-8") as handle:
+                return sum(1 for _ in handle)
         except (OSError, UnicodeDecodeError):
             return 0
 
@@ -46,8 +46,8 @@ class LocCap:
             return baseline
 
         try:
-            with open(actual_file, "r", encoding="utf-8") as f:
-                for line in f:
+            with open(actual_file, "r", encoding="utf-8") as handle:
+                for line in handle:
                     line = line.strip()
                     if not line:
                         continue
@@ -98,7 +98,7 @@ class LocCap:
         files = LocCap.find_python_files(root_path, exclude_patterns)
 
         filtered = [(path, loc) for path, loc in files.items() if loc >= floor]
-        sorted_files = sorted(filtered, key=lambda x: (-x[1], x[0]))
+        sorted_files = sorted(filtered, key=lambda item: (-item[1], item[0]))
 
         lines = [f"{path}:{loc}" for path, loc in sorted_files]
         return "\n".join(lines)
