@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **Typed packages** - Every wheel root ships its `py.typed` marker; before, only the compatibility shim did.
 - **Baseline loading error handling** - `load_baseline()` now raises a typed `BaselineLoadError` for missing, unreadable, malformed, undecodable (non-UTF-8), or structurally invalid baseline files instead of silently returning an empty dict. Missing or malformed baselines are now hard errors that fail the gate with exit code 1, preventing silent ratchet disablement.
 - **Malformed pyproject.toml exits with an error** - A file that cannot be read or parsed, or whose strict-module table is not a table, previously disabled all configuration silently. The CLI now prints the path and exits 1. A missing file still uses the defaults.
 - **Annotation matching is by name** - R006 no longer flags identifiers that only contain the letters "any" (for example `Company`). R001 detects a qualified `typing.Any` inside `Dict[str, typing.Any]` and no longer matches names such as `AnyStr`.
