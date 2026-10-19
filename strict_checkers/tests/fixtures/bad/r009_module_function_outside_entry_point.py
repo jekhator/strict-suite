@@ -7,5 +7,5 @@ def process_data(data):
 
 
 def calculate_sum(a, b):
-    """Another module-level function that should be in a class."""
+    """Another loose function that should be in a class."""
     return a + b

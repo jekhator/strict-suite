@@ -1,10 +1,11 @@
 """Checker for R006: typing.Any in signature."""
 
 import ast
+from collections.abc import Iterator
 
 from strict_checkers.base import BaseChecker
 from strict_inspection import AnnotationInspector, PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R006Checker(BaseChecker):
@@ -20,58 +21,34 @@ class R006Checker(BaseChecker):
             self.generic_visit(node)
             return
 
-        for arg in node.args.args + node.args.posonlyargs + node.args.kwonlyargs:
-            if arg.annotation and AnnotationInspector.contains_any(arg.annotation):
-                self.violations.append(
-                    Violation(
-                        rule_id="R006",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"typing.Any in parameter: {node.name}",
-                    )
-                )
+        for label, annotation in self._parameter_annotations(node):
+            if annotation is not None and AnnotationInspector.contains_any(annotation):
+                self._report(node, f"typing.Any in {label}: {node.name}")
                 return
 
-        if node.args.vararg and node.args.vararg.annotation:
-            if AnnotationInspector.contains_any(node.args.vararg.annotation):
-                self.violations.append(
-                    Violation(
-                        rule_id="R006",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"typing.Any in *args: {node.name}",
-                    )
-                )
-                return
-
-        if node.args.kwarg and node.args.kwarg.annotation:
-            if AnnotationInspector.contains_any(node.args.kwarg.annotation):
-                self.violations.append(
-                    Violation(
-                        rule_id="R006",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"typing.Any in **kwargs: {node.name}",
-                    )
-                )
-                return
-
-        if node.returns and AnnotationInspector.contains_any(node.returns):
-            self.violations.append(
-                Violation(
-                    rule_id="R006",
-                    severity=RuleSeverity.HIGH,
-                    file=str(self.file_path),
-                    line=node.lineno,
-                    col=node.col_offset,
-                    message=f"typing.Any in return type: {node.name}",
-                )
-            )
+        if node.returns is not None and AnnotationInspector.contains_any(node.returns):
+            self._report(node, f"typing.Any in return type: {node.name}")
 
         self.generic_visit(node)
+
+    @staticmethod
+    def _parameter_annotations(
+        node: ast.FunctionDef,
+    ) -> Iterator[tuple[str, ast.expr | None]]:
+        """Yield each parameter label with its annotation, including *args and **kwargs."""
+        for arg in (*node.args.args, *node.args.posonlyargs, *node.args.kwonlyargs):
+            yield "parameter", arg.annotation
+        if node.args.vararg is not None:
+            yield "*args", node.args.vararg.annotation
+        if node.args.kwarg is not None:
+            yield "**kwargs", node.args.kwarg.annotation
+
+    def _report(self, node: ast.FunctionDef, message: str) -> None:
+        """Append an R006 HIGH violation for a function."""
+        self.add_violation(
+            rule_id="R006",
+            severity=RuleSeverity.HIGH,
+            line=node.lineno,
+            col=node.col_offset,
+            message=message,
+        )

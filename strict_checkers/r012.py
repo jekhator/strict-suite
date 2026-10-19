@@ -3,7 +3,9 @@
 import ast
 
 from strict_checkers.base import BaseChecker
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
+
+MAX_COLLAPSED_LENGTH = 80
 
 
 class R012Checker(BaseChecker):
@@ -16,79 +18,53 @@ class R012Checker(BaseChecker):
 
     def visit_Call(self, node: ast.Call) -> None:
         """Visit call expressions to check fits-one-line-stays rule."""
-        if self.is_suppressed(node, "R012"):
-            self.generic_visit(node)
-            return
-
-        if len(self.lines) == 0 or node.end_lineno is None or node.lineno is None:
-            self.generic_visit(node)
-            return
-
-        if node.end_lineno <= node.lineno:
-            self.generic_visit(node)
-            return
-
-        arg_count = len(node.args) + len(node.keywords)
-        if arg_count != 1:
-            self.generic_visit(node)
-            return
-
-        if node.end_lineno - node.lineno < 2:
-            self.generic_visit(node)
-            return
-
-        try:
-            reconstructed = self._reconstruct_call(node, node.lineno, node.end_lineno)
-            if reconstructed and len(reconstructed) <= 80:
-                self.violations.append(
-                    Violation(
-                        rule_id="R012",
-                        severity=RuleSeverity.INFO,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message="Single-argument call unnecessarily split across lines. Keep on one line.",
-                    )
-                )
-        except Exception:
-            pass
+        if self._is_collapsible(node):
+            self.add_violation(
+                rule_id="R012",
+                severity=RuleSeverity.INFO,
+                line=node.lineno,
+                col=node.col_offset,
+                message="Single-argument call unnecessarily split across lines. Keep on one line.",
+            )
 
         self.generic_visit(node)
 
-    def _reconstruct_call(self, node: ast.Call, start_line: int, end_line: int) -> str | None:
-        """Attempt to reconstruct the call as a single line."""
-        try:
-            relevant_lines = self.lines[start_line - 1 : end_line]
-            reconstructed = " ".join(line.strip() for line in relevant_lines)
-            reconstructed = self._normalize_spacing(reconstructed)
-            return reconstructed
-        except Exception:
-            return None
+    def _is_collapsible(self, node: ast.Call) -> bool:
+        """Check whether a single-argument call spans lines but reconstructs within the length limit."""
+        if self.is_suppressed(node, "R012") or node.end_lineno is None:
+            return False
 
-    def _normalize_spacing(self, text: str) -> str:
-        """Normalize whitespace in reconstructed text."""
-        result = []
-        in_string = False
-        string_char = None
-        i = 0
+        if node.end_lineno - node.lineno < 2:
+            return False
 
-        while i < len(text):
-            char = text[i]
+        if len(node.args) + len(node.keywords) != 1:
+            return False
 
-            if char in ('"', "'") and (i == 0 or text[i - 1] != "\\"):
-                if not in_string:
-                    in_string = True
+        argument = node.args[0] if node.args else node.keywords[0].value
+        if argument.end_lineno != argument.lineno:
+            return False
+
+        reconstructed = self._normalize_spacing(
+            " ".join(line.strip() for line in self.lines[node.lineno - 1 : node.end_lineno])
+        )
+        return bool(reconstructed) and len(reconstructed) <= MAX_COLLAPSED_LENGTH
+
+    @staticmethod
+    def _normalize_spacing(text: str) -> str:
+        """Collapse runs of spaces outside string literals and strip the ends."""
+        result: list[str] = []
+        string_char: str | None = None
+
+        for index, char in enumerate(text):
+            escaped = index > 0 and text[index - 1] == "\\"
+            if char in ('"', "'") and not escaped:
+                if string_char is None:
                     string_char = char
                 elif char == string_char:
-                    in_string = False
+                    string_char = None
 
-            if in_string:
+            in_string = string_char is not None
+            if in_string or char != " " or not (result and result[-1] == " "):
                 result.append(char)
-            elif char == " " and result and result[-1] == " ":
-                pass
-            else:
-                result.append(char)
-
-            i += 1
 
         return "".join(result).strip()

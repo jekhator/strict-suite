@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002InlineDict:
-    """Test suite for related functionality."""
+    """Tests for R002: Inline dict literals with 3+ string keys."""
 
     def test_r002_good_few_keys(self, fixture_dir):
         """Good: dict literals with <3 keys."""

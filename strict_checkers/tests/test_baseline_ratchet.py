@@ -18,7 +18,7 @@ from strict_linter import BaselineLoadError, DtoStrictLinter
 
 
 class TestBaselineRatchet:
-    """Test suite for related functionality."""
+    """Tests for R-baseline ratchet-from-baseline mode (Issue #4)."""
 
     def test_baseline_generate(self):
         """Baseline: Generate baseline JSON from violations."""
@@ -39,7 +39,7 @@ def bad_function(x: Dict[str, Any]):
 
             baseline_data = linter.generate_baseline(violations)
             assert isinstance(baseline_data, list)
-            assert len(baseline_data) > 0
+            assert len(baseline_data) == len(violations)
             assert "file" in baseline_data[0]
             assert "line" in baseline_data[0]
             assert "rule_id" in baseline_data[0]

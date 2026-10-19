@@ -4,7 +4,7 @@ from strict_loc_cap import LocCap
 
 
 class TestLocCapTestExemption:
-    """Test suite for related functionality."""
+    """Tests for loc-cap test file exemption."""
 
     def test_loc_cap_exempts_test_basename(self, temp_project_with_test_files):
         """Test files matching test_*.py are exempt."""

@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002TagSeparatorFormat:
-    """Test suite for related functionality."""
+    """Test R002 exception tag format and separator alignment."""
 
     def test_r002_tag_separator_format_in_message(self, tmp_path):
         """Test that R002 error message uses correct tag separator format colon."""
@@ -30,7 +30,7 @@ def process_data():
             if "Format:" in msg:
                 assert "Format: 'tag: explanation'" in msg
                 assert "facade - celery schedule:" in msg
-                assert "—" not in msg
+                assert "\u2014" not in msg
 
     def test_tag_separator_uses_colon_not_em_dash(self, tmp_path):
         """Test that tag separator format shows colon, not em dash."""
@@ -39,4 +39,4 @@ def process_data():
             exception_tags=["facade - celery schedule"],
             exception_tag_requires_justification=True,
         )
-        assert all("-" in tag and "—" not in tag for tag in config.exception_tags)
+        assert all("-" in tag and "\u2014" not in tag for tag in config.exception_tags)

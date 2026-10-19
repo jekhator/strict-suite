@@ -1,7 +1,11 @@
 """Tests for loc-cap subcommand."""
 
+import pytest
+
+from strict_config import constants as const
 from strict_config._config import Config, LocCapConfig
 from strict_loc_cap import LocCap
+from strict_loc_cap.loc_cap_objects import LocCapInputError
 
 
 class TestCountLines:
@@ -25,9 +29,10 @@ class TestCountLines:
         test_file.write_text("")
         assert LocCap.count_lines(str(test_file)) == 0
 
-    def test_count_lines_nonexistent_file(self):
-        """Count lines in nonexistent file returns 0."""
-        assert LocCap.count_lines("/nonexistent/file.py") == 0
+    def test_count_lines_nonexistent_file(self, tmp_path, error_prefix):
+        """Counting lines in a nonexistent file raises LocCapInputError instead of returning zero."""
+        with pytest.raises(LocCapInputError, match=error_prefix(const.ERR_LOC_CAP_UNREADABLE)):
+            LocCap.count_lines(str(tmp_path / "missing.py"))
 
 
 class TestLoadBaseline:
@@ -149,6 +154,15 @@ class TestRunLocCap:
         (tmp_path / "file2.py").write_text("b\n" * 200)
         exit_code = LocCap.run_loc_cap(str(tmp_path), hard_cap=694, soft_target=500)
         assert exit_code == 0
+
+    def test_run_loc_cap_success_line_is_ascii(self, tmp_path, capsys):
+        """The success line starts with the OK prefix and contains only ASCII characters."""
+        (tmp_path / "file1.py").write_text("a\n" * 100)
+        LocCap.run_loc_cap(str(tmp_path), hard_cap=694, soft_target=500)
+        output = capsys.readouterr().out
+
+        assert output.startswith("OK: All Python files within 694 LOC cap")
+        assert output.isascii()
 
     def test_run_loc_cap_new_offender(self, tmp_path, capsys):
         """New file over cap returns 1."""

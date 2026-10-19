@@ -6,7 +6,7 @@ from pathlib import Path
 from strict_checkers.base import BaseChecker
 from strict_config._config import Config
 from strict_inspection import PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R002Checker(BaseChecker):
@@ -14,7 +14,6 @@ class R002Checker(BaseChecker):
 
     def __init__(self, file_path: Path, source: str, config: Config):
         super().__init__(file_path, source, config)
-        self.in_service_file = False
         self.tag_count = 0
         self.current_function: ast.FunctionDef | None = None
         self.current_class: ast.ClassDef | None = None
@@ -28,16 +27,17 @@ class R002Checker(BaseChecker):
         """Track class definitions to detect to_* serializer methods."""
         old_class = self.current_class
         self.current_class = node
-        self._track_parents(node)
         self.generic_visit(node)
         self.current_class = old_class
 
     def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         """Track function definitions to associate comments."""
+        previous_function = self.current_function
         self.current_function = node
         comment = self.get_comment_text(node.lineno)
         self.function_comments[id(node)] = comment
         self.generic_visit(node)
+        self.current_function = previous_function
 
     def visit_Module(self, node: ast.Module) -> None:
         """Visit module to track parent relationships for dicts."""
@@ -63,19 +63,10 @@ class R002Checker(BaseChecker):
 
         return False
 
-    def _is_dataclass_decorator(self, node: ast.expr) -> bool:
-        """Check if decorator is @dataclass (any form)."""
-        if isinstance(node, ast.Name):
-            return node.id == "dataclass"
-        elif isinstance(node, ast.Call):
-            if isinstance(node.func, ast.Name):
-                return node.func.id == "dataclass"
-        return False
-
     def _is_class_decorated_with_dataclass(self, class_node: ast.ClassDef) -> bool:
         """Check if class is decorated with @dataclass."""
         for decorator in class_node.decorator_list:
-            if self._is_dataclass_decorator(decorator):
+            if self.is_dataclass_decorator(decorator):
                 return True
         return False
 
@@ -146,42 +137,24 @@ class R002Checker(BaseChecker):
                                 break
 
                     if not has_justification:
-                        self.violations.append(
-                            Violation(
-                                rule_id="R002",
-                                severity=RuleSeverity.MEDIUM,
-                                file=str(self.file_path),
-                                line=node.lineno,
-                                col=node.col_offset,
-                                message="Exception tag missing justification. Format: 'tag: explanation' (e.g., 'facade - celery schedule: transient event payload')",
-                            )
-                        )
+                        self.add_violation(
+rule_id="R002", severity=RuleSeverity.MEDIUM, line=node.lineno, col=node.col_offset,
+message="Exception tag missing justification. Format: 'tag: explanation' (e.g., 'facade - celery schedule: transient event payload')",
+)
                         self.generic_visit(node)
                         return
 
                 if self.config.max_exception_tags_per_file is not None:
                     self.tag_count += 1
                     if self.tag_count > self.config.max_exception_tags_per_file:
-                        self.violations.append(
-                            Violation(
-                                rule_id="R002",
-                                severity=RuleSeverity.MEDIUM,
-                                file=str(self.file_path),
-                                line=node.lineno,
-                                col=node.col_offset,
-                                message=f"Exceeded max exception tags ({self.config.max_exception_tags_per_file}) in file",
-                            )
-                        )
+                        self.add_violation(
+rule_id="R002", severity=RuleSeverity.MEDIUM, line=node.lineno, col=node.col_offset,
+message=f"Exceeded max exception tags ({self.config.max_exception_tags_per_file}) in file",
+)
             else:
-                self.violations.append(
-                    Violation(
-                        rule_id="R002",
-                        severity=RuleSeverity.MEDIUM,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Inline dict literal with {string_keys} keys (likely business-shape; convert to DTO)",
-                    )
-                )
+                self.add_violation(
+rule_id="R002", severity=RuleSeverity.MEDIUM, line=node.lineno, col=node.col_offset,
+message=f"Inline dict literal with {string_keys} keys (likely business-shape; convert to DTO)",
+)
 
         self.generic_visit(node)

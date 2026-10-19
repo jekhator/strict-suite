@@ -6,11 +6,10 @@ from strict_config._config import Config
 
 
 class TestConfigLoading:
-    """Test suite for related functionality."""
+    """Tests for configuration loading."""
 
-    def test_config_defaults(self):
+    def test_config_defaults(self, config):
         """Test default configuration."""
-        config = Config()
         assert "apps/*/services/*.py" in config.service_paths
         assert "**/dtos.py" in config.dto_paths
         assert "facade - celery schedule" in config.exception_tags

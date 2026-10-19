@@ -8,7 +8,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR007Fixtures:
-    """Test suite for related functionality."""
+    """Tests for R007: pytest fixtures defined outside conftest.py."""
 
     def test_r007_bad_fixture_in_test_file(self, fixture_dir):
         """Bad: pytest fixture defined in non-conftest test file."""
@@ -24,11 +24,7 @@ class TestR007Fixtures:
         assert any("conftest" in v.message.lower() for v in r007_violations)
 
     def test_r007_good_fixture_defined_in_conftest(self, fixture_dir):
-        """Good: fixtures properly defined in conftest.py are not flagged.
-
-        This test verifies that test files with conftest.py don't trigger R007.
-        The conftest.py file itself can contain fixtures.
-        """
+        """Fixtures defined in conftest.py are not flagged by R007."""
         config = Config(
             service_paths=["**/*.py"],
             dto_paths=["**/dtos.py"],

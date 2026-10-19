@@ -1,6 +1,7 @@
 """LOC cap enforcer for Python codebases with ratchet baseline semantics."""
 
 import os
+import sys
 from pathlib import Path
 
 from strict_config.constants import (
@@ -8,12 +9,15 @@ from strict_config.constants import (
     DEFAULT_LOC_CAP_BASELINE_FILE,
     DEFAULT_LOC_HARD_CAP,
     DEFAULT_LOC_SOFT_TARGET,
+    ERR_LOC_CAP_BASELINE_UNREADABLE,
+    ERR_LOC_CAP_UNREADABLE,
     EXIT_CODE_HIGH_VIOLATION,
     EXIT_CODE_SUCCESS,
     LOC_CAP_BASELINE_LEGACY_NAMES,
     PY_EXTENSION,
 )
 from strict_inspection import PathClassifier
+from strict_loc_cap.loc_cap_objects import LocCapInputError
 
 
 class LocCap:
@@ -21,12 +25,14 @@ class LocCap:
 
     @staticmethod
     def count_lines(file_path: str) -> int:
-        """Count all lines (matches wc -l semantics for baseline compatibility)."""
+        """Count all lines (matches wc -l semantics); raise LocCapInputError when unreadable."""
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                return sum(1 for _ in f)
-        except (OSError, UnicodeDecodeError):
-            return 0
+            with open(file_path, "r", encoding="utf-8") as handle:
+                return sum(1 for _ in handle)
+        except (OSError, UnicodeDecodeError) as error:
+            raise LocCapInputError(
+                ERR_LOC_CAP_UNREADABLE.format(path=file_path, reason=error)
+            ) from error
 
     @staticmethod
     def load_baseline(baseline_file: str) -> dict[str, int]:
@@ -46,8 +52,8 @@ class LocCap:
             return baseline
 
         try:
-            with open(actual_file, "r", encoding="utf-8") as f:
-                for line in f:
+            with open(actual_file, "r", encoding="utf-8") as handle:
+                for line in handle:
                     line = line.strip()
                     if not line:
                         continue
@@ -58,8 +64,10 @@ class LocCap:
                             baseline[path.strip()] = int(loc_str.strip())
                         except ValueError:
                             continue
-        except OSError:
-            pass
+        except (OSError, UnicodeDecodeError) as error:
+            raise LocCapInputError(
+                ERR_LOC_CAP_BASELINE_UNREADABLE.format(path=actual_file, reason=error)
+            ) from error
 
         return baseline
 
@@ -98,7 +106,7 @@ class LocCap:
         files = LocCap.find_python_files(root_path, exclude_patterns)
 
         filtered = [(path, loc) for path, loc in files.items() if loc >= floor]
-        sorted_files = sorted(filtered, key=lambda x: (-x[1], x[0]))
+        sorted_files = sorted(filtered, key=lambda item: (-item[1], item[0]))
 
         lines = [f"{path}:{loc}" for path, loc in sorted_files]
         return "\n".join(lines)
@@ -113,13 +121,19 @@ class LocCap:
         generate: bool = False,
     ) -> int:
         """Run LOC cap checker with hard/soft caps and baseline ratchet enforcement."""
-        if generate:
-            baseline_output = LocCap.generate_baseline(path, exclude_patterns, floor=0)
-            print(baseline_output)
-            return EXIT_CODE_SUCCESS
+        try:
+            if generate:
+                baseline_output = LocCap.generate_baseline(
+                    path, exclude_patterns, floor=0
+                )
+                print(baseline_output)
+                return EXIT_CODE_SUCCESS
 
-        baseline = LocCap.load_baseline(baseline_file)
-        current = LocCap.find_python_files(path, exclude_patterns)
+            baseline = LocCap.load_baseline(baseline_file)
+            current = LocCap.find_python_files(path, exclude_patterns)
+        except LocCapInputError as error:
+            print(str(error), file=sys.stderr)
+            return EXIT_CODE_HIGH_VIOLATION
 
         soft_warnings = []
         hard_violations = []
@@ -169,17 +183,14 @@ class LocCap:
             print("\n".join(hard_violations))
             print()
             print(
-                "See memory/feedback_dto_refactor_autonomous_priority.md for cap rationale."
-            )
-            print(
                 "Tests: cap applies. Decompose by class-under-test; lift fixtures to conftest if needed."
             )
             print(
-                "Refactor approach: split by COHESION not line count. E.g., bedrock.py -> bedrock/{invoke,embed,dtos}.py"
+                "Refactor approach: split by COHESION not line count. E.g., service.py -> service/{invoke,embed,types}.py"
             )
             return EXIT_CODE_HIGH_VIOLATION
 
         print(
-            f"✓ All Python files within {hard_cap} LOC cap (ratchet: baseline allows improvements)"
+            f"OK: All Python files within {hard_cap} LOC cap (ratchet: baseline allows improvements)"
         )
         return EXIT_CODE_SUCCESS

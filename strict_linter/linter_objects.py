@@ -7,6 +7,10 @@ class BaselineLoadError(ValueError):
     """Error loading or parsing baseline file."""
 
 
+class LintInputError(ValueError):
+    """Source file that cannot be read or parsed, so it cannot be linted."""
+
+
 @dataclass(frozen=True, slots=True)
 class BaselineEntry:
     """Baseline entry for tracking accepted violations."""

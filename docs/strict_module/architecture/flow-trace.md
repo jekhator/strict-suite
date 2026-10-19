@@ -1,365 +1,226 @@
 # strict_module Flow-Trace Diagram
 
-strict_module is a CLI linter tool (not a decorator) that enforces Python DTO + facade discipline via AST analysis. It can run in two modes: standard linting or LOC cap checking. This diagram traces the actual execution path.
+strict_module is a CLI linter (not a decorator) that enforces DTO and facade discipline through AST analysis. It runs in two modes: standard linting (the default) and the `loc-cap` subcommand. This document traces the code paths as shipped in 0.6.0. File paths are relative to the repository root.
 
 ## Container Diagram
 
 ```
-┌─────────────────────────────────────────────────────────────────┐
-│ strict_module / dto-strict CLI                                  │
-│ Entrypoint: cli.py :: main()                                    │
-└─────────────────────────────────────────────────────────────────┘
-        │
-        ├─▶ [SUBCOMMAND?] sys.argv[1] == 'loc-cap'
-        │   ┌─────────────────────────────────────────────────────┐
-        │   │ LOC Cap Enforcer (loc_cap/loc_cap_client.py)        │
-        │   │ ├─ LocCap.count_lines(file_path) → int             │
-        │   │ ├─ LocCap.load_baseline(baseline_file) → dict      │
-        │   │ ├─ LocCap.find_python_files(root) → dict[str, int] │
-        │   │ ├─ LocCap.generate_baseline(root) → str            │
-        │   │ └─ LocCap.run_loc_cap(path, hard, soft) → int      │
-        │   └─────────────────────────────────────────────────────┘
-        │
-        └─▶ [DEFAULT] Standard linting mode
-            ┌─────────────────────────────────────────────────────┐
-            │ Config Loading (config/_config.py)                  │
-            │ ├─ Config.from_pyproject(path: Path) → Config       │
-            │ ├─ Parses [tool.strict-module] or [tool.dto-strict] │
-            │ ├─ Loads: service_paths, dto_paths, exception_tags  │
-            │ ├─       disabled_rules, r003_mode, loc_cap config  │
-            │ └─ Fallback: default Config() if load fails         │
-            └─────────────────────────────────────────────────────┘
-                    │
-                    ▶ DtoStrictLinter(config, baseline?)
-            ┌─────────────────────────────────────────────────────┐
-            │ Linter Engine (linter/linter_client.py)             │
-            │ ├─ lint_path(path: Path) → list[Violation]          │
-            │ ├─   walk(path.rglob("*.py"))                       │
-            │ ├─   lint_file(py_file: Path) → list[Violation]     │
-            │ │     ├─ read_text() ⚠ OSError/UnicodeDecodeError → skip
-            │ │     ├─ ast.parse(source) ⚠ SyntaxError → skip     │
-            │ │     ├─ for each Checker in [R001..R008]:          │
-            │ │     │   ├─ checker = RxxxChecker(path, src, cfg)  │
-            │ │     │   ├─ checker.visit(tree) [AST walk]         │
-            │ │     │   └─ violations += checker.violations        │
-            │ │     ├─ filter by config.is_rule_enabled()         │
-            │ │     └─ filter by baseline (ratchet) ← new vs old   │
-            │ │                                                    │
-            │ ├─ Checkers (checkers/r001.py .. r008.py):          │
-            │ │   ├─ R001Checker: Dict[str, Any] in service sigs  │
-            │ │   ├─   ⚠ Guard: is_service_path(...) + not noqa   │
-            │ │   ├─ R002Checker: inline dict 3+ keys             │
-            │ │   ├─   ⚠ Guard: in_service_file + skip annotated  │
-            │ │   ├─       constants + skip serializer returns    │
-            │ │   ├─ R003Checker: dataclass repr=False (anti-can) │
-            │ │   ├─   ⚠ Guard: is_dto_path() + r003_mode         │
-            │ │   ├─ R004Checker: module-level fn w/o exception   │
-            │ │   ├─   ⚠ Guard: is_service_path() + not wrapper   │
-            │ │   ├─ R005Checker: validator not using from_dict() │
-            │ │   ├─   ⚠ Guard: starts with validate_ + payload   │
-            │ │   ├─ R006Checker: typing.Any in service sigs      │
-            │ │   ├─   ⚠ Guard: is_service_path() + not noqa      │
-            │ │   ├─ R007Checker: fixture outside conftest.py     │
-            │ │   ├─   ⚠ Guard: is_test_file() + not conftest     │
-            │ │   └─ R008Checker: bare module test_* functions    │
-            │ │       ⚠ Guard: is_test_file() + not noqa          │
-            │ │                                                    │
-            │ └─ Violation(rule_id, severity, file, line, col,   │
-            │     message)                                        │
-            └─────────────────────────────────────────────────────┘
-                    │
-                    ▶ severity_overrides(rule_id) → update severity
-                    │
-                    ▶ format_violations(violations, format)
-            ┌─────────────────────────────────────────────────────┐
-            │ Output Formatters (linter/linter_client.py)         │
-            │ ├─ text: file:line: rule_id message                 │
-            │ ├─ github: ::error file=...,line=...,col=... ::msg  │
-            │ └─ json: [{rule_id, severity, file, line, col, ...}]
-            └─────────────────────────────────────────────────────┘
-                    │
-                    ▶ get_exit_code(violations) → int
-            ┌─────────────────────────────────────────────────────┐
-            │ Exit Code Logic (linter/linter_client.py)           │
-            │ ├─ no violations → 0 (SUCCESS)                      │
-            │ ├─ any HIGH severity → 1 (HARD FAIL)                │
-            │ ├─ any MEDIUM severity → 2 (WARN)                   │
-            │ └─ only LOW severity → 3 (INFO)                     │
-            └─────────────────────────────────────────────────────┘
-                    │
-                    ▶ print(output)
-                    │
-                    ▶ sys.exit(code)
++-----------------------------------------------------------------+
+| strict_module CLI                                               |
+| Entrypoint: strict_module/cli.py :: main()                      |
++-----------------------------------------------------------------+
+        |
+        +-- sys.argv[1] == "loc-cap" ?
+        |   yes: handle_loc_cap(sys.argv)
+        |   +-----------------------------------------------------+
+        |   | LOC cap (strict_loc_cap/loc_cap_client.py)          |
+        |   | LocCap.run_loc_cap(path, hard_cap, soft_target,     |
+        |   |                    baseline_file, generate)         |
+        |   |   count_lines, load_baseline, find_python_files,    |
+        |   |   generate_baseline                                 |
+        |   +-----------------------------------------------------+
+        |
+        +-- no: standard linting
+            +-----------------------------------------------------+
+            | Config (strict_config/_config.py)                   |
+            | Config.from_pyproject(path) -> Config               |
+            | missing file: defaults; invalid: ConfigLoadError    |
+            +-----------------------------------------------------+
+                    |
+                    v
+            +-----------------------------------------------------+
+            | Linter (strict_linter/linter_client.py)             |
+            | DtoStrictLinter(config, baseline)                   |
+            |   lint_path(path) -> list[Violation]                |
+            |     lint_file(py_file) for each *.py                |
+            |       read source      -> LintInputError on failure |
+            |       ast.parse        -> LintInputError on failure |
+            |       run CHECKER_CLASSES (R001..R015)              |
+            |       drop disabled rules and baseline entries      |
+            |     apply severity_overrides                        |
+            |   format_violations(violations, format)             |
+            |   get_exit_code(violations) -> int                  |
+            +-----------------------------------------------------+
+                    |
+                    v
+            print output to stdout; sys.exit(code)
 ```
 
-## FLOW TRACE
+## Flow Trace
 
-### Entry Point & Dispatch
+### Entry Point and Subcommand Selection
 
-1. **CLI Entry** (`cli.py::main()`)
-   ├─ Check `sys.argv[1]` for subcommand
-   └─ `loc-cap` present?
-      ├─ YES: handle_loc_cap(sys.argv)
-      │  ├─ Parse loc-cap args: path, --config, --hard-cap, --soft-target, --baseline, --generate-baseline
-      │  ├─ Load Config.from_pyproject(config_path)
-      │  └─ Call LocCap.run_loc_cap(...) ── returns exit code (0 clean, 1 violations)
-      │
-      └─ NO: Standard linting mode
+1. **CLI entry** (`strict_module/cli.py::main()`)
+   - `sys.argv[1] == "loc-cap"` -> `handle_loc_cap(sys.argv)`.
+   - Otherwise the standard linting path runs.
+
+### LOC Cap Subcommand
+
+2. **Arguments** (`handle_loc_cap`)
+   - Positional `path`; options `--config`, `--hard-cap`, `--soft-target`, `--baseline`, `--generate-baseline`.
+   - `Config.from_pyproject(config_path)`; a `ConfigLoadError` prints the message to stderr and returns exit code 1.
+   - CLI values override the `[tool.strict-module.loc-cap]` settings.
+
+3. **Run** (`LocCap.run_loc_cap`)
+   - `--generate-baseline`: `generate_baseline(path)` prints `path:loc` lines sorted by LOC descending and returns 0.
+   - Check mode loads the baseline with `load_baseline(baseline_file)`:
+     - A missing file yields an empty baseline. When the file name is the default `.loc-cap-baseline.txt`, the legacy names `.strict-module-baseline.txt` and `.dto-strict-baseline.txt` are tried in order.
+     - A file that exists but cannot be decoded raises `LocCapInputError`.
+   - `find_python_files(path)` walks `*.py`, skips the default exclude patterns (`migrations`, `management/commands`) and LOC test files (`conftest.py`, `test_*.py`, anything under `tests/`).
+   - Each file is counted with `count_lines`, which uses `wc -l` semantics. A file that cannot be decoded raises `LocCapInputError`.
+   - `LocCapInputError` from any step prints the message to stderr and returns exit code 1.
+   - Classification per file:
+     - `soft_target < loc <= hard_cap`: soft warning.
+     - `loc > hard_cap` and not in the baseline: hard violation ("NEW OFFENDER").
+     - `loc > hard_cap` and larger than its baseline value: hard violation ("grew by N").
+     - Baseline entries that are deleted, or shrank below the hard cap: improvements.
+   - Output uses GitHub annotation prefixes (`::warning::`, `::notice::`, `::error::`). Hard violations return 1. When nothing is over the cap the success line starts with `OK:` and the run returns 0.
 
 ### Standard Linting (Default Mode)
 
-2. **Argument Parsing** (`cli.py::main()`)
-   ├─ Parse: path (required), --config (default: pyproject.toml), --format (text/github/json), --baseline (optional), --generate-baseline
-   └─ Load Config.from_pyproject(Path(args.config))
-      ├─ Read TOML file ⚠ OSError → return Config()
-      ├─ Extract [tool.strict-module] or [tool.dto-strict]
-      └─ Return Config(service_paths=..., dto_paths=..., exception_tags=..., r003_mode=..., loc_cap=..., ...)
+4. **Argument parsing** (`main()`)
+   - Options: `path` (zero or more), `--config` (default `pyproject.toml`), `--format` (`text`, `github`, `json`), `--generate-baseline`, `--baseline`.
+   - `Config.from_pyproject(Path(args.config))`; a `ConfigLoadError` exits 1.
 
-3. **Generate Baseline Branch** (if --generate-baseline flag)
-   ├─ Require PATH argument (error if missing)
-   ├─ For each path in args.path:
-   │  ├─ Create DtoStrictLinter(config)
-   │  └─ all_violations.extend(linter.lint_path(target_path))
-   ├─ baseline_data = linter.generate_baseline(all_violations)
-   │  └─ For each violation: {file, line, rule_id, message_hash (SHA256[:16])}
-   ├─ Print JSON (stdout)
-   └─ sys.exit(0)
+5. **Generate baseline** (`--generate-baseline`)
+   - Requires at least one PATH; otherwise prints an error and exits 1.
+   - `_lint_all` lints every PATH. A `LintInputError` prints to stderr and exits 1.
+   - `generate_baseline(violations)` emits one object per violation with `file`, `line`, `rule_id` and `message_hash` (the first 16 hex characters of the SHA-256 of the message). JSON goes to stdout and the run exits 0.
 
-4. **Standard Lint Branch** (no --generate-baseline)
-   ├─ Require PATH argument (error if missing)
-   ├─ Load baseline (if --baseline provided)
-   │  ├─ Try: DtoStrictLinter.load_baseline(baseline_path) → dict[(file, line, rule_id)] -> message_hash
-   │  │   └─ Print MSG_BASELINE_LOADED to stderr with count and path
-   │  └─ Catch BaselineLoadError:
-   │     ├─ Print error message to stderr (ERR_BASELINE_MISSING, ERR_BASELINE_INVALID_JSON, ERR_BASELINE_NOT_LIST, ERR_BASELINE_ENTRY_NOT_OBJECT, or ERR_BASELINE_ENTRY_SHAPE)
-   │     ├─ Return EXIT_CODE_HIGH_VIOLATION (exit code 1)
-   │     └─ (Linter initialization is skipped; baseline load failure halts execution)
-   └─ Create DtoStrictLinter(config, baseline=baseline)
+6. **Path check and baseline load**
+   - Every PATH must exist; otherwise `ERR_NONEXISTENT_PATH` goes to stderr and the run exits 1.
+   - With `--baseline`, `DtoStrictLinter.load_baseline(path)` returns a mapping keyed by `(file, line, rule_id)`. Any `BaselineLoadError` (missing or unreadable file, invalid JSON, non-list top level, non-object entry, missing key) prints to stderr and exits 1. On success the count goes to stderr through `MSG_BASELINE_LOADED`.
+   - The stored `message_hash` is read but not compared; a baseline entry matches on file, line and rule only.
 
-### Linting Pipeline
+7. **Lint** (`DtoStrictLinter.lint_path(path)` for each PATH)
+   - A file path is linted directly. A directory is walked with `rglob("*.py")`; test files are included in the walk and exempted by the checkers themselves.
+   - Each file goes through `lint_file`:
+     - A suffix other than `.py` returns no violations.
+     - `read_text()` failure (OSError, UnicodeDecodeError) raises `LintInputError` with `ERR_SOURCE_UNREADABLE`.
+     - `ast.parse` failure (SyntaxError, ValueError) raises `LintInputError` with `ERR_SOURCE_SYNTAX`.
+     - Each class in `CHECKER_CLASSES` (R001 through R015) is constructed as `Checker(path, source, config)`, walks the tree and contributes its violations.
+     - `_filter` drops violations of rules in `disabled_rules`, then drops violations whose `(file, line, rule_id)` is in the baseline.
+   - `lint_path` applies `severity_overrides` to each violation. Valid overrides are the names HIGH, MEDIUM, LOW and INFO (case-insensitive); other values are ignored.
+   - `LintInputError` propagates out of `lint_path`; the CLI prints it to stderr and exits 1, so an unreadable or unparseable input never passes.
 
-5. **Lint All Paths** (`linter/linter_client.py::DtoStrictLinter.lint_path()`)
-   ├─ For each path_str in args.path:
-   │  ├─ target_path = Path(path_str)
-   │  ├─ path.is_file()? → lint_file(path) → list[Violation]
-   │  └─ path.is_dir()? → for each py in path.rglob("*.py"): lint_file(py)
-   │
-   └─ all_violations = combine results
+8. **Checkers** (`strict_checkers/r001.py` ... `r015.py`, all subclasses of `BaseChecker`)
 
-6. **Lint Single File** (`linter/linter_client.py::DtoStrictLinter.lint_file()`)
-   ├─ file_path.suffix != ".py"? → return []
-   ├─ source = file_path.read_text()
-   │  └─ ⚠ Exception (OSError, UnicodeDecodeError) → return []
-   ├─ tree = ast.parse(source)
-   │  └─ ⚠ SyntaxError → return []
-   │
-   └─ For each Checker class in [R001, R002, R003, R004, R005, R006, R007, R008]:
-      ├─ checker = RxxxChecker(file_path, source, config)
-      ├─ checker.visit(tree) [AST walk with visitor pattern]
-      └─ violations.extend(checker.violations)
+   | Rule | Severity | What it checks | Scope |
+   | --- | --- | --- | --- |
+   | R001 | HIGH | `Dict[str, Any]` (or a bare `dict`/`list`/`tuple` when `strict_collections` is on) in signatures | service paths |
+   | R002 | MEDIUM | inline dict literal with `min_dict_keys` or more string keys, unless tagged | service files |
+   | R003 | MEDIUM | dataclass shape: `frozen`, `slots`, and `repr` according to `r003_mode` | DTO paths |
+   | R004 | HIGH | facade: module-level function whose body is only a delegation to a class method | service paths |
+   | R005 | LOW | `validate_*` with a `payload` parameter that does not call `from_dict()` or raise a validation error | all |
+   | R006 | HIGH | `typing.Any` in signatures | service paths (`r006_paths`) |
+   | R007 | MEDIUM | `@pytest.fixture` outside `conftest.py` | test files |
+   | R008 | MEDIUM | module-level `test_*` function | test files |
+   | R009 | INFO | module-level function without a recorded reason | non-test files |
+   | R010 | MEDIUM | legacy `typing` ABC aliases (use `collections.abc`) | all |
+   | R011 | HIGH | string literal at a `raise` site (use a named constant) | non-test files, constants modules exempt |
+   | R012 | INFO | call that fits on one line but is split across lines | all |
+   | R013 | INFO | multi-parameter signature not grouped 2-3 per line | all |
+   | R014 | INFO | multi-keyword call not grouped | all |
+   | R015 | INFO | try/except statement-count asymmetry | all |
 
-7. **Checker Execution** (each RxxxChecker in checkers/ inherits from ast.NodeVisitor)
-   └─ Per rule:
-      │
-      ├─ R001Checker::visit_FunctionDef():
-      │  ├─ PathClassifier.is_service_path(...)? → NO: return
-      │  ├─ is_suppressed(node, "R001")? ← AnnotationInspector.has_noqa_comment(...) → YES: return
-      │  └─ For each param/vararg/kwarg/return annotation:
-      │     ├─ AnnotationInspector.is_dict_str_any(annotation)? → Violation(R001, HIGH, ...)
-      │     └─ config.strict_collections & AnnotationInspector.is_bare_collection(...)? → Violation(R001, HIGH, ...)
-      │
-      ├─ R002Checker::visit_Dict():
-      │  ├─ in_service_file? → NO: return
-      │  ├─ is_suppressed(node, "R002")? → YES: return
-      │  ├─ _is_annotated_constant(dict)? ← module-level typed const → YES: skip
-      │  ├─ _is_serializer_return_dict(dict)? ← to_* return in dataclass → YES: skip
-      │  ├─ Count string keys >= config.min_dict_keys?
-      │  │  ├─ NO: skip
-      │  │  └─ YES: check for exception_tags in comment
-      │  │     ├─ has_tag? → validate justification (if required) → check max_count
-      │  │     │  ├─ NO justification: Violation(R002, MEDIUM, ...)
-      │  │     │  └─ Exceeded max_tags: Violation(R002, MEDIUM, ...)
-      │  │     └─ NO tag: Violation(R002, MEDIUM, ...)
-      │
-      ├─ R003Checker::visit_ClassDef():
-      │  ├─ PathClassifier.is_dto_path(...)? → NO: return
-      │  ├─ is_suppressed(node, "R003")? → YES: return
-      │  ├─ @dataclass decorator present?
-      │  │  └─ Extract kwargs (frozen, slots, repr)
-      │  │     ├─ r003_mode == "canonical":
-      │  │     │  ├─ r003_strict_repr? → check repr != False → Violation(R003, MEDIUM, ...)
-      │  │     │  └─ else (relaxed): check frozen+slots → Violation(R003, MEDIUM, ...)
-      │  │     └─ r003_mode == "legacy": check frozen+slots+repr=False → Violation(R003, MEDIUM, ...)
-      │
-      ├─ R004Checker::visit_Module():
-      │  ├─ PathClassifier.is_service_path(...)? → NO: return
-      │  └─ For each top-level FunctionDef:
-      │     ├─ is_suppressed(node, "R004")? → YES: continue
-      │     └─ _has_exception_tag(fn)? | _is_class_method_wrapper(fn)?
-      │        ├─ NO: Violation(R004, HIGH, ...)
-      │        └─ YES: skip
-      │
-      ├─ R005Checker::visit_FunctionDef():
-      │  ├─ node.name.startswith("validate_")? → NO: return
-      │  ├─ is_suppressed(node, "R005")? → YES: return
-      │  ├─ Has "payload" parameter?
-      │  │  └─ _has_from_dict_call(fn)? | _has_validation_error(fn)?
-      │  │     ├─ NO: Violation(R005, LOW, ...)
-      │  │     └─ YES: skip
-      │
-      ├─ R006Checker::visit_FunctionDef():
-      │  ├─ PathClassifier.is_service_path(...)? → NO: return
-      │  ├─ is_suppressed(node, "R006")? → YES: return
-      │  └─ For each param/vararg/kwarg/return annotation:
-      │     ├─ AnnotationInspector.contains_any(annotation)? → Violation(R006, HIGH, ...)
-      │
-      ├─ R007Checker::visit_FunctionDef():
-      │  ├─ PathClassifier.is_test_file(file_path)? → NO: return
-      │  ├─ file_path.name == "conftest.py"? → YES: return (allowed)
-      │  └─ Has @pytest.fixture decorator?
-      │     ├─ is_suppressed(node, "R007")? → YES: continue
-      │     └─ Violation(R007, MEDIUM, ...)
-      │
-      └─ R008Checker::visit_Module():
-         ├─ PathClassifier.is_test_file(file_path)? → NO: return
-         └─ For each top-level FunctionDef starting with "test_":
-            ├─ is_suppressed(node, "R008")? → YES: continue
-            └─ Violation(R008, MEDIUM, ...)
+   - R004 detail (`R004Checker`): only module-level functions in service paths are considered. The body, after an optional docstring, must be one of:
+     - a single `return Name.method(...)`, `return Name(...).method(...)` or `return Name().method(...)`, or a bare `Name.method(...)` expression statement;
+     - `instance = Name(...)` followed by `return instance.method(...)`.
+     `Name` must start with a capital letter. Any other shape is not a facade and is left to R009.
+   - R009 detail (`R009Checker`): exempt shapes are test files; functions with any decorator; `main` and `handle_*`; dunder module hooks (for example `__getattr__`, `__dir__`); `pytest_*` hooks; and functions carrying an exception tag on the def line or in the first docstring line. The default tag is `module-level:`, matched case-insensitively.
+   - Exception tags (`has_exception_tag`) are read from the def line and the first docstring line only. The default tags are `facade - celery schedule`, `FRAMEWORK` and `module-level:`. Setting `exception_tags` replaces the defaults.
 
-### Filtering & Baseline
+9. **Suppression** (`AnnotationInspector.has_noqa_comment`, per node line)
+   - `# noqa` with no codes suppresses every rule.
+   - `# noqa: strict-module` or `# noqa: dto-strict` suppresses every rule.
+   - `# noqa: strict-module-R001`, `# noqa: dto-strict-R001` and `# noqa: R001` suppress that rule.
 
-8. **Filter by Enabled Rules** (`linter/linter_client.py::DtoStrictLinter.lint_path()`)
-   └─ For each violation:
-      ├─ config.is_rule_enabled(rule_id)? ← rule_id not in disabled_rules
-      │  ├─ YES: keep
-      │  └─ NO: discard
+### Output and Exit
 
-9. **Apply Baseline (Ratchet Mode)** (`linter/linter_client.py::DtoStrictLinter._filter_by_baseline()`)
-   └─ For each violation:
-      ├─ key = (violation.file, violation.line, violation.rule_id)
-      ├─ key in self.baseline?
-      │  ├─ YES: discard (violation was accepted in baseline)
-      │  └─ NO: keep (new violation)
+10. **Format** (`DtoStrictLinter.format_violations`)
+    - `text`: `file:line: RULE message`.
+    - `github`: `::error file=...,line=...,col=...::message` for HIGH, `::notice` for INFO, `::warning` otherwise.
+    - `json`: an array of objects with `rule_id`, `severity`, `file`, `line`, `col`, `message`.
 
-10. **Apply Severity Overrides** (`linter/linter_client.py::DtoStrictLinter.lint_path()`)
-    └─ For each violation with rule_id in config.severity_overrides:
-       └─ Create new Violation with updated severity
+11. **Exit code** (`DtoStrictLinter.get_exit_code`)
+    - No violations: 0.
+    - Any HIGH: 1.
+    - Otherwise any MEDIUM: 2.
+    - Otherwise any LOW: 3.
+    - INFO-only results return 0, so R009 and the R012-R015 formatting rules never block.
 
-### Output & Exit
+12. **Print and exit**: `main()` prints the formatted violations to stdout (when there are any) and returns the exit code.
 
-11. **Format Violations** (`linter/linter_client.py::DtoStrictLinter.format_violations()`)
-    └─ args.format type?
-       ├─ "text": for each v: "{file}:{line}: {rule_id} {message}"
-       ├─ "github": for each v: "::{level} file={file},line={line},col={col}::{message}"
-       │  └─ level = "error" if severity==HIGH else "warning"
-       └─ "json": all violations as JSON array with rule_id, severity, file, line, col, message
+## Real Output Examples
 
-12. **Compute Exit Code** (`linter/linter_client.py::DtoStrictLinter.get_exit_code()`)
-    ├─ no violations? → return 0 ← EXIT 0 (SUCCESS)
-    ├─ any HIGH severity? → return 1 ← EXIT 1 (HARD FAIL)
-    ├─ any MEDIUM severity? → return 2 ← EXIT 2 (WARN)
-    └─ only LOW severity? → return 3 ← EXIT 3 (INFO)
+The examples below were run against the 0.6.0 tree. The paths are the paths passed on the command line, relative to the directory the command ran in. The first path segments follow the default `service_paths` pattern `**/services/*.py`.
 
-13. **Print & Exit** (`cli.py::main()`)
-    ├─ print(output) [formatted violations to stdout]
-    └─ sys.exit(code)
+### Clean file
 
----
-
-## REAL OUTPUT EXAMPLES
-
-### Clean File Test
-```bash
-$ cd /tmp/claude-flowtrace/strict-suite-work
-$ uv run strict-module /tmp/test_clean.py
-[no output]
+```
+$ uv run strict-module tools/clean.py
 EXIT CODE: 0
 ```
 
-**Explanation**: File matches no patterns (not in services/, not in dtos/), so all checkers skip. No violations collected. Exit code 0 (success).
+A file that matches no rule prints nothing and exits 0.
 
-### Violation File Test
-```bash
-$ cd /tmp/claude-flowtrace/strict-suite-work
-$ uv run strict-module /tmp/app_test
-/tmp/app_test/services/handler.py:5: R001 Dict[str, Any] in signature: handle_request
-/tmp/app_test/services/handler.py:5: R004 Module-level def without exception tag: handle_request
-/tmp/app_test/services/handler.py:5: R006 typing.Any in parameter: handle_request
+### Service file with a HIGH finding
+
+```
+$ uv run strict-module apps/demo/services/handler.py
+apps/demo/services/handler.py:6: R001 Dict[str, Any] in signature: handle_request
+apps/demo/services/handler.py:6: R006 typing.Any in parameter: handle_request
 EXIT CODE: 1
 ```
 
-**Explanation**:
-- File path matches `**/services/*.py` pattern (in_service_file=True).
-- R001: `params: Dict[str, Any]` triggers is_dict_str_any() check → Violation(HIGH).
-- R004: Module-level function `handle_request` has no exception tag and is not a wrapper → Violation(HIGH).
-- R006: `params: Dict[str, Any]` contains "Any" → Violation(HIGH).
-- Exit code 1 because has_high=True in get_exit_code().
+`params: Dict[str, Any]` triggers R001 (HIGH) and R006 (HIGH). Exit code 1 because HIGH findings are present.
 
----
+### Facade in a service path
 
-## Noqa Suppression (example path)
+```
+$ uv run strict-module apps/demo/services/facade.py
+apps/demo/services/facade.py:12: R004 Facade 'get_user': module-level wrapper around UserService.get_user; call the class method directly or move the logic onto the class. A framework-required wrapper carries an exception tag (for example '# FRAMEWORK').
+apps/demo/services/facade.py:12: R009 Module-level function 'get_user': a method on a class is the default shape. Keep it module-level only when that is the optimal shape (framework hook, entry point, stateless helper with no owning class) and record why with '# module-level: <reason>' on the def line. Entry points need no tag: main, handle_*.
+EXIT CODE: 1
+```
 
-For any node with matching rule:
-- `# noqa` → suppress all rules
-- `# noqa: strict-module` → suppress all strict-module rules
-- `# noqa: strict-module-R001` → suppress R001 specifically
-- `# noqa: dto-strict` (backward-compat) → suppress all rules
-- `# noqa: dto-strict-R001` (backward-compat) → suppress R001
+`return UserService().get_user(user_id)` is the facade shape, so R004 (HIGH) fires. The same function also gets the R009 advisory, which does not change the exit code on its own.
 
----
+### Module-level helper outside a service path
 
-## LOC Cap Flow (loc_cap/loc_cap_client.py subcommand)
+```
+$ uv run strict-module tools/helpers.py
+tools/helpers.py:4: R009 Module-level function 'scale_value': a method on a class is the default shape. Keep it module-level only when that is the optimal shape (framework hook, entry point, stateless helper with no owning class) and record why with '# module-level: <reason>' on the def line. Entry points need no tag: main, handle_*.
+EXIT CODE: 0
+```
 
-1. **Subcommand Detection** (`cli.py::main()`)
-   └─ sys.argv[1] == "loc-cap"? → handle_loc_cap(sys.argv)
+Only INFO findings are present, so the run exits 0.
 
-2. **LOC Cap Args** (`cli.py::handle_loc_cap()`)
-   ├─ Parse: path, --config, --hard-cap, --soft-target, --baseline, --generate-baseline
-   ├─ Load Config.from_pyproject(config_path)
-   └─ Merge CLI args with config.loc_cap settings
+### File that cannot be parsed
 
-3. **Run LOC Cap** (`loc_cap/loc_cap_client.py::LocCap.run_loc_cap()`)
-   ├─ generate? → LocCap.generate_baseline(path) → print() → exit(0)
-   │
-   └─ Check mode:
-      ├─ baseline = LocCap.load_baseline(baseline_file)
-      │  └─ Fallback: .strict-module-baseline.txt, .dto-strict-baseline.txt
-      │     ⚠ OSError → return {}
-      │
-      ├─ current = LocCap.find_python_files(path, exclude_patterns)
-      │  └─ For each *.py:
-      │     ├─ Skip migrations/, management/commands, test files
-      │     ├─ loc = LocCap.count_lines(file) ← wc -l semantics ⚠ OSError/UnicodeDecodeError → 0
-      │     └─ current[file] = loc
-      │
-      ├─ For each current file:
-      │  ├─ soft_target < loc <= hard_cap? → soft_warnings.append(...)
-      │  └─ loc > hard_cap?
-      │     ├─ NOT in baseline? → hard_violations.append("NEW OFFENDER")
-      │     └─ loc > baseline[file]? → hard_violations.append("grew by {delta}")
-      │
-      ├─ For each baseline file:
-      │  └─ NOT in current? OR improved? → improvements.append(...)
-      │
-      └─ Print results:
-         ├─ soft_warnings? → ::warning::
-         ├─ improvements? → ::notice::
-         ├─ hard_violations? → ::error:: → return 1
-         └─ else: ✓ all clean → return 0
+```
+$ uv run strict-module apps/demo/services/broken.py
+error: cannot parse Python source: apps/demo/services/broken.py line 1: invalid syntax (<unknown>, line 1)
+EXIT CODE: 1
+```
 
----
+The error goes to stderr. The run exits 1 instead of reporting the file as clean.
+
+## LOC Cap Flow Summary
+
+`loc-cap` reads the configuration, scans the tree, compares each counted file with the ratchet baseline and reports soft warnings, improvements and hard violations. Unreadable files and baselines stop the run with an error and exit 1.
 
 ## Summary
 
-strict_module operates in **two independent paths**:
+strict_module runs two independent paths:
 
-1. **Standard Linting** (default): Config → AST checkers (R001-R008) → baseline ratchet → severity overrides → format → exit code
-2. **LOC Cap** (subcommand): Config → file scanner → count lines → baseline compare → report violations → exit code
+1. **Standard linting** (default): Config -> R001-R015 checkers -> disabled-rule and baseline filter -> severity overrides -> format -> exit code.
+2. **LOC cap** (`loc-cap`): Config -> file scanner -> line count -> baseline comparison -> annotated report -> exit code.
 
-**Key Design Points**:
-- All checkers are **path-aware** (service_paths, dto_paths, test_file patterns).
-- **Noqa suppression** is inline per node; exception tags are inline comments.
-- **Baseline ratcheting** allows accepted violations; new ones still fail.
-- **Exit codes** reflect severity: 0=clean, 1=HIGH, 2=MEDIUM, 3=LOW.
-- **File I/O errors** (OSError, UnicodeDecodeError) silently skip files.
-- **Syntax errors** in Python files are silently skipped (linter continues).
+**Key design points**:
+
+- Checkers are path-aware (`service_paths`, `dto_paths`, `r006_paths`, test-file patterns).
+- Suppression is inline per node; exception tags are comments on the def line or in the first docstring line.
+- Baseline ratcheting accepts recorded violations on file, line and rule; new violations still fail.
+- Exit codes reflect the most severe blocking finding: 0 clean or INFO-only, 1 HIGH, 2 MEDIUM, 3 LOW.
+- Unreadable or unparseable inputs are errors, not skips: they print to stderr and exit 1.

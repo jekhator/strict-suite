@@ -7,6 +7,7 @@ import sys
 from strict_config.constants import (
     ERR_BASELINE_INVALID_JSON,
     ERR_BASELINE_MISSING,
+    EXIT_CODE_SUCCESS,
     MSG_BASELINE_LOADED,
 )
 from strict_module.cli import main
@@ -27,7 +28,7 @@ service_paths = ["**/*.py"]
         try:
             sys.argv = ["strict-module", "loc-cap", str(tmp_path)]
             result = main()
-            assert result in [0, 1]
+            assert result == EXIT_CODE_SUCCESS
         finally:
             sys.argv = original_argv
 
@@ -57,7 +58,7 @@ service_paths = ["**/*.py"]
         try:
             sys.argv = ["strict-module", str(file1), str(file2)]
             result = main()
-            assert result in [0, 1]
+            assert result == EXIT_CODE_SUCCESS
         finally:
             sys.argv = original_argv
 

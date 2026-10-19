@@ -8,7 +8,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002ConfigurableThreshold:
-    """Test suite for related functionality."""
+    """Tests for R002 configurable min_dict_keys threshold (Issue #2)."""
 
     def test_r002_threshold_2_keys(self):
         """R002: With min_dict_keys=2, 2+ string keys trigger violation."""

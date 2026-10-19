@@ -4,7 +4,7 @@ import ast
 
 from strict_checkers.base import BaseChecker
 from strict_inspection import PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R008Checker(BaseChecker):
@@ -21,13 +21,7 @@ class R008Checker(BaseChecker):
                     if self.is_suppressed(item, "R008"):
                         continue
 
-                    self.violations.append(
-                        Violation(
-                            rule_id="R008",
-                            severity=RuleSeverity.MEDIUM,
-                            file=str(self.file_path),
-                            line=item.lineno,
-                            col=item.col_offset,
-                            message=f"Module-level test function: {item.name}. Move into Test<Concern> class.",
-                        )
-                    )
+                    self.add_violation(
+rule_id="R008", severity=RuleSeverity.MEDIUM, line=item.lineno, col=item.col_offset,
+message=f"Module-level test function: {item.name}. Move into Test<Concern> class.",
+)

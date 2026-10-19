@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR006Any:
-    """Test suite for related functionality."""
+    """Tests for R006: typing.Any in signatures."""
 
     def test_r006_any_in_parameter(self, tmp_path):
         """typing.Any in parameter flagged."""
@@ -18,9 +18,7 @@ def process(data: Any) -> None:  # bad: Any in parameter
     pass
 """
         )
-        config = Config(
-            r006_paths=["**/*.py"],
-        )
+        config = Config(r006_paths=["**/*.py"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(bad_file)
         r006_violations = [v for v in violations if v.rule_id == "R006"]
@@ -38,9 +36,7 @@ def get_config() -> Any:  # bad: Any in return
     return {}
 """
         )
-        config = Config(
-            r006_paths=["**/*.py"],
-        )
+        config = Config(r006_paths=["**/*.py"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(bad_file)
         r006_violations = [v for v in violations if v.rule_id == "R006"]
@@ -58,9 +54,7 @@ def fetch(id: int) -> Optional[Any]:  # bad: Any in Optional
     return None
 """
         )
-        config = Config(
-            r006_paths=["**/*.py"],
-        )
+        config = Config(r006_paths=["**/*.py"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(bad_file)
         r006_violations = [v for v in violations if v.rule_id == "R006"]
@@ -77,9 +71,7 @@ def process(data: Dict[str, str]) -> None:
     pass
 """
         )
-        config = Config(
-            r006_paths=["**/*.py"],
-        )
+        config = Config(r006_paths=["**/*.py"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(good_file)
         r006_violations = [v for v in violations if v.rule_id == "R006"]
@@ -97,9 +89,7 @@ def helper(x: Any) -> Any:  # allowed: not in r006_paths
     return x
 """
         )
-        config = Config(
-            r006_paths=["**/services/*.py"],  # only services
-        )
+        config = Config(r006_paths=["**/services/*.py"])  # only services
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(other_file)
         r006_violations = [v for v in violations if v.rule_id == "R006"]

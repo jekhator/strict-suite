@@ -2,20 +2,20 @@
 
 import ast
 import json
-import os
 import tempfile
 from pathlib import Path
 from unittest.mock import Mock
 
 import pytest
 
+from strict_config import constants as const
 from strict_config._config import Config
 from strict_config.constants import (
     ERR_BASELINE_INVALID_JSON,
     ERR_BASELINE_MISSING,
 )
 from strict_inspection import AnnotationInspector
-from strict_linter import BaselineLoadError, DtoStrictLinter
+from strict_linter import BaselineLoadError, DtoStrictLinter, LintInputError
 from strict_rules.rules_client import RuleRegistry
 
 
@@ -47,7 +47,7 @@ class TestNoqaCommentEdgeCases:
     def test_noqa_malformed_with_em_dash_explanation(self):
         """Test noqa comment with em-dash explanation."""
         source = [
-            "x = 1  # noqa: strict-module-R001 — explanation here",
+            "x = 1  # noqa: strict-module-R001 \u2014 explanation here",
         ]
         node = Mock()
         node.lineno = 1
@@ -58,7 +58,7 @@ class TestNoqaCommentEdgeCases:
     def test_noqa_malformed_with_en_dash_explanation(self):
         """Test noqa comment with en-dash explanation."""
         source = [
-            "x = 1  # noqa: strict-module-R001 – explanation",
+            "x = 1  # noqa: strict-module-R001 \u2013 explanation",
         ]
         node = Mock()
         node.lineno = 1
@@ -208,7 +208,7 @@ class TestAnnotationParsingEdgeCases:
         arg = func.args.args[0]
 
         result = AnnotationInspector.get_annotation_string(arg.annotation)
-        assert "tuple" in result.lower() or "int" in result.lower()
+        assert result.startswith("tuple[") and "int" in result and "str" in result
 
     def test_get_annotation_string_attribute(self):
         """Test annotation string for attribute."""
@@ -218,7 +218,7 @@ class TestAnnotationParsingEdgeCases:
         arg = func.args.args[0]
 
         result = AnnotationInspector.get_annotation_string(arg.annotation)
-        assert len(result) > 0
+        assert result == "typing.Optional[int]"
 
     def test_get_annotation_string_constant(self):
         """Test annotation string for constant."""
@@ -227,7 +227,7 @@ class TestAnnotationParsingEdgeCases:
         ann_assign = tree.body[0]
 
         result = AnnotationInspector.get_annotation_string(ann_assign.annotation)
-        assert "'int'" in result or "int" in result
+        assert result == "'int'"
 
     def test_is_dict_str_any_valid(self):
         """Test detection of Dict[str, Any]."""
@@ -333,10 +333,8 @@ class TestAnnotationParsingEdgeCases:
 class TestLinterFileHandling:
     """Test linter file handling and error cases."""
 
-    def test_lint_file_non_python(self):
+    def test_lint_file_non_python(self, config, linter):
         """Test linting non-.py file returns empty."""
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             text_file = Path(tmpdir) / "test.txt"
@@ -345,50 +343,36 @@ class TestLinterFileHandling:
             result = linter.lint_file(text_file)
             assert result == []
 
-    def test_lint_file_unreadable(self):
-        """Test linting unreadable file returns empty."""
-        config = Config()
-        linter = DtoStrictLinter(config)
+    def test_lint_file_unreadable(self, config, tmp_path, error_prefix, linter):
+        """Test that a path that cannot be read as a file raises LintInputError."""
+        py_file = tmp_path / "test.py"
+        py_file.mkdir()
 
-        with tempfile.TemporaryDirectory() as tmpdir:
-            py_file = Path(tmpdir) / "test.py"
-            py_file.write_text("x = 1")
+        with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
+            linter.lint_file(py_file)
 
-            os.chmod(py_file, 0o000)
-            try:
-                result = linter.lint_file(py_file)
-                assert result == []
-            finally:
-                os.chmod(py_file, 0o644)
-
-    def test_lint_file_invalid_encoding(self):
-        """Test linting file with invalid encoding."""
-        config = Config()
-        linter = DtoStrictLinter(config)
+    def test_lint_file_invalid_encoding(self, config, error_prefix, linter):
+        """Test linting a file with invalid encoding raises LintInputError."""
 
         with tempfile.TemporaryDirectory() as tmpdir:
             py_file = Path(tmpdir) / "test.py"
             py_file.write_bytes(b"\x80\x81\x82\x83")
 
-            result = linter.lint_file(py_file)
-            assert result == []
+            with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
+                linter.lint_file(py_file)
 
-    def test_lint_file_syntax_error(self):
-        """Test linting file with syntax error."""
-        config = Config()
-        linter = DtoStrictLinter(config)
+    def test_lint_file_syntax_error(self, config, error_prefix, linter):
+        """Test linting a file with a syntax error raises LintInputError."""
 
         with tempfile.TemporaryDirectory() as tmpdir:
             py_file = Path(tmpdir) / "test.py"
             py_file.write_text("x = (")
 
-            result = linter.lint_file(py_file)
-            assert result == []
+            with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_SYNTAX)):
+                linter.lint_file(py_file)
 
-    def test_lint_path_single_file(self):
+    def test_lint_path_single_file(self, config, linter):
         """Test linting single file via lint_path."""
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             py_file = Path(tmpdir) / "test.py"
@@ -397,10 +381,8 @@ class TestLinterFileHandling:
             result = linter.lint_path(py_file)
             assert isinstance(result, list)
 
-    def test_lint_path_directory(self):
+    def test_lint_path_directory(self, config, linter):
         """Test linting directory via lint_path."""
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             base = Path(tmpdir)
@@ -410,17 +392,14 @@ class TestLinterFileHandling:
             result = linter.lint_path(base)
             assert isinstance(result, list)
 
-    def test_lint_path_nonexistent(self):
+    def test_lint_path_nonexistent(self, config, linter):
         """Test linting nonexistent path."""
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         result = linter.lint_path(Path("/nonexistent/path"))
         assert result == []
 
-    def test_baseline_filtering_empty_baseline(self):
+    def test_baseline_filtering_empty_baseline(self, config):
         """Test baseline filtering with empty baseline."""
-        config = Config()
         linter = DtoStrictLinter(config, baseline={})
 
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -430,9 +409,8 @@ class TestLinterFileHandling:
             result = linter.lint_file(bad_file)
             assert isinstance(result, list)
 
-    def test_baseline_filtering_with_entries(self):
+    def test_baseline_filtering_with_entries(self, config):
         """Test baseline filtering with populated baseline."""
-        config = Config()
 
         with tempfile.TemporaryDirectory() as tmpdir:
             bad_file = Path(tmpdir) / "bad.py"
@@ -501,12 +479,10 @@ class TestLinterFileHandling:
                 if v.rule_id == "R002":
                     assert v.severity.name == "HIGH"
 
-    def test_get_exit_code_high_severity(self):
+    def test_get_exit_code_high_severity(self, config, linter):
         """Test exit code 1 for high severity."""
         from strict_rules.rules_objects import RuleSeverity, Violation
 
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         violations = [
             Violation("R001", RuleSeverity.HIGH, "test.py", 1, 0, "Test"),
@@ -515,12 +491,10 @@ class TestLinterFileHandling:
         code = linter.get_exit_code(violations)
         assert code == 1
 
-    def test_get_exit_code_medium_severity(self):
+    def test_get_exit_code_medium_severity(self, config, linter):
         """Test exit code 2 for medium severity."""
         from strict_rules.rules_objects import RuleSeverity, Violation
 
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         violations = [
             Violation("R002", RuleSeverity.MEDIUM, "test.py", 1, 0, "Test"),
@@ -529,12 +503,10 @@ class TestLinterFileHandling:
         code = linter.get_exit_code(violations)
         assert code == 2
 
-    def test_get_exit_code_low_severity(self):
+    def test_get_exit_code_low_severity(self, config, linter):
         """Test exit code 3 for low severity."""
         from strict_rules.rules_objects import RuleSeverity, Violation
 
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         violations = [
             Violation("R005", RuleSeverity.LOW, "test.py", 1, 0, "Test"),
@@ -543,20 +515,16 @@ class TestLinterFileHandling:
         code = linter.get_exit_code(violations)
         assert code == 3
 
-    def test_get_exit_code_no_violations(self):
+    def test_get_exit_code_no_violations(self, config, linter):
         """Test exit code 0 for no violations."""
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         code = linter.get_exit_code([])
         assert code == 0
 
-    def test_format_violations_text(self):
+    def test_format_violations_text(self, config, linter):
         """Test text formatting of violations."""
         from strict_rules.rules_objects import RuleSeverity, Violation
 
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         violations = [
             Violation("R001", RuleSeverity.HIGH, "test.py", 1, 0, "Test message"),
@@ -567,12 +535,10 @@ class TestLinterFileHandling:
         assert "R001" in output
         assert "Test message" in output
 
-    def test_format_violations_json(self):
+    def test_format_violations_json(self, config, linter):
         """Test JSON formatting of violations."""
         from strict_rules.rules_objects import RuleSeverity, Violation
 
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         violations = [
             Violation("R001", RuleSeverity.HIGH, "test.py", 1, 0, "Test message"),
@@ -586,12 +552,10 @@ class TestLinterFileHandling:
         assert data[0]["rule_id"] == "R001"
         assert data[0]["severity"] == "HIGH"
 
-    def test_format_violations_github(self):
+    def test_format_violations_github(self, config, linter):
         """Test GitHub formatting of violations."""
         from strict_rules.rules_objects import RuleSeverity, Violation
 
-        config = Config()
-        linter = DtoStrictLinter(config)
 
         violations = [
             Violation("R001", RuleSeverity.HIGH, "test.py", 1, 0, "Test message"),

@@ -2,9 +2,12 @@
 
 import ast
 
+import pytest
+
+from strict_config import constants as const
 from strict_config._config import Config
 from strict_inspection import AnnotationInspector
-from strict_linter import DtoStrictLinter
+from strict_linter import DtoStrictLinter, LintInputError
 
 
 class TestNoqaCommentParsing:
@@ -50,31 +53,25 @@ class TestNoqaCommentParsing:
 class TestLinterEdgeCases:
     """Test linter with edge cases."""
 
-    def test_linter_with_empty_file(self, tmp_path):
+    def test_linter_with_empty_file(self, tmp_path, config, linter):
         """Test linting an empty file."""
         empty_file = tmp_path / "empty.py"
         empty_file.write_text("")
-        config = Config()
-        linter = DtoStrictLinter(config)
         violations = linter.lint_file(empty_file)
         assert len(violations) == 0
 
-    def test_linter_with_syntax_error_file(self, tmp_path):
-        """Test linting a file with syntax error."""
+    def test_linter_with_syntax_error_file(self, tmp_path, config, error_prefix, linter):
+        """Test that a file with a syntax error raises LintInputError instead of passing."""
         bad_file = tmp_path / "syntax_error.py"
         bad_file.write_text("def foo(:\n")
-        config = Config()
-        linter = DtoStrictLinter(config)
-        violations = linter.lint_file(bad_file)
-        assert len(violations) == 0
+        with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_SYNTAX)):
+            linter.lint_file(bad_file)
 
-    def test_linter_with_nonexistent_file(self, tmp_path):
-        """Test linting a nonexistent file."""
+    def test_linter_with_nonexistent_file(self, tmp_path, config, error_prefix, linter):
+        """Test that a nonexistent file raises LintInputError instead of passing."""
         nonexistent = tmp_path / "nonexistent.py"
-        config = Config()
-        linter = DtoStrictLinter(config)
-        violations = linter.lint_file(nonexistent)
-        assert len(violations) == 0
+        with pytest.raises(LintInputError, match=error_prefix(const.ERR_SOURCE_UNREADABLE)):
+            linter.lint_file(nonexistent)
 
     def test_linter_format_github_high_severity(self, tmp_path):
         """Test GitHub format with HIGH severity."""
@@ -89,9 +86,9 @@ def process(data: Any) -> dict:
         config = Config(service_paths=["apps/*/services/*.py"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(service_file)
-        if violations:
-            formatted = linter.format_violations(violations, "github")
-            assert "::error" in formatted or "::warning" in formatted
+        assert violations
+        formatted = linter.format_violations(violations, "github")
+        assert "::error" in formatted
 
     def test_config_with_disabled_rules(self, tmp_path):
         """Test configuration with disabled rules."""
@@ -109,24 +106,21 @@ def process(data: Any) -> dict:
         r006_violations = [v for v in violations if v.rule_id == "R006"]
         assert len(r006_violations) == 0
 
-    def test_generate_baseline_empty_violations(self, tmp_path):
+    def test_generate_baseline_empty_violations(self, tmp_path, config, linter):
         """Test baseline generation with no violations."""
         clean_file = tmp_path / "clean.py"
         clean_file.write_text("x = 1")
-        config = Config()
-        linter = DtoStrictLinter(config)
         violations = []
         baseline = linter.generate_baseline(violations)
         assert isinstance(baseline, (dict, list))
 
-    def test_baseline_ratchet_improvement(self, tmp_path):
+    def test_baseline_ratchet_improvement(self, tmp_path, config):
         """Test baseline ratchet allows improvements."""
         test_file = tmp_path / "test.py"
         test_file.write_text("x = 1")
 
         baseline = {str(test_file): 10}
 
-        config = Config()
         linter = DtoStrictLinter(config, baseline=baseline)
         violations = []
 

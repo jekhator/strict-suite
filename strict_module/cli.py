@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from strict_config._config import Config
+from strict_config._config import Config, ConfigLoadError
 from strict_config.constants import (
     DEFAULT_LOC_CAP_BASELINE_FILE,
     DEFAULT_LOC_HARD_CAP,
@@ -17,8 +17,52 @@ from strict_config.constants import (
     MSG_BASELINE_LOADED,
     VALID_FORMATS,
 )
-from strict_linter import BaselineLoadError, DtoStrictLinter
+from strict_linter import BaselineLoadError, DtoStrictLinter, LintInputError
 from strict_loc_cap import LocCap
+from strict_rules import Violation
+
+LOC_CAP_SUBCOMMAND = "loc-cap"
+
+
+def _add_config_option(  # module-level: stateless helper
+    parser: argparse.ArgumentParser,
+) -> None:
+    """Add the --config option shared by the linter and loc-cap parsers."""
+    parser.add_argument(
+        "--config",
+        default="pyproject.toml",
+        help="Path to pyproject.toml config file (default: pyproject.toml)",
+    )
+
+
+def _add_generate_baseline_option(  # module-level: stateless helper
+    parser: argparse.ArgumentParser, help_text: str
+) -> None:
+    """Add the --generate-baseline flag with a subcommand-specific help text."""
+    parser.add_argument("--generate-baseline", action="store_true", help=help_text)
+
+
+def _lint_all(  # module-level: stateless helper
+    linter: DtoStrictLinter, path_strs: list[str]
+) -> list[Violation] | None:
+    """Lint every path; print an unreadable or unparseable input to stderr and return None."""
+    violations: list[Violation] = []
+    try:
+        for path_str in path_strs:
+            violations.extend(linter.lint_path(Path(path_str)))
+    except LintInputError as error:
+        print(str(error), file=sys.stderr)
+        return None
+    return violations
+
+
+def _load_config(config_path: str) -> Config | None:  # module-level: stateless helper
+    """Load configuration, printing the error to stderr and returning None when it is invalid."""
+    try:
+        return Config.from_pyproject(Path(config_path))
+    except ConfigLoadError as error:
+        print(str(error), file=sys.stderr)
+        return None
 
 
 def handle_loc_cap(args: list[str]) -> int:
@@ -28,11 +72,7 @@ def handle_loc_cap(args: list[str]) -> int:
         description="LOC cap enforcer with configurable hard/soft limits and ratchet baseline.",
     )
     parser.add_argument("path", help="Path to directory to scan")
-    parser.add_argument(
-        "--config",
-        default="pyproject.toml",
-        help="Path to pyproject.toml config file (default: pyproject.toml)",
-    )
+    _add_config_option(parser)
     parser.add_argument(
         "--hard-cap",
         type=int,
@@ -47,16 +87,16 @@ def handle_loc_cap(args: list[str]) -> int:
         "--baseline",
         help=f"Baseline file path (default: {DEFAULT_LOC_CAP_BASELINE_FILE}, or from [tool.strict-module.loc-cap].baseline_file)",
     )
-    parser.add_argument(
-        "--generate-baseline",
-        action="store_true",
-        help="Generate baseline from all Python files in path (stdout)",
+    _add_generate_baseline_option(
+        parser, "Generate baseline from all Python files in path (stdout)"
     )
 
     parsed = parser.parse_args(args[2:])
 
-    config_path = Path(parsed.config)
-    config = Config.from_pyproject(config_path)
+    config = _load_config(parsed.config)
+    if config is None:
+        return EXIT_CODE_HIGH_VIOLATION
+
     hard_cap = (
         parsed.hard_cap if parsed.hard_cap is not None else config.loc_cap.hard_cap
     )
@@ -78,28 +118,23 @@ def handle_loc_cap(args: list[str]) -> int:
 
 def main() -> int:
     """Main CLI entry point."""
-    if len(sys.argv) > 1 and sys.argv[1] == "loc-cap":
+    if len(sys.argv) > 1 and sys.argv[1] == LOC_CAP_SUBCOMMAND:
         return handle_loc_cap(sys.argv)
 
     parser = argparse.ArgumentParser(
         description="AST-based linter for Python DTO discipline and facade-ban enforcement."
     )
     parser.add_argument("path", nargs="*", help="Path(s) to file or directory to lint")
-    parser.add_argument(
-        "--config",
-        default="pyproject.toml",
-        help="Path to pyproject.toml config file (default: pyproject.toml)",
-    )
+    _add_config_option(parser)
     parser.add_argument(
         "--format",
         choices=VALID_FORMATS,
         default=FORMAT_TEXT,
         help=f"Output format (default: {FORMAT_TEXT})",
     )
-    parser.add_argument(
-        "--generate-baseline",
-        action="store_true",
-        help="Generate baseline JSON from all violations in path and output to stdout",
+    _add_generate_baseline_option(
+        parser,
+        "Generate baseline JSON from all violations in path and output to stdout",
     )
     parser.add_argument(
         "--baseline",
@@ -109,21 +144,22 @@ def main() -> int:
 
     args = parser.parse_args()
 
-    config_path = Path(args.config)
-    config = Config.from_pyproject(config_path)
+    config = _load_config(args.config)
+    if config is None:
+        return EXIT_CODE_HIGH_VIOLATION
+
+    linter = DtoStrictLinter(config)
 
     if args.generate_baseline:
         if not args.path:
             print("error: --generate-baseline requires PATH argument", file=sys.stderr)
             return EXIT_CODE_HIGH_VIOLATION
 
-        all_violations = []
-        for path_str in args.path:
-            target_path = Path(path_str)
-            linter = DtoStrictLinter(config)
-            all_violations.extend(linter.lint_path(target_path))
+        generation_violations = _lint_all(linter, args.path)
+        if generation_violations is None:
+            return EXIT_CODE_HIGH_VIOLATION
 
-        baseline_data = linter.generate_baseline(all_violations)
+        baseline_data = linter.generate_baseline(generation_violations)
         print(json.dumps(baseline_data, indent=2))
         return EXIT_CODE_SUCCESS
 
@@ -135,33 +171,28 @@ def main() -> int:
         return EXIT_CODE_HIGH_VIOLATION
 
     for path_str in args.path:
-        target_path = Path(path_str)
-        if not target_path.exists():
+        if not Path(path_str).exists():
             print(ERR_NONEXISTENT_PATH.format(path=path_str), file=sys.stderr)
             return EXIT_CODE_HIGH_VIOLATION
 
-    baseline = None
     if args.baseline:
         try:
             baseline = DtoStrictLinter.load_baseline(args.baseline)
-            baseline_count = len(baseline)
-            print(
-                MSG_BASELINE_LOADED.format(count=baseline_count, path=args.baseline),
-                file=sys.stderr,
-            )
         except BaselineLoadError as error:
             print(str(error), file=sys.stderr)
             return EXIT_CODE_HIGH_VIOLATION
+        print(
+            MSG_BASELINE_LOADED.format(count=len(baseline), path=args.baseline),
+            file=sys.stderr,
+        )
+        linter = DtoStrictLinter(config, baseline=baseline)
 
-    linter = DtoStrictLinter(config, baseline=baseline)
-    all_violations = []
-    for path_str in args.path:
-        target_path = Path(path_str)
-        all_violations.extend(linter.lint_path(target_path))
+    all_violations = _lint_all(linter, args.path)
+    if all_violations is None:
+        return EXIT_CODE_HIGH_VIOLATION
 
     if all_violations:
-        output = linter.format_violations(all_violations, args.format)
-        print(output)
+        print(linter.format_violations(all_violations, args.format))
 
     return linter.get_exit_code(all_violations)
 

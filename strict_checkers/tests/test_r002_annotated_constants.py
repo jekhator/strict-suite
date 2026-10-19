@@ -1,8 +1,4 @@
-"""Tests for R002 rule on annotated constants.
-
-Verifies that R002 correctly skips annotated module-level and class-level
-constants while still flagging actual inline dict literals in function bodies.
-"""
+"""Tests that R002 skips annotated constants and still flags inline dict literals."""
 
 import ast
 import textwrap
@@ -13,7 +9,7 @@ from strict_config._config import Config
 
 
 class TestR002AnnotatedConstants:
-    """Test suite for related functionality."""
+    """Tests that R002 skips annotated constants and still flags inline dict literals."""
 
     def test_r002_skips_annotated_module_constant(self):
         """R002 should skip annotated module-level constants (typed declarations)."""

@@ -5,7 +5,7 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR005ValidatorPattern:
-    """Test suite for related functionality."""
+    """Tests for R005: Validator not using DTO.from_dict() pattern."""
 
     def test_r005_good_with_dto_pattern(self, fixture_dir):
         """Good: validators using DTO.from_dict() or raising ValidationError."""

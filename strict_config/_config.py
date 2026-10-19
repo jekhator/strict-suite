@@ -3,7 +3,7 @@
 import tomllib
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Self
+from typing import Any, Self
 
 from strict_config.constants import (
     CONFIG_SECTION_DTO_STRICT,
@@ -18,7 +18,12 @@ from strict_config.constants import (
     DEFAULT_R003_MODE,
     DEFAULT_R006_PATHS,
     DEFAULT_SERVICE_PATHS,
+    ERR_CONFIG_INVALID,
 )
+
+
+class ConfigLoadError(ValueError):
+    """Error reading or validating a pyproject.toml configuration file."""
 
 
 @dataclass(frozen=True, slots=True)
@@ -56,21 +61,27 @@ class Config:
 
     @classmethod
     def from_pyproject(cls, path: Path) -> Self:
-        """Load configuration from pyproject.toml."""
+        """Load configuration from pyproject.toml.
+
+        A missing file yields the defaults. An unreadable file, invalid TOML, or a
+        non-table section raises ConfigLoadError naming the path.
+        """
         if not path.exists():
             return cls()
 
         try:
-            with open(path, "rb") as f:
-                data = tomllib.load(f)
-        except Exception:
-            return cls()
+            with open(path, "rb") as handle:
+                data = tomllib.load(handle)
+        except (OSError, tomllib.TOMLDecodeError) as error:
+            raise ConfigLoadError(ERR_CONFIG_INVALID.format(path=path)) from error
 
-        tool_data = data.get("tool", {})
-        config_data = tool_data.get(CONFIG_SECTION_STRICT_MODULE) or tool_data.get(
-            CONFIG_SECTION_DTO_STRICT, {}
+        tool_data = _table(data.get("tool", {}), path)
+        config_data = _table(
+            tool_data.get(CONFIG_SECTION_STRICT_MODULE)
+            or tool_data.get(CONFIG_SECTION_DTO_STRICT, {}),
+            path,
         )
-        loc_cap_data = config_data.get(CONFIG_SECTION_LOC_CAP, {})
+        loc_cap_data = _table(config_data.get(CONFIG_SECTION_LOC_CAP, {}), path)
 
         loc_cap = LocCapConfig(
             hard_cap=loc_cap_data.get("hard_cap", DEFAULT_LOC_HARD_CAP),
@@ -81,9 +92,11 @@ class Config:
         )
 
         return cls(
-            service_paths=config_data.get("service_paths", DEFAULT_SERVICE_PATHS),
-            dto_paths=config_data.get("dto_paths", DEFAULT_DTO_PATHS),
-            exception_tags=config_data.get("exception_tags", DEFAULT_EXCEPTION_TAGS),
+            service_paths=config_data.get("service_paths", list(DEFAULT_SERVICE_PATHS)),
+            dto_paths=config_data.get("dto_paths", list(DEFAULT_DTO_PATHS)),
+            exception_tags=config_data.get(
+                "exception_tags", list(DEFAULT_EXCEPTION_TAGS)
+            ),
             disabled_rules=config_data.get("disabled_rules", []),
             severity_overrides=config_data.get("severity_overrides", {}),
             strict_collections=config_data.get("strict_collections", False),
@@ -92,7 +105,7 @@ class Config:
             ),
             max_exception_tags_per_file=config_data.get("max_exception_tags_per_file"),
             r003_mode=config_data.get("r003_mode", DEFAULT_R003_MODE),
-            r006_paths=config_data.get("r006_paths", DEFAULT_R006_PATHS),
+            r006_paths=config_data.get("r006_paths", list(DEFAULT_R006_PATHS)),
             min_dict_keys=config_data.get("min_dict_keys", DEFAULT_MIN_DICT_KEYS),
             r003_strict_repr=config_data.get("r003_strict_repr", True),
             r003_sensitivity_bases=config_data.get(
@@ -107,3 +120,10 @@ class Config:
     def is_rule_enabled(self, rule_id: str) -> bool:
         """Check if a rule is enabled."""
         return rule_id not in self.disabled_rules
+
+
+def _table(value: Any, path: Path) -> dict[str, Any]:  # module-level: stateless helper
+    """Return value as a TOML table, or raise ConfigLoadError naming the path."""
+    if not isinstance(value, dict):
+        raise ConfigLoadError(ERR_CONFIG_INVALID.format(path=path))
+    return value

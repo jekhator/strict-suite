@@ -97,7 +97,8 @@ service_paths = ["apps/*/services/*.py", "**/services/*.py"]
 dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
     "facade - celery schedule",
-    "FRAMEWORK"
+    "FRAMEWORK",
+    "module-level:"
 ]
 disabled_rules = []
 severity_overrides = {}

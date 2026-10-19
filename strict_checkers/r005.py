@@ -3,7 +3,7 @@
 import ast
 
 from strict_checkers.base import BaseChecker
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R005Checker(BaseChecker):
@@ -31,16 +31,10 @@ class R005Checker(BaseChecker):
         has_validation_error = self._has_validation_error(node)
 
         if not (has_from_dict or has_validation_error):
-            self.violations.append(
-                Violation(
-                    rule_id="R005",
-                    severity=RuleSeverity.LOW,
-                    file=str(self.file_path),
-                    line=node.lineno,
-                    col=node.col_offset,
-                    message=f"Validator does not use DTO.from_dict() pattern: {node.name}",
-                )
-            )
+            self.add_violation(
+rule_id="R005", severity=RuleSeverity.LOW, line=node.lineno, col=node.col_offset,
+message=f"Validator does not use DTO.from_dict() pattern: {node.name}",
+)
 
         self.generic_visit(node)
 

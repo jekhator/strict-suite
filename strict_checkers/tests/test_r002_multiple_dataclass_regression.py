@@ -5,14 +5,10 @@ from strict_linter import DtoStrictLinter
 
 
 class TestR002MultipleDataclassRegression:
-    """Test suite for related functionality."""
+    """Regression test: multiple dataclasses with to_* serializer methods (state reset per class)."""
 
     def test_r002_multiple_dataclass_serializers_both_exempt(self, fixture_dir):
-        """Both FirstDTO and SecondDTO to_* methods should be exempt.
-
-        This tests that state is properly reset per class - the second dataclass
-        should not be affected by processing the first.
-        """
+        """Both dataclasses' to_* methods are exempt, so state does not leak from the first class to the second."""
         config = Config(
             service_paths=["*/**/*.py", "tests/fixtures/**/*.py"],
             dto_paths=["**/dtos.py"],
@@ -32,11 +28,7 @@ class TestR002MultipleDataclassRegression:
         )
 
     def test_r002_plain_class_to_method_still_flagged(self, fixture_dir):
-        """Plain class (non-dataclass) to_* methods should still be flagged.
-
-        Tests that the exemption only applies to @dataclass-decorated classes,
-        not all classes with to_* methods.
-        """
+        """A plain class with to_* methods is still flagged; the exemption applies only to dataclasses."""
         config = Config(
             service_paths=["*/**/*.py", "tests/fixtures/**/*.py"],
             dto_paths=["**/dtos.py"],

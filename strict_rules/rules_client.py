@@ -1,14 +1,12 @@
 """Rule registry for linting rules."""
 
-from typing import Optional
-
 from strict_rules.rules_objects import Rule, RuleSeverity
 
 
 class RuleRegistry:
     """Registry of all linting rules."""
 
-    RULES = {
+    RULES: dict[str, Rule] = {
         "R001": Rule(
             "R001",
             "Dict[str, Any] or bare collections in service signatures",
@@ -29,9 +27,11 @@ class RuleRegistry:
         ),
         "R004": Rule(
             "R004",
-            "Module-level function without exception tag",
+            "Facade: module-level wrapper around a class method",
             RuleSeverity.HIGH,
-            "Module-level function definition lacks documented exception tag (facade pattern).",
+            "Module-level function in a service path whose body only delegates to a class method "
+            "(Name.method(...), Name(...).method(...), or an instance built and called on the next line). "
+            "Call the class method directly, or record a framework exception tag on the def line or docstring.",
         ),
         "R005": Rule(
             "R005",
@@ -59,9 +59,12 @@ class RuleRegistry:
         ),
         "R009": Rule(
             "R009",
-            "Module-level function outside allowed entry points",
-            RuleSeverity.HIGH,
-            "Module-level function found in service path. All methods must be defined within classes. Allowed exceptions: main, handle_*, handle_command, handle_event, handle_request.",
+            "Module-level function without a recorded reason",
+            RuleSeverity.INFO,
+            "Module-level function without a recorded reason. A method on a class is the default shape. "
+            "Exempt: entry points (main, handle_*), decorated functions, dunder and pytest_* hooks, and "
+            "functions tagged '# module-level: <reason>' (or another exception tag) on the def line or docstring. "
+            "Set severity_overrides = { R009 = \"HIGH\" } to make it blocking.",
         ),
         "R010": Rule(
             "R010",
@@ -102,6 +105,6 @@ class RuleRegistry:
     }
 
     @classmethod
-    def get_rule(cls, rule_id: str) -> Optional[Rule]:
+    def get_rule(cls, rule_id: str) -> Rule | None:
         """Get rule by ID."""
         return cls.RULES.get(rule_id)
