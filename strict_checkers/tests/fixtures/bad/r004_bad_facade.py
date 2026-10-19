@@ -1,16 +1,31 @@
-"""Bad example: module-level functions without exception tags."""
+"""Bad example: module-level facades that only delegate to a class method."""
 
 
-def bare_process_user(user_id: int):
-    """No exception tag for module-level function."""
-    return {"id": user_id}
+class UserService:
+    """Service with class methods."""
+
+    @staticmethod
+    def get_user(user_id: int) -> int:
+        """Return the user id."""
+        return user_id
 
 
-def another_helper(config):
-    """Another bare function without tag."""
-    pass
+def get_user(user_id: int) -> int:
+    """Delegate directly to a class method."""
+    return UserService.get_user(user_id)
 
 
-def third_function():
-    """Third bare function without tag."""
-    pass
+def get_user_from_new_instance(user_id: int) -> int:
+    """Delegate through a freshly constructed instance."""
+    return UserService().get_user(user_id)
+
+
+def get_user_from_named_instance(user_id: int) -> int:
+    """Delegate through an instance bound on the previous line."""
+    service = UserService()
+    return service.get_user(user_id)
+
+
+def fire_user_lookup(user_id: int) -> None:
+    """Delegate as a bare expression statement."""
+    UserService.get_user(user_id)

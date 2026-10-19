@@ -27,6 +27,17 @@ class BaseChecker(ast.NodeVisitor):
             return line.split("#", 1)[1].strip()
         return ""
 
+    def has_exception_tag(self, node: ast.FunctionDef) -> bool:
+        """Check the def line and the first docstring line for a configured exception tag, case-insensitively."""
+        texts = [self.get_comment_text(node.lineno)]
+        docstring = ast.get_docstring(node)
+        if docstring:
+            texts.append(docstring.partition("\n")[0])
+        lowered = [text.lower() for text in texts if text]
+        return any(
+            tag.lower() in text for tag in self.config.exception_tags for text in lowered
+        )
+
     def is_suppressed(self, node: ast.AST, rule_id: str) -> bool:
         """Check if node has a noqa comment suppressing the given rule."""
         return AnnotationInspector.has_noqa_comment(node, rule_id, self.lines)

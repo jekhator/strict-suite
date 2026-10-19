@@ -3,24 +3,25 @@
 [![PyPI](https://img.shields.io/pypi/v/strict-suite.svg?style=flat)](https://pypi.org/project/strict-suite/)
 [![CI](https://github.com/jekhator/strict-suite/workflows/CI/badge.svg)](https://github.com/jekhator/strict-suite/actions)
 [![License: Apache 2.0](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
-[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Python 3.12+](https://img.shields.io/badge/python-3.12+-blue.svg)](https://www.python.org/downloads/)
 
 Consolidated Python linter with R001-R015 rules for DTO discipline, module structure, typing compliance, constants enforcement, and formatting standards.
 
 **Consolidated from strict-module 0.5.0.** This monorepo consolidates the strict-module package and related linting infrastructure. Backward-compatible CLI entry points (`strict-module` and `dto-strict`) are preserved.
 
-> **Python only.** The strict-component (npm/TypeScript) stays in its own repo. This distribution is Python 3.11+ only.
+> **Python only.** The strict-component (npm/TypeScript) stays in its own repo. This distribution is Python 3.12+ only.
 
 ## Overview
 
-Data Transfer Objects (DTOs) and facade discipline are critical for clean API boundaries, especially in regulated environments (healthcare, compliance, financial systems). **stricts** enforces these patterns via static AST analysis, with 6 focused rules:
+Data Transfer Objects (DTOs) and facade discipline are critical for clean API boundaries, especially in regulated environments (healthcare, compliance, financial systems). **stricts** enforces these patterns via static AST analysis, with the focused rules below (the full table of all 15 rules is in docs/README.md):
 
 1. **R001 (HIGH)**: Detect `Dict[str, Any]` or bare `dict`/`list`/`tuple` in service-layer function signatures.
 2. **R002 (MEDIUM)**: Flag inline dict literals with 3+ string keys; exception tags can require justification.
 3. **R003 (MEDIUM)**: Flag `repr=False` in dataclasses (canonical: plain `@dataclass(frozen=True, slots=True)`).
-4. **R004 (HIGH)**: Demand exception tags on module-level functions (e.g., `# facade - celery schedule`).
+4. **R004 (HIGH)**: Flag module-level facades in service paths: functions whose body only delegates to a class method. Call the method directly, or tag a framework-required wrapper (e.g., `# facade - celery schedule`).
 5. **R005 (LOW)**: Encourage validators to use `DTO.from_dict()` pattern.
 6. **R006 (HIGH)**: Detect `typing.Any` in function signatures (parameters and return types).
+7. **R009 (INFO)**: Advise on module-level functions without a recorded reason. A method on a class is the default shape; record an optimal module-level function with `# module-level: <reason>`. Advisory by default; see Configuration to make it blocking.
 
 All rules are configurable; violations can be disabled, severity overridden, or paths scoped.
 
@@ -125,11 +126,27 @@ class MyDTO:
     value: int
 ```
 
-**R004** (module-level function without exception tag):
+**R004** (module-level facade in a service path):
 ```python
-# violation (in a non-conftest file)
+# violation (in apps/orders/services/orders.py)
+class OrderService:
+    @staticmethod
+    def get_order(order_id: int) -> int:
+        return order_id
+
+def get_order(order_id: int) -> int:
+    return OrderService.get_order(order_id)
+```
+
+**R009** (module-level function without a recorded reason, INFO):
+```python
+# advisory: a method on a class is the default shape
 def process_data(item):
     return item["id"]
+
+# no finding: the def line records the reason
+def scale_value(value: int) -> int:  # module-level: stateless helper with no owning class
+    return value * 2
 ```
 
 **R007** (pytest fixtures outside conftest.py):
@@ -193,9 +210,16 @@ severity_overrides = {}
 
 - **service_paths**: Glob patterns for files to lint with R001 (strict mode).
 - **dto_paths**: Glob patterns for files expected to contain DTO definitions.
-- **exception_tags**: Recognized justification tags for module-level functions (R004 and R009). Example: `aws-boundary` exempts a function from the module-level function rules.
+- **exception_tags**: Recognized justification tags for module-level functions (R004 and R009) and dict literals (R002). A tag on the def line or in the first docstring line exempts the function; matching is case-insensitive. Setting this key replaces the defaults (`facade - celery schedule`, `FRAMEWORK`, `module-level`), so keep any default you still need. Example: `aws-boundary` exempts a function from the module-level rules.
 - **disabled_rules**: List of rule IDs to disable (e.g., ["R005"]).
 - **severity_overrides**: Dict mapping rule IDs to override severity (e.g., {"R002": "HIGH", "R011": "INFO"}).
+
+R009 is advisory (INFO) by default. To make it blocking again, add one line:
+
+```toml
+[tool.strict-module]
+severity_overrides = { R009 = "HIGH" }
+```
 
 Backward compatibility: `[tool.strict-module]` config and `.strict-module-baseline.json` baseline files are supported.
 
@@ -242,17 +266,20 @@ The package exports the following public symbols:
 - **`__version__`**: Package version string (e.g., "0.1.0")
 - **`DtoStrictLinter`**: Main linter class for running AST analysis
 - **`Rule`**: Rule definition dataclass
-- **`RuleSeverity`**: Enum for rule severity levels (HIGH, MEDIUM, LOW)
+- **`RuleSeverity`**: Enum for rule severity levels (HIGH, MEDIUM, LOW, INFO)
 
 Example usage:
 
 ```python
+from pathlib import Path
+
+from strict_config import Config
 from strict_module import DtoStrictLinter, Rule, RuleSeverity, __version__
 
 print(f"strict-suite {__version__}")
 
-linter = DtoStrictLinter()
-violations = linter.lint_file("mymodule.py")
+linter = DtoStrictLinter(Config())
+violations = linter.lint_file(Path("mymodule.py"))
 for v in violations:
     print(f"{v.rule_id} ({v.severity.value}): {v.message}")
 ```
@@ -268,13 +295,13 @@ Historical changelog: see `CHANGELOG-history.md` for strict-module v0.1.0 throug
 Install dev dependencies:
 
 ```bash
-pip install -e ".[dev]"
+uv sync --all-extras
 ```
 
 Run tests:
 
 ```bash
-python3.12 -m pytest strict_module/tests/ -v
+uv run pytest -v --cov --cov-fail-under=95
 ```
 
 Run the self-lint check:
@@ -287,14 +314,14 @@ dto-strict strict_module/
 Run format and style checks:
 
 ```bash
-ruff check strict_module/
-ruff format --check strict_module/
+uvx ruff@0.15.14 check strict_checkers/ strict_config/ strict_inspection/ strict_linter/ strict_loc_cap/ strict_rules/ strict_module/
+uvx ruff@0.15.14 format --check strict_module/
 ```
 
 Run LOC cap check:
 
 ```bash
-strict-module loc-cap strict_module/
+strict-module loc-cap strict_checkers/
 ```
 
 ## License

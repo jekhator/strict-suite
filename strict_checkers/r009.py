@@ -1,4 +1,4 @@
-"""Checker for R009: Module-level functions outside allowed entry points."""
+"""Checker for R009: Module-level functions without a recorded reason."""
 
 import ast
 
@@ -8,7 +8,13 @@ from strict_rules import RuleSeverity, Violation
 
 
 class R009Checker(BaseChecker):
-    """Check for bare module-level functions outside allowed entry points."""
+    """Advise on module-level functions that have no recorded reason.
+
+    A method on a class is the default shape. A module-level function is exempt
+    when it is an entry point, a decorated framework registration point, a
+    protocol-required module hook, or carries an exception tag on the def line
+    or in the first line of its docstring.
+    """
 
     ALLOWED_ENTRY_POINTS = {"main", "handle_command", "handle_event", "handle_request"}
 
@@ -18,76 +24,47 @@ class R009Checker(BaseChecker):
             return
 
         for item in node.body:
-            if isinstance(item, ast.FunctionDef):
-                if self._is_fixture(item):
-                    continue
+            if not isinstance(item, ast.FunctionDef):
+                continue
 
-                if self._is_allowed_entry_point(item.name):
-                    continue
+            if self._is_exempt(item):
+                continue
 
-                if self._has_exception_tag(item):
-                    continue
+            if self.is_suppressed(item, "R009"):
+                continue
 
-                if self.is_suppressed(item, "R009"):
-                    continue
-
-                self.violations.append(
-                    Violation(
-                        rule_id="R009",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=item.lineno,
-                        col=item.col_offset,
-                        message=f"Module-level function '{item.name}' found in service path. Every method must be in a class. Allowed exceptions: {self._format_allowed_list()}.",
-                    )
+            self.violations.append(
+                Violation(
+                    rule_id="R009",
+                    severity=RuleSeverity.INFO,
+                    file=str(self.file_path),
+                    line=item.lineno,
+                    col=item.col_offset,
+                    message=(
+                        f"Module-level function '{item.name}': a method on a class is the "
+                        "default shape. Keep it module-level only when that is the optimal "
+                        "shape (framework hook, entry point, stateless helper with no owning "
+                        "class) and record why with '# module-level: <reason>' on the def "
+                        "line. Entry points need no tag: main, handle_*."
+                    ),
                 )
+            )
 
         self.generic_visit(node)
 
-    def _is_fixture(self, node: ast.FunctionDef) -> bool:
-        """Check if function is a pytest fixture."""
-        for decorator in node.decorator_list:
-            if self._is_pytest_fixture_decorator(decorator):
-                return True
-        return False
+    def _is_exempt(self, node: ast.FunctionDef) -> bool:
+        """Check whether a module-level function is exempt from R009."""
+        if node.decorator_list:
+            return True
+        if self._is_entry_point(node.name) or self._is_protocol_hook(node.name):
+            return True
+        return self.has_exception_tag(node)
 
-    def _is_pytest_fixture_decorator(self, decorator: ast.expr) -> bool:
-        """Check if decorator is @pytest.fixture."""
-        if isinstance(decorator, ast.Name):
-            return decorator.id == "fixture"
-        elif isinstance(decorator, ast.Attribute):
-            if decorator.attr == "fixture":
-                if isinstance(decorator.value, ast.Name):
-                    return decorator.value.id == "pytest"
-        elif isinstance(decorator, ast.Call):
-            if isinstance(decorator.func, ast.Name):
-                return decorator.func.id == "fixture"
-            elif isinstance(decorator.func, ast.Attribute):
-                if decorator.func.attr == "fixture":
-                    if isinstance(decorator.func.value, ast.Name):
-                        return decorator.func.value.id == "pytest"
-        return False
-
-    def _is_allowed_entry_point(self, name: str) -> bool:
+    def _is_entry_point(self, name: str) -> bool:
         """Check if function name is an allowed entry point."""
-        if name in self.ALLOWED_ENTRY_POINTS:
-            return True
-        if name.startswith("handle_"):
-            return True
-        return False
+        return name in self.ALLOWED_ENTRY_POINTS or name.startswith("handle_")
 
-    def _has_exception_tag(self, node: ast.FunctionDef) -> bool:
-        """Check if function has an exception tag on the same line."""
-        comment_text = self.get_comment_text(node.lineno)
-        if not comment_text:
-            return False
-
-        for tag in self.config.exception_tags:
-            if tag.lower() in comment_text.lower():
-                return True
-
-        return False
-
-    def _format_allowed_list(self) -> str:
-        """Format allowed entry point names for error message."""
-        return ", ".join(sorted(self.ALLOWED_ENTRY_POINTS | {"handle_*"}))
+    def _is_protocol_hook(self, name: str) -> bool:
+        """Check if function is a dunder module hook or a pytest hook."""
+        is_dunder = name.startswith("__") and name.endswith("__")
+        return is_dunder or name.startswith("pytest_")

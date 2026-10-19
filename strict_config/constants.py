@@ -34,7 +34,14 @@ DEFAULT_LOC_CAP_BASELINE_FILE = ".loc-cap-baseline.txt"
 
 DEFAULT_MIN_DICT_KEYS = 3
 DEFAULT_R003_MODE = "canonical"
-DEFAULT_EXCEPTION_TAGS = ["facade - celery schedule", "FRAMEWORK"]
+TAG_FACADE_CELERY_SCHEDULE = "facade - celery schedule"
+TAG_FRAMEWORK = "FRAMEWORK"
+TAG_MODULE_LEVEL = "module-level"
+DEFAULT_EXCEPTION_TAGS = [
+    TAG_FACADE_CELERY_SCHEDULE,
+    TAG_FRAMEWORK,
+    TAG_MODULE_LEVEL,
+]
 DEFAULT_SERVICE_PATHS = ["apps/*/services/*.py", "**/services/*.py"]
 DEFAULT_DTO_PATHS = ["**/dtos.py", "**/dtos/*.py"]
 DEFAULT_R006_PATHS = ["apps/*/services/*.py", "**/services/*.py"]

@@ -1,22 +1,32 @@
-"""Tests for R004 auto-detect class-method-wrapping pattern (Issue #1)."""
+"""Tests for R004 facade detection on module-level delegation patterns."""
 
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
 from strict_config._config import Config
 from strict_linter import DtoStrictLinter
+from strict_rules import RuleSeverity
+
+
+def _lint_source(source: str, config: Config) -> list:
+    """Write source to a temporary file and lint it, returning the violations."""
+    with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as handle:
+        handle.write(source)
+        handle.flush()
+        path = Path(handle.name)
+
+    try:
+        return DtoStrictLinter(config).lint_file(path)
+    finally:
+        path.unlink()
 
 
 class TestR004AutoDetect:
-    """Test suite for related functionality."""
+    """Test suite for facade detection through instance and class references."""
 
-    def test_r004_auto_detect_class_method_wrapper(self):
-        """R004: Auto-detect class-method delegation pattern (no tag needed)."""
-        config = Config(
-            service_paths=["**/*.py"],
-            dto_paths=["**/dtos.py"],
-            exception_tags=["facade - celery schedule", "FRAMEWORK"],
-        )
+    def test_r004_instance_wrapper_is_not_a_facade(self):
+        """A lowercase instance reference is not a class reference, so no facade is reported."""
+        config = Config(service_paths=["**/*.py"])
         source = """
 class UserService:
     @staticmethod
@@ -26,86 +36,60 @@ class UserService:
 _service = UserService()
 
 def get_user_wrapper(user_id: int):
-    # This is a wrapper that delegates to class method - no tag needed
     return _service.get_user(user_id)
+"""
+        violations = _lint_source(source, config)
+        r004_violations = [v for v in violations if v.rule_id == "R004"]
+        assert r004_violations == []
+
+    def test_r004_class_reference_wrapper_is_a_facade(self):
+        """Calling a class method through the class name is a facade."""
+        config = Config(service_paths=["**/*.py"])
+        source = """
+class UserService:
+    @staticmethod
+    def get_user(user_id: int):
+        return user_id
 
 def another_wrapper(user_id: int):
-    # Another wrapper pattern - should skip (no violation)
     return UserService.get_user(user_id)
 """
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(source)
-            f.flush()
-            path = Path(f.name)
+        violations = _lint_source(source, config)
+        r004_violations = [v for v in violations if v.rule_id == "R004"]
+        assert len(r004_violations) == 1
+        assert "another_wrapper" in r004_violations[0].message
 
-        try:
-            linter = DtoStrictLinter(config)
-            violations = linter.lint_file(path)
-            r004_violations = [v for v in violations if v.rule_id == "R004"]
-            assert len(r004_violations) == 0, (
-                "Class-method wrappers should be auto-detected as legitimate"
-            )
-        finally:
-            path.unlink()
-
-    def test_r004_pure_utility_function_needs_tag(self):
-        """R004: Pure utility function (no class-method calls) should have tag."""
-        config = Config(
-            service_paths=["**/*.py"],
-            dto_paths=["**/dtos.py"],
-            exception_tags=["facade - celery schedule", "FRAMEWORK"],
-        )
+    def test_r004_untagged_function_with_logic_is_not_r004(self):
+        """An untagged function with logic is R009 advice, never a blocking R004 finding."""
+        config = Config(service_paths=["**/*.py"])
         source = """
 def pure_utility(x: int):
-    # This is a pure utility with business logic - needs tag
     return x * 2
 """
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(source)
-            f.flush()
-            path = Path(f.name)
-
-        try:
-            linter = DtoStrictLinter(config)
-            violations = linter.lint_file(path)
-            r004_violations = [v for v in violations if v.rule_id == "R004"]
-            assert len(r004_violations) >= 1, (
-                "Pure utility without tag should be flagged"
-            )
-        finally:
-            path.unlink()
+        violations = _lint_source(source, config)
+        assert [v for v in violations if v.rule_id == "R004"] == []
+        r009_violations = [v for v in violations if v.rule_id == "R009"]
+        assert len(r009_violations) == 1
+        assert r009_violations[0].severity == RuleSeverity.INFO
 
     def test_r004_exception_tag_still_works(self):
-        """R004: Exception tag still works as override."""
-        config = Config(
-            service_paths=["**/*.py"],
-            dto_paths=["**/dtos.py"],
-            exception_tags=["facade - celery schedule", "FRAMEWORK"],
-        )
+        """An exception tag on the def line still exempts a facade."""
+        config = Config(service_paths=["**/*.py"])
         source = """
+class Worker:
+    @staticmethod
+    def run(x: int):
+        return x
+
 def my_function(x: int):  # facade - celery schedule
-    return x * 2
+    return Worker.run(x)
 """
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(source)
-            f.flush()
-            path = Path(f.name)
+        violations = _lint_source(source, config)
+        assert [v for v in violations if v.rule_id == "R004"] == []
 
-        try:
-            linter = DtoStrictLinter(config)
-            violations = linter.lint_file(path)
-            r004_violations = [v for v in violations if v.rule_id == "R004"]
-            assert len(r004_violations) == 0, "Exception tag should allow function"
-        finally:
-            path.unlink()
-
-    def test_r004_nested_attribute_access(self):
-        """R004: Auto-detect nested attribute access (obj.service.method())."""
-        config = Config(
-            service_paths=["**/*.py"],
-            dto_paths=["**/dtos.py"],
-            exception_tags=["facade - celery schedule", "FRAMEWORK"],
-        )
+    def test_r004_nested_attribute_access_is_not_a_facade(self):
+        """A lowercase attribute chain is not a class reference, so no facade is reported."""
+        config = Config(service_paths=["**/*.py"])
         source = """
 class Services:
     pass
@@ -114,20 +98,7 @@ _svc = Services()
 _svc.user_service = type('UserService', (), {'get_user': lambda self, id: id})()
 
 def get_user(user_id: int):
-    # Wrapper with nested attribute access - auto-detected
     return _svc.user_service.get_user(user_id)
 """
-        with NamedTemporaryFile(mode="w", suffix=".py", delete=False) as f:
-            f.write(source)
-            f.flush()
-            path = Path(f.name)
-
-        try:
-            linter = DtoStrictLinter(config)
-            violations = linter.lint_file(path)
-            r004_violations = [v for v in violations if v.rule_id == "R004"]
-            assert len(r004_violations) == 0, (
-                "Nested attribute method calls should be auto-detected"
-            )
-        finally:
-            path.unlink()
+        violations = _lint_source(source, config)
+        assert [v for v in violations if v.rule_id == "R004"] == []
