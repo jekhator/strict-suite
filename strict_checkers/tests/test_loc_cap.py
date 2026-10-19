@@ -154,6 +154,15 @@ class TestRunLocCap:
         exit_code = LocCap.run_loc_cap(str(tmp_path), hard_cap=694, soft_target=500)
         assert exit_code == 0
 
+    def test_run_loc_cap_success_line_is_ascii(self, tmp_path, capsys):
+        """The success line starts with the OK prefix and contains only ASCII characters."""
+        (tmp_path / "file1.py").write_text("a\n" * 100)
+        LocCap.run_loc_cap(str(tmp_path), hard_cap=694, soft_target=500)
+        output = capsys.readouterr().out
+
+        assert output.startswith("OK: All Python files within 694 LOC cap")
+        assert output.isascii()
+
     def test_run_loc_cap_new_offender(self, tmp_path, capsys):
         """New file over cap returns 1."""
         (tmp_path / "file.py").write_text("a\n" * 700)

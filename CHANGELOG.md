@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 - **Exception tag matching is shared** - R004 and R009 use one matcher: case-insensitive, read from the def line or the first docstring line. R004 previously matched case-sensitively and read the whole docstring.
 - **loc-cap advisory text** - The hard-cap advisory no longer refers to a document that is not part of the public repository, and its refactor example uses a generic module name.
 - **Unreadable input raises a typed error from the library API** - `DtoStrictLinter.lint_file` raises `LintInputError` for an unreadable or unparseable file (it previously returned an empty list). `LocCap.count_lines` raises `LocCapInputError` for an unreadable file (it previously returned 0), and `LocCap.load_baseline` raises it for an undecodable baseline (it previously returned an empty mapping). The CLI converts these into the stderr error and exit 1.
+- **loc-cap success line is ASCII** - The success line that the LOC cap prints when every file is within the cap now starts with `OK:` instead of a check-mark glyph.
 - **Linter internals** - The unused `violations` attribute of `DtoStrictLinter` is removed; no public name changed.
 
 ### Added

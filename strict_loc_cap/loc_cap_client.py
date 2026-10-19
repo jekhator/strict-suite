@@ -191,6 +191,6 @@ class LocCap:
             return EXIT_CODE_HIGH_VIOLATION
 
         print(
-            f"✓ All Python files within {hard_cap} LOC cap (ratchet: baseline allows improvements)"
+            f"OK: All Python files within {hard_cap} LOC cap (ratchet: baseline allows improvements)"
         )
         return EXIT_CODE_SUCCESS
