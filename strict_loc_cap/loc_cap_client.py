@@ -169,13 +169,10 @@ class LocCap:
             print("\n".join(hard_violations))
             print()
             print(
-                "See memory/feedback_dto_refactor_autonomous_priority.md for cap rationale."
-            )
-            print(
                 "Tests: cap applies. Decompose by class-under-test; lift fixtures to conftest if needed."
             )
             print(
-                "Refactor approach: split by COHESION not line count. E.g., bedrock.py -> bedrock/{invoke,embed,dtos}.py"
+                "Refactor approach: split by COHESION not line count. E.g., service.py -> service/{invoke,embed,types}.py"
             )
             return EXIT_CODE_HIGH_VIOLATION
 
