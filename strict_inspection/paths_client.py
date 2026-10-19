@@ -3,6 +3,9 @@
 import fnmatch
 from pathlib import Path
 
+TEST_BASENAME = "conftest.py"
+TEST_PREFIX = "test_"
+
 
 class PathClassifier:
     """Classify file paths for linting scope."""
@@ -11,36 +14,28 @@ class PathClassifier:
     def is_test_file(file_path: Path) -> bool:
         """Check if file is a test file by basename (conftest.py or test_*.py) for linting."""
         basename = file_path.name
-        if basename == "conftest.py" or basename.startswith("test_"):
-            return True
-        return False
+        return basename == TEST_BASENAME or basename.startswith(TEST_PREFIX)
 
     @staticmethod
     def is_loc_test_file(file_path: Path) -> bool:
         """Check if file is a test file (conftest.py, test_*.py, or under tests/ directory)."""
-        basename = file_path.name
-        if basename == "conftest.py" or basename.startswith("test_"):
+        if PathClassifier.is_test_file(file_path):
             return True
-        if "/tests/" in str(file_path) or str(file_path).startswith("tests/"):
-            return True
-        return False
+        return "/tests/" in str(file_path) or str(file_path).startswith("tests/")
 
     @staticmethod
     def is_service_path(file_path: Path, service_paths: list[str]) -> bool:
         """Check if file path matches a service path pattern (excluding test files)."""
-        if PathClassifier.is_test_file(file_path):
-            return False
-        for pattern in service_paths:
-            if fnmatch.fnmatch(str(file_path), pattern):
-                return True
-        return False
+        return PathClassifier._matches_any(file_path, service_paths)
 
     @staticmethod
     def is_dto_path(file_path: Path, dto_paths: list[str]) -> bool:
         """Check if file path matches a DTO path pattern (excluding test files)."""
+        return PathClassifier._matches_any(file_path, dto_paths)
+
+    @staticmethod
+    def _matches_any(file_path: Path, patterns: list[str]) -> bool:
+        """Check that a non-test file matches at least one glob pattern."""
         if PathClassifier.is_test_file(file_path):
             return False
-        for pattern in dto_paths:
-            if fnmatch.fnmatch(str(file_path), pattern):
-                return True
-        return False
+        return any(fnmatch.fnmatch(str(file_path), pattern) for pattern in patterns)
