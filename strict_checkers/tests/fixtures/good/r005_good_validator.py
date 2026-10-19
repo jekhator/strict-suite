@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+import constants as const  # type: ignore[import-not-found]
+
 
 @dataclass(frozen=True, slots=True, repr=False)
 class UserDTO:
@@ -17,7 +19,7 @@ class ValidationError(Exception):
     pass
 
 
-def validate_user_payload(payload: dict) -> UserDTO:
+def validate_user_payload(payload: dict) -> UserDTO:  # module-level: fixture helper with no owning class
     """Good: uses DTO.from_dict() for shape validation."""
     try:
         user = UserDTO(
@@ -26,11 +28,11 @@ def validate_user_payload(payload: dict) -> UserDTO:
         )
         return user
     except (KeyError, TypeError) as error:
-        raise ValidationError(f"Invalid payload: {error}")
+        raise ValidationError(const.ERR_PAYLOAD_INVALID)
 
 
-def validate_config(payload: dict) -> bool:
+def validate_config(payload: dict) -> bool:  # module-level: fixture helper with no owning class
     """Good: raises ValidationError on invalid shape."""
     if "timeout" not in payload:
-        raise ValidationError("Missing timeout")
+        raise ValidationError(const.ERR_TIMEOUT_MISSING)
     return True

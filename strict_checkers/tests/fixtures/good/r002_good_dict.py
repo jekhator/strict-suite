@@ -12,16 +12,16 @@ class ConfigDTO:
     host: str
 
 
-def build_config() -> ConfigDTO:
+def build_config() -> ConfigDTO:  # module-level: fixture helper with no owning class
     """Build config using DTO."""
     return ConfigDTO(timeout=30, retries=3, host="localhost")
 
 
-def simple_dict() -> dict:
+def simple_dict() -> dict:  # module-level: fixture helper with no owning class
     """Simple dict with 1-2 keys is OK."""
     return {"status": "ok"}
 
 
-def create_response(ok: bool) -> dict:
+def create_response(ok: bool) -> dict:  # module-level: fixture helper with no owning class
     """Return simple dict at boundary."""
     return {"success": ok}

@@ -29,5 +29,5 @@ P = ParamSpec("P")
 
 
 def generic_function(value: Any) -> T:  # type: ignore[type-var]
-    """Typing.Any and TypeVar are still from typing (not collections.abc)."""
+    """Module-level: typing.Any and TypeVar are still from typing (not collections.abc)."""
     return value
