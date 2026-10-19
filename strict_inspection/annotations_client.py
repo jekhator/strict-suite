@@ -32,7 +32,8 @@ class AnnotationInspector:
             return f"{base}[{index}]"
         if isinstance(annotation, ast.Tuple):
             elements = ", ".join(
-                AnnotationInspector.get_annotation_string(e) for e in annotation.elts
+                AnnotationInspector.get_annotation_string(element)
+                for element in annotation.elts
             )
             return f"({elements})"
         if isinstance(annotation, ast.Attribute):
@@ -53,8 +54,10 @@ class AnnotationInspector:
             and AnnotationInspector._tail_name(node.value).lower() in DICT_TYPE_NAMES
             and isinstance(node.slice, ast.Tuple)
             and len(node.slice.elts) == 2
-            and AnnotationInspector._tail_name(node.slice.elts[0]).lower() == STR_TYPE_NAME
-            and AnnotationInspector._tail_name(node.slice.elts[1]).lower() == ANY_TYPE_NAME
+            and AnnotationInspector._tail_name(node.slice.elts[0]).lower()
+            == STR_TYPE_NAME
+            and AnnotationInspector._tail_name(node.slice.elts[1]).lower()
+            == ANY_TYPE_NAME
             for node in ast.walk(annotation)
         )
 
@@ -116,7 +119,7 @@ class AnnotationInspector:
         ):
             return True
 
-        tokens = [t.strip() for t in spec.split(",")]
+        tokens = [token.strip() for token in spec.split(",")]
         return (
             f"{PREFIX_STRICT_MODULE}-{rule_id}" in tokens
             or f"{PREFIX_DTO_STRICT}-{rule_id}" in tokens
