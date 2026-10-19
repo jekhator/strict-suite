@@ -83,7 +83,7 @@ service_paths = ["**/*.py"]
         assert exit_code == EXIT_CODE_HIGH_VIOLATION
 
         captured = capsys.readouterr()
-        assert "::error" in captured.out or "::warning" in captured.out
+        assert "::error" in captured.out
 
     def test_cli_nonexistent_path(self, monkeypatch, capsys, tmp_path):
         """Test CLI errors on nonexistent path."""

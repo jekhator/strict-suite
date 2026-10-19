@@ -86,9 +86,9 @@ def process(data: Any) -> dict:
         config = Config(service_paths=["apps/*/services/*.py"])
         linter = DtoStrictLinter(config)
         violations = linter.lint_file(service_file)
-        if violations:
-            formatted = linter.format_violations(violations, "github")
-            assert "::error" in formatted or "::warning" in formatted
+        assert violations
+        formatted = linter.format_violations(violations, "github")
+        assert "::error" in formatted
 
     def test_config_with_disabled_rules(self, tmp_path):
         """Test configuration with disabled rules."""

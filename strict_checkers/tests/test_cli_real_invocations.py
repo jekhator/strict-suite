@@ -27,7 +27,7 @@ class TestCLIRealInvocations:
         )
 
         assert result.returncode == 1
-        assert "R001" in result.stdout or "R006" in result.stdout
+        assert "R006" in result.stdout
         assert "bad.py" in result.stdout
 
     def test_cli_lint_json_format(self, project_dir):
@@ -78,7 +78,7 @@ class TestCLIRealInvocations:
         )
 
         assert result.returncode == 1
-        assert "::error" in result.stdout or "::warning" in result.stdout
+        assert "::error" in result.stdout
 
     def test_cli_lint_clean_file(self, project_dir):
         """Test CLI linting clean file exits with 0."""
@@ -117,11 +117,8 @@ class TestCLIRealInvocations:
 
         assert result.returncode == 0
         data = json.loads(result.stdout)
-        assert isinstance(data, (dict, list))
-        if isinstance(data, list):
-            assert len(data) >= 0
-        else:
-            assert "violations_by_rule" in data or "violations" in data
+        assert isinstance(data, list)
+        assert sorted(entry["rule_id"] for entry in data) == ["R006", "R009"]
 
     def test_cli_with_baseline(self, project_dir):
         """Test CLI with baseline file."""
@@ -186,7 +183,7 @@ class TestCLIRealInvocations:
         )
 
         assert result.returncode == 1
-        assert "error" in result.stderr.lower() or "error" in result.stdout.lower()
+        assert "error: PATH argument required" in result.stderr
 
 
 class TestCLILocCap:

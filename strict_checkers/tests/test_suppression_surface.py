@@ -297,7 +297,7 @@ class TestInfoSeverityFormatting:
 
         output = violation.format_github()
         assert "::notice" in output
-        assert "R011" in output or "String literal" in output
+        assert "String literal at raise site" in output
 
     def test_format_github_high_is_error(self):
         """HIGH violations should use 'error' level in GitHub format."""
