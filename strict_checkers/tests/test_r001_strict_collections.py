@@ -85,7 +85,7 @@ def process_data(config: dict) -> None:  # allowed when strict_collections=False
         good_file = tmp_path / "good_typed.py"
         good_file.write_text(
             """
-def process_data(config: dict[str, str]) -> list[int] -> None:
+def process_data(config: dict[str, str]) -> list[int]:
     pass
 """
         )

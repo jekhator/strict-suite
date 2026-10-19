@@ -1,6 +1,7 @@
 """LOC cap enforcer for Python codebases with ratchet baseline semantics."""
 
 import os
+import sys
 from pathlib import Path
 
 from strict_config.constants import (
@@ -8,12 +9,15 @@ from strict_config.constants import (
     DEFAULT_LOC_CAP_BASELINE_FILE,
     DEFAULT_LOC_HARD_CAP,
     DEFAULT_LOC_SOFT_TARGET,
+    ERR_LOC_CAP_BASELINE_UNREADABLE,
+    ERR_LOC_CAP_UNREADABLE,
     EXIT_CODE_HIGH_VIOLATION,
     EXIT_CODE_SUCCESS,
     LOC_CAP_BASELINE_LEGACY_NAMES,
     PY_EXTENSION,
 )
 from strict_inspection import PathClassifier
+from strict_loc_cap.loc_cap_objects import LocCapInputError
 
 
 class LocCap:
@@ -21,12 +25,14 @@ class LocCap:
 
     @staticmethod
     def count_lines(file_path: str) -> int:
-        """Count all lines (matches wc -l semantics for baseline compatibility)."""
+        """Count all lines (matches wc -l semantics); raise LocCapInputError when unreadable."""
         try:
             with open(file_path, "r", encoding="utf-8") as handle:
                 return sum(1 for _ in handle)
-        except (OSError, UnicodeDecodeError):
-            return 0
+        except (OSError, UnicodeDecodeError) as error:
+            raise LocCapInputError(
+                ERR_LOC_CAP_UNREADABLE.format(path=file_path, reason=error)
+            ) from error
 
     @staticmethod
     def load_baseline(baseline_file: str) -> dict[str, int]:
@@ -58,8 +64,10 @@ class LocCap:
                             baseline[path.strip()] = int(loc_str.strip())
                         except ValueError:
                             continue
-        except OSError:
-            pass
+        except (OSError, UnicodeDecodeError) as error:
+            raise LocCapInputError(
+                ERR_LOC_CAP_BASELINE_UNREADABLE.format(path=actual_file, reason=error)
+            ) from error
 
         return baseline
 
@@ -113,13 +121,19 @@ class LocCap:
         generate: bool = False,
     ) -> int:
         """Run LOC cap checker with hard/soft caps and baseline ratchet enforcement."""
-        if generate:
-            baseline_output = LocCap.generate_baseline(path, exclude_patterns, floor=0)
-            print(baseline_output)
-            return EXIT_CODE_SUCCESS
+        try:
+            if generate:
+                baseline_output = LocCap.generate_baseline(
+                    path, exclude_patterns, floor=0
+                )
+                print(baseline_output)
+                return EXIT_CODE_SUCCESS
 
-        baseline = LocCap.load_baseline(baseline_file)
-        current = LocCap.find_python_files(path, exclude_patterns)
+            baseline = LocCap.load_baseline(baseline_file)
+            current = LocCap.find_python_files(path, exclude_patterns)
+        except LocCapInputError as error:
+            print(str(error), file=sys.stderr)
+            return EXIT_CODE_HIGH_VIOLATION
 
         soft_warnings = []
         hard_violations = []

@@ -22,6 +22,10 @@ ERR_BASELINE_ENTRY_NOT_OBJECT = "error: baseline entry {index} is not an object:
 ERR_BASELINE_ENTRY_SHAPE = (
     "error: baseline entry {index} is missing required key '{key}': {path}"
 )
+ERR_SOURCE_UNREADABLE = "error: cannot read Python source: {path} ({reason})"
+ERR_SOURCE_SYNTAX = "error: cannot parse Python source: {path} line {line}: {reason}"
+ERR_LOC_CAP_UNREADABLE = "error: cannot read file for LOC count: {path} ({reason})"
+ERR_LOC_CAP_BASELINE_UNREADABLE = "error: LOC cap baseline cannot be read: {path} ({reason})"
 ERR_CONFIG_INVALID = (
     "error: config file is not valid TOML or has an invalid [tool.strict-module] table: {path}"
 )

@@ -117,3 +117,21 @@ def temp_project_with_test_files(tmp_path):
     src_test_file.write_text("x = 1\n" * 750)  # 750 lines
 
     return root
+
+
+@pytest.fixture
+def run_cli(monkeypatch, capsys):
+    """Run the strict-module CLI in-process and return (exit_code, stdout, stderr).
+
+    Used by TestUnreadableInputs.
+    """
+
+    def _run(argv):
+        monkeypatch.setattr("sys.argv", ["strict-module", *argv])
+        from strict_module.cli import main
+
+        code = main()
+        captured = capsys.readouterr()
+        return code, captured.out, captured.err
+
+    return _run

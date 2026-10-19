@@ -15,7 +15,7 @@ from strict_config.constants import (
     ERR_BASELINE_MISSING,
 )
 from strict_inspection import AnnotationInspector
-from strict_linter import BaselineLoadError, DtoStrictLinter
+from strict_linter import BaselineLoadError, DtoStrictLinter, LintInputError
 from strict_rules.rules_client import RuleRegistry
 
 
@@ -346,7 +346,7 @@ class TestLinterFileHandling:
             assert result == []
 
     def test_lint_file_unreadable(self):
-        """Test linting unreadable file returns empty."""
+        """Test linting an unreadable file raises LintInputError."""
         config = Config()
         linter = DtoStrictLinter(config)
 
@@ -356,13 +356,13 @@ class TestLinterFileHandling:
 
             os.chmod(py_file, 0o000)
             try:
-                result = linter.lint_file(py_file)
-                assert result == []
+                with pytest.raises(LintInputError, match="cannot read Python source"):
+                    linter.lint_file(py_file)
             finally:
                 os.chmod(py_file, 0o644)
 
     def test_lint_file_invalid_encoding(self):
-        """Test linting file with invalid encoding."""
+        """Test linting a file with invalid encoding raises LintInputError."""
         config = Config()
         linter = DtoStrictLinter(config)
 
@@ -370,11 +370,11 @@ class TestLinterFileHandling:
             py_file = Path(tmpdir) / "test.py"
             py_file.write_bytes(b"\x80\x81\x82\x83")
 
-            result = linter.lint_file(py_file)
-            assert result == []
+            with pytest.raises(LintInputError, match="cannot read Python source"):
+                linter.lint_file(py_file)
 
     def test_lint_file_syntax_error(self):
-        """Test linting file with syntax error."""
+        """Test linting a file with a syntax error raises LintInputError."""
         config = Config()
         linter = DtoStrictLinter(config)
 
@@ -382,8 +382,8 @@ class TestLinterFileHandling:
             py_file = Path(tmpdir) / "test.py"
             py_file.write_text("x = (")
 
-            result = linter.lint_file(py_file)
-            assert result == []
+            with pytest.raises(LintInputError, match="cannot parse Python source"):
+                linter.lint_file(py_file)
 
     def test_lint_path_single_file(self):
         """Test linting single file via lint_path."""

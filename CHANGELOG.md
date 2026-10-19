@@ -12,6 +12,7 @@ All notable changes to this project will be documented in this file.
 - **R002 function context** - A dict literal after a function that carried an exception tag is no longer excused by that tag.
 - **R011 constants modules** - Only a `constants.py` file, a `*_const.py` file, or a file under a directory named `constants` is exempt. A path that merely contains the word no longer is.
 - **R003 on Python 3.14** - A dataclass keyword set to a bare name no longer raises on Python 3.14, which removed the legacy node class the rule referenced.
+- **Unreadable or unparseable input fails the run** - A Python file the linter cannot decode or parse, or a file or baseline the LOC cap cannot decode, previously passed silently (the linter skipped the file and the LOC cap counted it as zero lines). The run now prints the path and the reason to stderr and exits 1. This includes `--generate-baseline`, which refuses to write a baseline from an unparseable file.
 - **R007 duplicate reports** - A fixture function with more than one fixture decorator yields one violation instead of one per decorator.
 
 ### Changed
@@ -22,6 +23,7 @@ All notable changes to this project will be documented in this file.
 - **Exception tag default is the written form** - The default tag is `module-level:` (with the colon), not `module-level`. A docstring that merely mentions module-level as prose no longer exempts a function; only `# module-level: <reason>` on the def line or the first docstring line does.
 - **Exception tag matching is shared** - R004 and R009 use one matcher: case-insensitive, read from the def line or the first docstring line. R004 previously matched case-sensitively and read the whole docstring.
 - **loc-cap advisory text** - The hard-cap advisory no longer refers to a document that is not part of the public repository, and its refactor example uses a generic module name.
+- **Unreadable input raises a typed error from the library API** - `DtoStrictLinter.lint_file` raises `LintInputError` for an unreadable or unparseable file (it previously returned an empty list). `LocCap.count_lines` raises `LocCapInputError` for an unreadable file (it previously returned 0), and `LocCap.load_baseline` raises it for an undecodable baseline (it previously returned an empty mapping). The CLI converts these into the stderr error and exit 1.
 - **Linter internals** - The unused `violations` attribute of `DtoStrictLinter` is removed; no public name changed.
 
 ### Added

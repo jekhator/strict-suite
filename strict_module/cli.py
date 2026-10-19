@@ -17,8 +17,9 @@ from strict_config.constants import (
     MSG_BASELINE_LOADED,
     VALID_FORMATS,
 )
-from strict_linter import BaselineLoadError, DtoStrictLinter
+from strict_linter import BaselineLoadError, DtoStrictLinter, LintInputError
 from strict_loc_cap import LocCap
+from strict_rules import Violation
 
 LOC_CAP_SUBCOMMAND = "loc-cap"
 
@@ -39,6 +40,20 @@ def _add_generate_baseline_option(  # module-level: stateless helper
 ) -> None:
     """Add the --generate-baseline flag with a subcommand-specific help text."""
     parser.add_argument("--generate-baseline", action="store_true", help=help_text)
+
+
+def _lint_all(  # module-level: stateless helper
+    linter: DtoStrictLinter, path_strs: list[str]
+) -> list[Violation] | None:
+    """Lint every path; print an unreadable or unparseable input to stderr and return None."""
+    violations: list[Violation] = []
+    try:
+        for path_str in path_strs:
+            violations.extend(linter.lint_path(Path(path_str)))
+    except LintInputError as error:
+        print(str(error), file=sys.stderr)
+        return None
+    return violations
 
 
 def _load_config(config_path: str) -> Config | None:  # module-level: stateless helper
@@ -140,11 +155,11 @@ def main() -> int:
             print("error: --generate-baseline requires PATH argument", file=sys.stderr)
             return EXIT_CODE_HIGH_VIOLATION
 
-        all_violations = []
-        for path_str in args.path:
-            all_violations.extend(linter.lint_path(Path(path_str)))
+        generation_violations = _lint_all(linter, args.path)
+        if generation_violations is None:
+            return EXIT_CODE_HIGH_VIOLATION
 
-        baseline_data = linter.generate_baseline(all_violations)
+        baseline_data = linter.generate_baseline(generation_violations)
         print(json.dumps(baseline_data, indent=2))
         return EXIT_CODE_SUCCESS
 
@@ -172,9 +187,9 @@ def main() -> int:
         )
         linter = DtoStrictLinter(config, baseline=baseline)
 
-    all_violations = []
-    for path_str in args.path:
-        all_violations.extend(linter.lint_path(Path(path_str)))
+    all_violations = _lint_all(linter, args.path)
+    if all_violations is None:
+        return EXIT_CODE_HIGH_VIOLATION
 
     if all_violations:
         print(linter.format_violations(all_violations, args.format))

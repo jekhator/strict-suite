@@ -2,9 +2,11 @@
 
 import ast
 
+import pytest
+
 from strict_config._config import Config
 from strict_inspection import AnnotationInspector
-from strict_linter import DtoStrictLinter
+from strict_linter import DtoStrictLinter, LintInputError
 
 
 class TestNoqaCommentParsing:
@@ -60,21 +62,21 @@ class TestLinterEdgeCases:
         assert len(violations) == 0
 
     def test_linter_with_syntax_error_file(self, tmp_path):
-        """Test linting a file with syntax error."""
+        """Test that a file with a syntax error raises LintInputError instead of passing."""
         bad_file = tmp_path / "syntax_error.py"
         bad_file.write_text("def foo(:\n")
         config = Config()
         linter = DtoStrictLinter(config)
-        violations = linter.lint_file(bad_file)
-        assert len(violations) == 0
+        with pytest.raises(LintInputError, match="cannot parse Python source"):
+            linter.lint_file(bad_file)
 
     def test_linter_with_nonexistent_file(self, tmp_path):
-        """Test linting a nonexistent file."""
+        """Test that a nonexistent file raises LintInputError instead of passing."""
         nonexistent = tmp_path / "nonexistent.py"
         config = Config()
         linter = DtoStrictLinter(config)
-        violations = linter.lint_file(nonexistent)
-        assert len(violations) == 0
+        with pytest.raises(LintInputError, match="cannot read Python source"):
+            linter.lint_file(nonexistent)
 
     def test_linter_format_github_high_severity(self, tmp_path):
         """Test GitHub format with HIGH severity."""

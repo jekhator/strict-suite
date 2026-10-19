@@ -30,6 +30,8 @@ from strict_config.constants import (
     ERR_BASELINE_INVALID_JSON,
     ERR_BASELINE_MISSING,
     ERR_BASELINE_NOT_LIST,
+    ERR_SOURCE_SYNTAX,
+    ERR_SOURCE_UNREADABLE,
     EXIT_CODE_HIGH_VIOLATION,
     EXIT_CODE_LOW_VIOLATION,
     EXIT_CODE_MEDIUM_VIOLATION,
@@ -41,7 +43,7 @@ from strict_config.constants import (
     REQUIRED_BASELINE_KEYS,
     VALID_SEVERITY_LEVELS,
 )
-from strict_linter.linter_objects import BaselineLoadError
+from strict_linter.linter_objects import BaselineLoadError, LintInputError
 from strict_rules import RuleSeverity, Violation
 
 CHECKER_CLASSES: tuple[type[BaseChecker], ...] = (
@@ -81,19 +83,25 @@ class DtoStrictLinter:
         self.baseline = baseline or {}
 
     def lint_file(self, file_path: Path) -> list[Violation]:
-        """Lint a single Python file."""
+        """Lint a single Python file; raise LintInputError when it cannot be read or parsed."""
         if file_path.suffix != PY_EXTENSION:
             return []
 
         try:
             source = file_path.read_text()
-        except Exception:
-            return []
+        except (OSError, UnicodeDecodeError) as error:
+            raise LintInputError(
+                ERR_SOURCE_UNREADABLE.format(path=file_path, reason=error)
+            ) from error
 
         try:
             tree = ast.parse(source)
-        except SyntaxError:
-            return []
+        except (SyntaxError, ValueError) as error:
+            raise LintInputError(
+                ERR_SOURCE_SYNTAX.format(
+                    path=file_path, line=getattr(error, "lineno", None), reason=error
+                )
+            ) from error
 
         violations: list[Violation] = []
         for checker_cls in CHECKER_CLASSES:

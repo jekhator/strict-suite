@@ -10,6 +10,10 @@ from strict_config.constants import (
 )
 
 
+class LocCapInputError(ValueError):
+    """A source file or baseline that the LOC cap cannot read."""
+
+
 @dataclass(frozen=True, slots=True)
 class LocCapConfig:
     """Configuration for LOC cap checker."""
