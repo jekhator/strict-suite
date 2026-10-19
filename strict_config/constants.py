@@ -72,5 +72,3 @@ LOC_CAP_BASELINE_LEGACY_NAMES = [
 DEFAULT_EXCLUDE_PATTERNS = ("migrations", "management/commands")
 
 BARE_COLLECTION_TYPES = ("dict", "list", "tuple")
-
-DICT_STR_ANY_PATTERN = "dict[str,any]"

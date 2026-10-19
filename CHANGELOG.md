@@ -30,6 +30,10 @@ All notable changes to this project will be documented in this file.
 
 - **"module-level:" default exception tag** - `# module-level: <reason>` is recognized out of the box, so a function that records why it is module-level is exempt from R009. The existing defaults (`facade - celery schedule`, `FRAMEWORK`) are unchanged.
 
+### Removed
+
+- **Unused path-pattern constant** - `DICT_STR_ANY_PATTERN` is removed from `strict_config.constants` (and from the `strict_config` package namespace). The package had no remaining reader for it.
+
 ## [0.5.0] - 2026-07-22
 
 ### Added
