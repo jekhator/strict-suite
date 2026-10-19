@@ -202,6 +202,7 @@ dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
     "facade - celery schedule",
     "FRAMEWORK",
+    "module-level:",
     "aws-boundary"
 ]
 disabled_rules = []
@@ -210,7 +211,7 @@ severity_overrides = {}
 
 - **service_paths**: Glob patterns for files to lint with R001 (strict mode).
 - **dto_paths**: Glob patterns for files expected to contain DTO definitions.
-- **exception_tags**: Recognized justification tags for module-level functions (R004 and R009) and dict literals (R002). A tag on the def line or in the first docstring line exempts the function; matching is case-insensitive. Setting this key replaces the defaults (`facade - celery schedule`, `FRAMEWORK`, `module-level`), so keep any default you still need. Example: `aws-boundary` exempts a function from the module-level rules.
+- **exception_tags**: Recognized justification tags for module-level functions (R004 and R009) and dict literals (R002). A tag on the def line or in the first docstring line exempts the function; matching is case-insensitive. Setting this key replaces the defaults (`facade - celery schedule`, `FRAMEWORK`, `module-level:`), so keep any default you still need. The `module-level:` tag is matched in its written form only: `# module-level: <reason>` on the def line or the docstring, so prose that happens to contain the words does not exempt a function. Example: `aws-boundary` exempts a function from the module-level rules.
 - **disabled_rules**: List of rule IDs to disable (e.g., ["R005"]).
 - **severity_overrides**: Dict mapping rule IDs to override severity (e.g., {"R002": "HIGH", "R011": "INFO"}).
 

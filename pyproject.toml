@@ -98,7 +98,7 @@ dto_paths = ["**/dtos.py", "**/dtos/*.py"]
 exception_tags = [
     "facade - celery schedule",
     "FRAMEWORK",
-    "module-level"
+    "module-level:"
 ]
 disabled_rules = []
 severity_overrides = {}

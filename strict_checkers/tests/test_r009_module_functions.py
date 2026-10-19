@@ -83,6 +83,24 @@ class TestR009ModuleLevelFunctions:
         """The module-level tag is in the default exception tags."""
         assert const.TAG_MODULE_LEVEL in Config().exception_tags
 
+    def test_r009_default_tag_is_the_colon_form(self):
+        """The default tag is the written form with a colon, so prose cannot satisfy it."""
+        assert const.TAG_MODULE_LEVEL == "module-level:"
+
+    def test_r009_prose_docstring_does_not_exempt(self, fixture_dir):
+        """A first docstring line that only mentions module-level as prose still gets an R009 finding."""
+        linter = DtoStrictLinter(Config())
+        violations = linter.lint_file(
+            fixture_dir / "bad" / "r009_prose_docstring_not_a_tag.py"
+        )
+        r009_violations = [v for v in violations if v.rule_id == "R009"]
+
+        assert len(r009_violations) == 1, (
+            f"Expected 1 R009 violation for the prose-only docstring, "
+            f"got {len(r009_violations)}"
+        )
+        assert "strip_prefix" in r009_violations[0].message
+
     def test_r009_default_run_exits_zero(self, fixture_dir):
         """With default severity, R009 findings are advisory and the run exits zero."""
         linter = DtoStrictLinter(Config())

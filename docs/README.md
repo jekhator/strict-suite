@@ -40,7 +40,7 @@ To restore the former blocking behaviour of R009, set its severity to HIGH in `p
 severity_overrides = { R009 = "HIGH" }
 ```
 
-Exception tags are plain substrings matched case-insensitively. The defaults are `facade - celery schedule`, `FRAMEWORK` and `module-level`. A project can add its own, for example `aws-boundary`, in `exception_tags`; setting that key replaces the defaults.
+Exception tags are plain substrings matched case-insensitively. The defaults are `facade - celery schedule`, `FRAMEWORK` and `module-level:`. The colon form is deliberate: `module-level` without the colon would also match prose in a docstring, so only the written form `# module-level: <reason>` exempts a function. A project can add its own, for example `aws-boundary`, in `exception_tags`; setting that key replaces the defaults.
 
 ## Documentation Structure
 
