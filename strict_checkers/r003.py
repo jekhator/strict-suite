@@ -7,7 +7,7 @@ from pathlib import Path
 from strict_checkers.base import BaseChecker
 from strict_config._config import Config
 from strict_inspection import PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 ERR_R003_ALLOWLIST_UNDETECTED = (
     "Class {class_name} is in r003_sensitivity_allowlist but no sensitivity "
@@ -22,7 +22,6 @@ class R003Checker(BaseChecker):
 
     def __init__(self, file_path: Path, source: str, config: Config):
         super().__init__(file_path, source, config)
-        self.in_dto_file = False
         self.in_dto_file = PathClassifier.is_dto_path(file_path, config.dto_paths)
 
     def visit_ClassDef(self, node: ast.ClassDef) -> None:
@@ -36,24 +35,20 @@ class R003Checker(BaseChecker):
             return
 
         for decorator in node.decorator_list:
-            if self._is_dataclass_decorator(decorator):
+            if self.is_dataclass_decorator(decorator):
                 kwargs = self._extract_decorator_kwargs(decorator)
 
                 if self.config.r003_mode == "canonical":
                     if self.config.r003_strict_repr:
                         has_repr_false = kwargs.get("repr") == "False"
-                        if has_repr_false and not self._is_sensitivity_aware_repr_false(
-                            node
-                        ):
-                            self.violations.append(
-                                Violation(
-                                    rule_id="R003",
-                                    severity=RuleSeverity.MEDIUM,
-                                    file=str(self.file_path),
-                                    line=node.lineno,
-                                    col=node.col_offset,
-                                    message=f"@dataclass uses anti-canonical repr=False: {node.name}. Remove it.",
-                                )
+                        sensitivity_aware = self._is_sensitivity_aware_repr_false(node)
+                        if has_repr_false and not sensitivity_aware:
+                            self.add_violation(
+                                rule_id="R003",
+                                severity=RuleSeverity.MEDIUM,
+                                line=node.lineno,
+                                col=node.col_offset,
+                                message=f"@dataclass uses anti-canonical repr=False: {node.name}. Remove it.",
                             )
                     else:
                         has_frozen = kwargs.get("frozen") == "True"
@@ -66,15 +61,12 @@ class R003Checker(BaseChecker):
                             if not has_slots:
                                 missing.append("slots=True")
 
-                            self.violations.append(
-                                Violation(
-                                    rule_id="R003",
-                                    severity=RuleSeverity.MEDIUM,
-                                    file=str(self.file_path),
-                                    line=node.lineno,
-                                    col=node.col_offset,
-                                    message=f"@dataclass missing {', '.join(missing)}: {node.name}",
-                                )
+                            self.add_violation(
+                                rule_id="R003",
+                                severity=RuleSeverity.MEDIUM,
+                                line=node.lineno,
+                                col=node.col_offset,
+                                message=f"@dataclass missing {', '.join(missing)}: {node.name}",
                             )
                 else:
                     has_frozen = kwargs.get("frozen") == "True"
@@ -90,15 +82,12 @@ class R003Checker(BaseChecker):
                         if not has_repr_false:
                             missing.append("repr=False")
 
-                        self.violations.append(
-                            Violation(
-                                rule_id="R003",
-                                severity=RuleSeverity.MEDIUM,
-                                file=str(self.file_path),
-                                line=node.lineno,
-                                col=node.col_offset,
-                                message=f"@dataclass missing {', '.join(missing)}: {node.name}",
-                            )
+                        self.add_violation(
+                            rule_id="R003",
+                            severity=RuleSeverity.MEDIUM,
+                            line=node.lineno,
+                            col=node.col_offset,
+                            message=f"@dataclass missing {', '.join(missing)}: {node.name}",
                         )
 
         self.generic_visit(node)
@@ -120,9 +109,8 @@ class R003Checker(BaseChecker):
                 node
             ) or self._has_sensitivity_field_metadata(node)
             if not has_sensitivity:
-                logger.info(
-                    ERR_R003_ALLOWLIST_UNDETECTED.format(class_name=full_class_path)
-                )
+                template = ERR_R003_ALLOWLIST_UNDETECTED
+                logger.info(template.format(class_name=full_class_path))
             return True
 
         if self._has_sensitivity_base(node):
@@ -156,9 +144,8 @@ class R003Checker(BaseChecker):
                         if item.value.func.id == "field":
                             for keyword in item.value.keywords:
                                 if keyword.arg == "metadata":
-                                    if self._metadata_contains_sensitivity_key(
-                                        keyword.value
-                                    ):
+                                    value = keyword.value
+                                    if self._metadata_contains_sensitivity_key(value):
                                         return True
 
         return False
@@ -175,15 +162,6 @@ class R003Checker(BaseChecker):
 
         return False
 
-    def _is_dataclass_decorator(self, decorator: ast.expr) -> bool:
-        """Check if decorator is @dataclass."""
-        if isinstance(decorator, ast.Name):
-            return decorator.id == "dataclass"
-        elif isinstance(decorator, ast.Call):
-            if isinstance(decorator.func, ast.Name):
-                return decorator.func.id == "dataclass"
-        return False
-
     def _extract_decorator_kwargs(self, decorator: ast.expr) -> dict[str, str]:
         """Extract kwargs from @dataclass(...) decorator."""
         kwargs: dict[str, str] = {}
@@ -192,8 +170,6 @@ class R003Checker(BaseChecker):
                 if keyword.arg is None:
                     continue
                 if isinstance(keyword.value, ast.Constant):
-                    kwargs[keyword.arg] = str(keyword.value.value)
-                elif isinstance(keyword.value, ast.NameConstant):
                     kwargs[keyword.arg] = str(keyword.value.value)
                 elif isinstance(keyword.value, ast.Name):
                     kwargs[keyword.arg] = keyword.value.id

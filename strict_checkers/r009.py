@@ -4,7 +4,7 @@ import ast
 
 from strict_checkers.base import BaseChecker
 from strict_inspection import PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R009Checker(BaseChecker):
@@ -33,22 +33,16 @@ class R009Checker(BaseChecker):
             if self.is_suppressed(item, "R009"):
                 continue
 
-            self.violations.append(
-                Violation(
-                    rule_id="R009",
-                    severity=RuleSeverity.INFO,
-                    file=str(self.file_path),
-                    line=item.lineno,
-                    col=item.col_offset,
-                    message=(
+            self.add_violation(
+rule_id="R009", severity=RuleSeverity.INFO, line=item.lineno, col=item.col_offset,
+message=(
                         f"Module-level function '{item.name}': a method on a class is the "
                         "default shape. Keep it module-level only when that is the optimal "
                         "shape (framework hook, entry point, stateless helper with no owning "
                         "class) and record why with '# module-level: <reason>' on the def "
                         "line. Entry points need no tag: main, handle_*."
                     ),
-                )
-            )
+)
 
         self.generic_visit(node)
 

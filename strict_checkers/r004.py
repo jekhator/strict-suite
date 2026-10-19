@@ -6,7 +6,7 @@ from pathlib import Path
 from strict_checkers.base import BaseChecker
 from strict_config._config import Config
 from strict_inspection import PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R004Checker(BaseChecker):
@@ -43,21 +43,15 @@ class R004Checker(BaseChecker):
                 continue
 
             class_name, method_name = target
-            self.violations.append(
-                Violation(
-                    rule_id="R004",
-                    severity=RuleSeverity.HIGH,
-                    file=str(self.file_path),
-                    line=item.lineno,
-                    col=item.col_offset,
-                    message=(
+            self.add_violation(
+rule_id="R004", severity=RuleSeverity.HIGH, line=item.lineno, col=item.col_offset,
+message=(
                         f"Facade '{item.name}': module-level wrapper around "
                         f"{class_name}.{method_name}; call the class method directly or "
                         "move the logic onto the class. A framework-required wrapper "
                         "carries an exception tag (for example '# FRAMEWORK')."
                     ),
-                )
-            )
+)
 
     def _facade_target(self, node: ast.FunctionDef) -> tuple[str, str] | None:
         """Return (class name, method name) when the body is a bare class-method delegation."""

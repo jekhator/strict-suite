@@ -4,7 +4,7 @@ import ast
 
 from strict_checkers.base import BaseChecker
 from strict_inspection import AnnotationInspector, PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
 
 
 class R001Checker(BaseChecker):
@@ -20,119 +20,42 @@ class R001Checker(BaseChecker):
         if self.is_suppressed(node, "R001"):
             return
 
-        for arg in node.args.args + node.args.posonlyargs + node.args.kwonlyargs:
-            if arg.annotation:
-                if AnnotationInspector.is_dict_str_any(arg.annotation):
-                    self.violations.append(
-                        Violation(
-                            rule_id="R001",
-                            severity=RuleSeverity.HIGH,
-                            file=str(self.file_path),
-                            line=node.lineno,
-                            col=node.col_offset,
-                            message=f"Dict[str, Any] in signature: {node.name}",
-                        )
-                    )
-                    return
-                elif (
-                    self.config.strict_collections
-                    and AnnotationInspector.is_bare_collection(arg.annotation)
-                ):
-                    self.violations.append(
-                        Violation(
-                            rule_id="R001",
-                            severity=RuleSeverity.HIGH,
-                            file=str(self.file_path),
-                            line=node.lineno,
-                            col=node.col_offset,
-                            message=f"Bare collection type in signature: {node.name} (use strict_collections=False to disable)",
-                        )
-                    )
-                    return
+        parameter_annotations = [
+            arg.annotation
+            for arg in (*node.args.args, *node.args.posonlyargs, *node.args.kwonlyargs)
+        ]
+        for special in (node.args.vararg, node.args.kwarg):
+            if special is not None:
+                parameter_annotations.append(special.annotation)
 
-        if node.args.vararg and node.args.vararg.annotation:
-            if AnnotationInspector.is_dict_str_any(node.args.vararg.annotation):
-                self.violations.append(
-                    Violation(
-                        rule_id="R001",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Dict[str, Any] in signature: {node.name}",
-                    )
-                )
-                return
-            elif (
-                self.config.strict_collections
-                and AnnotationInspector.is_bare_collection(node.args.vararg.annotation)
-            ):
-                self.violations.append(
-                    Violation(
-                        rule_id="R001",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Bare collection type in signature: {node.name} (use strict_collections=False to disable)",
-                    )
-                )
+        for annotation in parameter_annotations:
+            if annotation is None:
+                continue
+            message = self._problem_message(annotation, node.name)
+            if message is not None:
+                self._report(node, message)
                 return
 
-        if node.args.kwarg and node.args.kwarg.annotation:
-            if AnnotationInspector.is_dict_str_any(node.args.kwarg.annotation):
-                self.violations.append(
-                    Violation(
-                        rule_id="R001",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Dict[str, Any] in signature: {node.name}",
-                    )
-                )
-                return
-            elif (
-                self.config.strict_collections
-                and AnnotationInspector.is_bare_collection(node.args.kwarg.annotation)
-            ):
-                self.violations.append(
-                    Violation(
-                        rule_id="R001",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Bare collection type in signature: {node.name} (use strict_collections=False to disable)",
-                    )
-                )
-                return
-
-        if node.returns:
-            if AnnotationInspector.is_dict_str_any(node.returns):
-                self.violations.append(
-                    Violation(
-                        rule_id="R001",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Dict[str, Any] in signature: {node.name}",
-                    )
-                )
-            elif (
-                self.config.strict_collections
-                and AnnotationInspector.is_bare_collection(node.returns)
-            ):
-                self.violations.append(
-                    Violation(
-                        rule_id="R001",
-                        severity=RuleSeverity.HIGH,
-                        file=str(self.file_path),
-                        line=node.lineno,
-                        col=node.col_offset,
-                        message=f"Bare collection type in signature: {node.name} (use strict_collections=False to disable)",
-                    )
-                )
+        if node.returns is not None:
+            message = self._problem_message(node.returns, node.name)
+            if message is not None:
+                self._report(node, message)
 
         self.generic_visit(node)
+
+    def _problem_message(self, annotation: ast.expr, name: str) -> str | None:
+        """Return the violation message for an annotation, or None when it is allowed."""
+        if AnnotationInspector.is_dict_str_any(annotation):
+            return f"Dict[str, Any] in signature: {name}"
+        if self.config.strict_collections and AnnotationInspector.is_bare_collection(
+            annotation
+        ):
+            return f"Bare collection type in signature: {name} (use strict_collections=False to disable)"
+        return None
+
+    def _report(self, node: ast.FunctionDef, message: str) -> None:
+        """Append an R001 HIGH violation for a function."""
+        self.add_violation(
+rule_id="R001", severity=RuleSeverity.HIGH, line=node.lineno, col=node.col_offset,
+message=message,
+)

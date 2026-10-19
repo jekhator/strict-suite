@@ -1,10 +1,15 @@
 """Checker for R011: String literal at raise site."""
 
 import ast
+from pathlib import Path
 
 from strict_checkers.base import BaseChecker
 from strict_inspection import PathClassifier
-from strict_rules import RuleSeverity, Violation
+from strict_rules import RuleSeverity
+
+CONSTANTS_BASENAME = "constants.py"
+CONSTANTS_SUFFIX = "_const.py"
+CONSTANTS_DIRECTORY = "constants"
 
 
 class R011Checker(BaseChecker):
@@ -17,70 +22,46 @@ class R011Checker(BaseChecker):
 
     def visit_Raise(self, node: ast.Raise) -> None:
         """Visit raise statements to find string literal messages."""
-        if PathClassifier.is_test_file(self.file_path):
-            self.generic_visit(node)
-            return
-
-        if self._is_constant_module(self.file_path):
-            self.generic_visit(node)
-            return
-
-        if node.exc is None:
-            self.generic_visit(node)
-            return
-
-        if not isinstance(node.exc, ast.Call):
-            self.generic_visit(node)
-            return
-
-        if self.is_suppressed(node, "R011"):
-            self.generic_visit(node)
-            return
-
-        has_literal = self._check_for_string_literals(node.exc)
-        if has_literal:
-            self.violations.append(
-                Violation(
-                    rule_id="R011",
-                    severity=RuleSeverity.HIGH,
-                    file=str(self.file_path),
-                    line=node.lineno,
-                    col=node.col_offset,
-                    message="String literal found in raise statement. Extract to constants/<feature>.py as ERR_<DOMAIN>_<CONDITION>, reference via const.",
-                )
+        exc = node.exc
+        if (
+            isinstance(exc, ast.Call)
+            and not PathClassifier.is_test_file(self.file_path)
+            and not self._is_constant_module(self.file_path)
+            and not self.is_suppressed(node, "R011")
+            and self._has_string_literal(exc)
+        ):
+            self.add_violation(
+                rule_id="R011",
+                severity=RuleSeverity.HIGH,
+                line=node.lineno,
+                col=node.col_offset,
+                message="String literal found in raise statement. Extract to constants/<feature>.py as ERR_<DOMAIN>_<CONDITION>, reference via const.",
             )
 
         self.generic_visit(node)
 
-    def _is_constant_module(self, file_path) -> bool:
-        """Check if file is a constants module."""
+    @staticmethod
+    def _is_constant_module(file_path: Path) -> bool:
+        """Check if the file is a constants module (constants.py, *_const.py, or under a constants directory)."""
         return (
-            file_path.name == "constants.py"
-            or file_path.name.endswith("_const.py")
-            or "constants" in str(file_path)
+            file_path.name == CONSTANTS_BASENAME
+            or file_path.name.endswith(CONSTANTS_SUFFIX)
+            or CONSTANTS_DIRECTORY in file_path.parts
         )
 
-    def _check_for_string_literals(self, call_node: ast.Call) -> bool:
+    def _has_string_literal(self, call_node: ast.Call) -> bool:
         """Check if a Call node contains string literal arguments.
 
         Returns True if any positional or keyword argument is:
         - An ast.Constant with string value
         - An ast.JoinedStr (f-string)
         """
-        for arg in call_node.args:
-            if self._is_string_literal(arg):
-                return True
+        values = [*call_node.args, *(keyword.value for keyword in call_node.keywords)]
+        return any(self._is_string_literal(value) for value in values)
 
-        for keyword in call_node.keywords:
-            if self._is_string_literal(keyword.value):
-                return True
-
-        return False
-
-    def _is_string_literal(self, node: ast.expr) -> bool:
+    @staticmethod
+    def _is_string_literal(node: ast.expr) -> bool:
         """Check if a node is a string literal or f-string."""
         if isinstance(node, ast.Constant):
             return isinstance(node.value, str)
-        if isinstance(node, ast.JoinedStr):
-            return True
-        return False
+        return isinstance(node, ast.JoinedStr)
