@@ -40,6 +40,10 @@ class R012Checker(BaseChecker):
         if len(node.args) + len(node.keywords) != 1:
             return False
 
+        argument = node.args[0] if node.args else node.keywords[0].value
+        if argument.end_lineno != argument.lineno:
+            return False
+
         reconstructed = self._normalize_spacing(
             " ".join(line.strip() for line in self.lines[node.lineno - 1 : node.end_lineno])
         )

@@ -24,6 +24,7 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 
+- **R012 multi-line arguments** - A call whose only argument spans several lines because the argument itself is multi-line (for example a triple-quoted string) is no longer reported as split unnecessarily. A short call that is genuinely split is still reported.
 - **Typed packages** - Every wheel root ships its `py.typed` marker; before, only the compatibility shim did.
 - **Baseline loading error handling** - `load_baseline()` now raises a typed `BaselineLoadError` for missing, unreadable, malformed, undecodable (non-UTF-8), or structurally invalid baseline files instead of silently returning an empty dict. Missing or malformed baselines are now hard errors that fail the gate with exit code 1, preventing silent ratchet disablement.
 - **Malformed pyproject.toml exits with an error** - A file that cannot be read or parsed, or whose strict-module table is not a table, previously disabled all configuration silently. The CLI now prints the path and exits 1. A missing file still uses the defaults.
