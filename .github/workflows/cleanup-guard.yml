@@ -7,6 +7,7 @@ jobs:
   feature-documentation:
     name: Verify all features have audit and review docs
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
       - name: Check feature documentation completeness
